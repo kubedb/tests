@@ -48,4 +48,5 @@ go test -c                                              \
       -X main.Compiler=$(go env CC)                     \
       -X main.Platform=${OS}/${ARCH}                    \
     "                                                   \
-    ./e2e
+    ./e2e                                               \
+    -o "./bin/${BIN}"

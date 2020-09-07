@@ -169,9 +169,8 @@ $(OUTBIN): .go/$(OUTBIN).stamp
 	    --rm                                                    \
 	    -v $$(pwd):/src                                         \
 	    -w /src                                                 \
-	    -v $$(pwd)/.go/bin/$(OS)_$(ARCH):/go/bin                \
-	    -v $$(pwd)/.go/bin/$(OS)_$(ARCH):/go/bin/$(OS)_$(ARCH)  \
-	    -v $$(pwd)/.go/cache:/.cache                            \
+		-v $$(pwd)/.go/cache:/.cache                            \
+		--env BIN=$(BIN)                          				\
 	    --env HTTP_PROXY=$(HTTP_PROXY)                          \
 	    --env HTTPS_PROXY=$(HTTPS_PROXY)                        \
 	    $(BUILD_IMAGE)                                          \
@@ -202,11 +201,6 @@ $(OUTBIN): .go/$(OUTBIN).stamp
 		    $(BUILD_IMAGE)                                          \
 		    upx --brute /go/$(OUTBIN);                              \
 	fi
-	@if ! cmp -s .go/$(OUTBIN) $(OUTBIN); then \
-	    mv .go/$(OUTBIN) $(OUTBIN);            \
-	    date >$@;                              \
-	fi
-	@echo
 
 # Used to track state in hidden files.
 DOTFILE_IMAGE    = $(subst /,_,$(IMAGE))-$(TAG)
