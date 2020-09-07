@@ -21,8 +21,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"k8s.io/client-go/dynamic"
-
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha1"
 	cs "kubedb.dev/apimachinery/client/clientset/versioned"
 
@@ -31,6 +29,7 @@ import (
 	"github.com/spf13/afero"
 	"gomodules.xyz/cert/certstore"
 	crd_cs "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/metadata"
 	"k8s.io/client-go/rest"

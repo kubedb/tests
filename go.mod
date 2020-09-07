@@ -35,6 +35,8 @@ require (
 
 replace bitbucket.org/ww/goautoneg => gomodules.xyz/goautoneg v0.0.0-20120707110453-a547fc61f48d
 
+replace cloud.google.com/go => cloud.google.com/go v0.49.0
+
 replace git.apache.org/thrift.git => github.com/apache/thrift v0.13.0
 
 replace github.com/Azure/azure-sdk-for-go => github.com/Azure/azure-sdk-for-go v35.0.0+incompatible
@@ -61,11 +63,19 @@ replace github.com/Azure/go-autorest/logger => github.com/Azure/go-autorest/logg
 
 replace github.com/Azure/go-autorest/tracing => github.com/Azure/go-autorest/tracing v0.5.0
 
+replace github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.1
+
+replace github.com/golang/protobuf => github.com/golang/protobuf v1.3.2
+
 replace github.com/imdario/mergo => github.com/imdario/mergo v0.3.5
 
 replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.0.0
 
 replace go.etcd.io/etcd => go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
+
+replace google.golang.org/api => google.golang.org/api v0.14.0
+
+replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20191115194625-c23dd37a84c9
 
 replace google.golang.org/grpc => google.golang.org/grpc v1.26.0
 

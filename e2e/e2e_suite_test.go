@@ -24,7 +24,6 @@ import (
 	"testing"
 	"time"
 
-	"k8s.io/client-go/dynamic"
 	cs "kubedb.dev/apimachinery/client/clientset/versioned"
 	"kubedb.dev/apimachinery/client/clientset/versioned/scheme"
 	"kubedb.dev/tests/e2e/framework"
@@ -36,6 +35,7 @@ import (
 	. "github.com/onsi/gomega"
 	kext_cs "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	clientSetScheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
