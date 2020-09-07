@@ -19,13 +19,14 @@ import (
 	"context"
 	"time"
 
+	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
+
 	"github.com/appscode/go/crypto/rand"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kmmeta "kmodules.xyz/client-go/meta"
-	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 )
 
 func (i *Invocation) MongoDBOpsRequestUpgrade(name, namespace, version string) *dbaapi.MongoDBOpsRequest {
