@@ -49,4 +49,4 @@ go test -c                                              \
       -X main.Platform=${OS}/${ARCH}                    \
     "                                                   \
     ./e2e                                               \
-    -o "./bin/${BIN}"
+    -o "/go/bin/${BIN}"
