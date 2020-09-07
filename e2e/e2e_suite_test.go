@@ -27,8 +27,8 @@ import (
 	"k8s.io/client-go/dynamic"
 	cs "kubedb.dev/apimachinery/client/clientset/versioned"
 	"kubedb.dev/apimachinery/client/clientset/versioned/scheme"
-	"kubedb.dev/test/e2e/framework"
-	_ "kubedb.dev/test/e2e/mongodb"
+	"kubedb.dev/tests/e2e/framework"
+	_ "kubedb.dev/tests/e2e/mongodb"
 
 	cm "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
 	. "github.com/onsi/ginkgo"

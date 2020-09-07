@@ -18,7 +18,7 @@ package e2e_test
 
 import (
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha1"
-	"kubedb.dev/test/e2e/framework"
+	"kubedb.dev/tests/e2e/framework"
 
 	"github.com/appscode/go/types"
 	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"

@@ -564,6 +564,7 @@ k8s.io/kube-openapi/pkg/util/proto
 # k8s.io/kubernetes v1.18.3 => github.com/kmodules/kubernetes v1.19.0-alpha.0.0.20200521033432-49d3646051ad
 k8s.io/kubernetes/pkg/util/hash
 # k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
+## explicit
 k8s.io/utils/integer
 k8s.io/utils/pointer
 # kmodules.xyz/client-go v0.0.0-20200903033732-dab39b86c81b

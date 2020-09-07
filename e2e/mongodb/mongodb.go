@@ -23,8 +23,8 @@ import (
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha1"
 	"kubedb.dev/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1/util"
-	"kubedb.dev/test/e2e/framework"
-	"kubedb.dev/test/e2e/matcher"
+	"kubedb.dev/tests/e2e/framework"
+	"kubedb.dev/tests/e2e/matcher"
 
 	"github.com/appscode/go/log"
 	"github.com/appscode/go/types"
