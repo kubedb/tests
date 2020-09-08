@@ -1,12 +1,12 @@
 package e2e_test
 
-
 import (
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha1"
+	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
 
 	"github.com/appscode/go/types"
-	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1beta1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
@@ -14,56 +14,139 @@ import (
 	kmapi "kmodules.xyz/client-go/api/v1"
 )
 
-func shouldRunWithPVC2(	f                *framework.Invocation, mongodb *api.MongoDB) interface{} {
-	return func() {
-		if skipMessage != "" {
-			Skip(skipMessage)
-		}
-		// Create MongoDB
-		createAndWaitForRunning()
+const (
+	MONGO_INITDB_ROOT_USERNAME = "MONGO_INITDB_ROOT_USERNAME"
+	MONGO_INITDB_ROOT_PASSWORD = "MONGO_INITDB_ROOT_PASSWORD"
+	MONGO_INITDB_DATABASE      = "MONGO_INITDB_DATABASE"
+)
 
-		By("Checking SSL settings (if enabled any)")
-		f.EventuallyUserSSLSettings(mongodb.ObjectMeta, clusterAuthMode, sslMode).Should(BeTrue())
+var dbName = "kubedb"
 
-		if enableSharding {
-			By("Enable sharding for db:" + dbName)
-			f.EventuallyEnableSharding(mongodb.ObjectMeta, dbName).Should(BeTrue())
-		}
-		if verifySharding {
-			By("Check if db " + dbName + " is set to partitioned")
-			f.EventuallyCollectionPartitioned(mongodb.ObjectMeta, dbName).Should(Equal(enableSharding))
-		}
+type testOptions struct {
+	*framework.Invocation
+	mongodb          *api.MongoDB
+	mongoOpsReq      *dbaapi.MongoDBOpsRequest
+	skipMessage      string
+	garbageMongoDB   *api.MongoDBList
+	snapshotPVC      *core.PersistentVolumeClaim
+	secret           *core.Secret
+	verifySharding   bool
+	enableSharding   bool
+	clusterAuthMode  *api.ClusterAuthMode
+	sslMode          *api.SSLMode
+	garbageCASecrets []*core.Secret
+	anotherMongoDB   *api.MongoDB
+}
 
-		By("Insert Document Inside DB")
-		f.EventuallyInsertDocument(mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
-
-		By("Checking Inserted Document")
-		f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
-
-		By("Delete mongodb")
-		err = f.DeleteMongoDB(mongodb.ObjectMeta)
-		Expect(err).NotTo(HaveOccurred())
-
-		By("Wait for mongodb to be paused")
-		f.EventuallyMongoDB(mongodb.ObjectMeta).Should(BeFalse())
-
-		// Create MongoDB object again to resume it
-		By("Create MongoDB: " + mongodb.Name)
-		err = f.CreateMongoDB(mongodb)
-		Expect(err).NotTo(HaveOccurred())
-
-		By("Wait for Running mongodb")
-		f.EventuallyMongoDBRunning(mongodb.ObjectMeta).Should(BeTrue())
-
-		By("Ping mongodb database")
-		f.EventuallyPingMongo(mongodb.ObjectMeta)
-
-		if verifySharding {
-			By("Check if db " + dbName + " is set to partitioned")
-			f.EventuallyCollectionPartitioned(mongodb.ObjectMeta, dbName).Should(Equal(enableSharding))
-		}
-
-		By("Checking Inserted Document")
-		f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
+func (to *testOptions) addIssuerRef() {
+	//create cert-manager ca secret
+	issuer, err := to.InsureIssuer(to.mongodb.ObjectMeta, api.ResourceKindMongoDB)
+	Expect(err).NotTo(HaveOccurred())
+	to.mongodb.Spec.TLS = &kmapi.TLSConfig{
+		IssuerRef: &core.TypedLocalObjectReference{
+			Name:     issuer.Name,
+			Kind:     "Issuer",
+			APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
+		},
 	}
+}
+
+func (to *testOptions) createAndWaitForRunning(ignoreSSL ...bool) {
+	if to.skipMessage != "" {
+		Skip(to.skipMessage)
+	}
+
+	if framework.SSLEnabled && len(ignoreSSL) == 0 {
+		to.mongodb.Spec.SSLMode = api.SSLModeRequireSSL
+		to.addIssuerRef()
+	}
+
+	By("Create MongoDB: " + to.mongodb.Name)
+	err := to.CreateMongoDB(to.mongodb)
+	Expect(err).NotTo(HaveOccurred())
+
+	By("Wait for Running mongodb")
+	to.EventuallyMongoDBRunning(to.mongodb.ObjectMeta).Should(BeTrue())
+
+	By("Wait for AppBinding to create")
+	to.EventuallyAppBinding(to.mongodb.ObjectMeta).Should(BeTrue())
+
+	By("Check valid AppBinding Specs")
+	err = to.CheckMongoDBAppBindingSpec(to.mongodb.ObjectMeta)
+	Expect(err).NotTo(HaveOccurred())
+
+	By("Ping mongodb database")
+	to.EventuallyPingMongo(to.mongodb.ObjectMeta)
+}
+
+func (to *testOptions) createAndInsertData() {
+	// Create MongoDB
+	to.createAndWaitForRunning()
+
+	By("Insert Document Inside DB")
+	to.EventuallyInsertDocument(to.mongodb.ObjectMeta, dbName, 1).Should(BeTrue())
+
+	By("Checking Inserted Document")
+	to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 1).Should(BeTrue())
+}
+
+func (to *testOptions) shouldTestOpsRequest() {
+	// Create MongoDB
+	to.createAndWaitForRunning()
+
+	// Insert Data
+	By("Insert Document Inside DB")
+	to.EventuallyInsertDocument(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
+
+	By("Checking Inserted Document")
+	to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
+
+	// Update Database
+	By("Updating MongoDB")
+	err := to.CreateMongoDBOpsRequest(to.mongoOpsReq)
+	Expect(err).NotTo(HaveOccurred())
+
+	By("Waiting for MongoDB Ops Request Phase to be Successful")
+	to.EventuallyMongoDBOpsRequestPhase(to.mongoOpsReq.ObjectMeta).Should(Equal(dbaapi.OpsRequestPhaseSuccessful))
+
+	// Retrieve Inserted Data
+	By("Checking Inserted Document after update")
+	to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
+}
+
+func (to *testOptions) deleteTestResource() {
+	if to.mongodb == nil {
+		Skip("Skipping")
+	}
+
+	By("Check if mongodb " + to.mongodb.Name + " exists.")
+	mg, err := to.GetMongoDB(to.mongodb.ObjectMeta)
+	if err != nil && kerr.IsNotFound(err) {
+		// MongoDB was not created. Hence, rest of cleanup is not necessary.
+		return
+	}
+	Expect(err).NotTo(HaveOccurred())
+
+	By("Update mongodb to set spec.terminationPolicy = WipeOut")
+	_, err = to.PatchMongoDB(mg.ObjectMeta, func(in *api.MongoDB) *api.MongoDB {
+		in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+		return in
+	})
+	Expect(err).NotTo(HaveOccurred())
+
+	By("Delete mongodb")
+	err = to.DeleteMongoDB(to.mongodb.ObjectMeta)
+	if err != nil && kerr.IsNotFound(err) {
+		// MongoDB was not created. Hence, rest of cleanup is not necessary.
+		return
+	}
+	Expect(err).NotTo(HaveOccurred())
+	By("Delete CA secret")
+	to.DeleteGarbageCASecrets(to.garbageCASecrets)
+
+	By("Wait for mongodb to be deleted")
+	to.EventuallyMongoDB(to.mongodb.ObjectMeta).Should(BeFalse())
+
+	By("Wait for mongodb resources to be wipedOut")
+	to.EventuallyWipedOut(to.mongodb.ObjectMeta).Should(Succeed())
 }
