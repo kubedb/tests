@@ -204,7 +204,7 @@ func (f *Framework) VerifyExporter(meta metav1.ObjectMeta) error {
 		var count = 0
 		for mf := range mfChan {
 			if mf.Metric != nil && mf.Metric[0].Gauge != nil && mf.Metric[0].Gauge.Value != nil {
-				if *mf.Name == mongodbVersionMetric && strings.Contains(MongoDBCatalogName, *mf.Metric[0].Label[0].Value) {
+				if *mf.Name == mongodbVersionMetric && strings.Contains(DBVersion, *mf.Metric[0].Label[0].Value) {
 					count++
 				} else if *mf.Name == mongodbUpMetric && int(*mf.Metric[0].Gauge.Value) > 0 {
 					count++

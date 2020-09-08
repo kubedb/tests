@@ -71,8 +71,8 @@ func init() {
 	flag.StringVar(&kubeContext, "kube-context", "", "Name of kube context")
 	flag.StringVar(&storageClass, "storageclass", storageClass, "Kubernetes StorageClass name")
 	flag.StringVar(&framework.DockerRegistry, "docker-registry", framework.DockerRegistry, "User provided docker repository")
-	flag.StringVar(&framework.MongoDBCatalogName, "mongodb-catalog", framework.MongoDBCatalogName, "MongoDB version")
-	flag.StringVar(&framework.MongoDBUpdatedCatalogName, "mongodb-updated-catalog", framework.MongoDBUpdatedCatalogName, "MongoDB updated version")
+	flag.StringVar(&framework.DBVersion, "db-version", framework.DBVersion, "Database version")
+	flag.StringVar(&framework.DBUpdatedVersion, "db-updated-catalog", framework.DBUpdatedVersion, "Upgraded database version")
 	flag.StringVar(&framework.StorageProvider, "storage-provider", framework.StorageProviderMinio, "Backend Storage Provider")
 	flag.BoolVar(&framework.SSLEnabled, "ssl", framework.SSLEnabled, "enable ssl")
 }

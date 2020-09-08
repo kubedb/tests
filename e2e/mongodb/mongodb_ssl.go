@@ -431,7 +431,7 @@ var _ = Describe("MongoDB SSL", func() {
 						mongodb.Spec.SSLMode = *sslMode
 					})
 
-					It("should run successfully", shouldRunWithPVC)
+					It("should run successfully", shouldRunWithPVC2(f, mongodb))
 
 					// Snapshot doesn't work yet for requireSSL SSLMode
 				})

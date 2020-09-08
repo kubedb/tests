@@ -129,9 +129,9 @@ var _ = Describe("MongoDB", func() {
 		Context("Update Standalone DB", func() {
 			BeforeEach(func() {
 				mongodb = f.MongoDBStandalone()
-				mongodb.Spec.Version = framework.MongoDBCatalogName
+				mongodb.Spec.Version = framework.DBVersion
 				mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-				mongoOpsReq = f.MongoDBOpsRequestUpgrade(mongodb.Name, mongodb.Namespace, framework.MongoDBUpdatedCatalogName)
+				mongoOpsReq = f.MongoDBOpsRequestUpgrade(mongodb.Name, mongodb.Namespace, framework.DBUpdatedVersion)
 			})
 
 			It("Should Update MongoDB version", func() {
@@ -143,9 +143,9 @@ var _ = Describe("MongoDB", func() {
 		Context("Update Non-Sharded Cluster", func() {
 			BeforeEach(func() {
 				mongodb = f.MongoDBRS()
-				mongodb.Spec.Version = framework.MongoDBCatalogName
+				mongodb.Spec.Version = framework.DBVersion
 				mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-				mongoOpsReq = f.MongoDBOpsRequestUpgrade(mongodb.Name, mongodb.Namespace, framework.MongoDBUpdatedCatalogName)
+				mongoOpsReq = f.MongoDBOpsRequestUpgrade(mongodb.Name, mongodb.Namespace, framework.DBUpdatedVersion)
 			})
 
 			It("Should Update MongoDB version", func() {
@@ -157,9 +157,9 @@ var _ = Describe("MongoDB", func() {
 		Context("Update Sharded Cluster", func() {
 			BeforeEach(func() {
 				mongodb = f.MongoDBShard()
-				mongodb.Spec.Version = framework.MongoDBCatalogName
+				mongodb.Spec.Version = framework.DBVersion
 				mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-				mongoOpsReq = f.MongoDBOpsRequestUpgrade(mongodb.Name, mongodb.Namespace, framework.MongoDBUpdatedCatalogName)
+				mongoOpsReq = f.MongoDBOpsRequestUpgrade(mongodb.Name, mongodb.Namespace, framework.DBUpdatedVersion)
 			})
 
 			It("Should Update MongoDB version", func() {
@@ -174,7 +174,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Scale Up Shard Replica", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBShard()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					shard := dbaapi.MongoDBShardNode{
 						Shards:   0,
@@ -191,7 +191,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Scale Down Shard Replica", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBShard()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					shard := dbaapi.MongoDBShardNode{
 						Shards:   0,
@@ -209,7 +209,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Scale Up Shard", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBShard()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					shard := dbaapi.MongoDBShardNode{
 						Shards:   3,
@@ -227,7 +227,7 @@ var _ = Describe("MongoDB", func() {
 				Context("Without Database Primary Shard", func() {
 					BeforeEach(func() {
 						mongodb = f.MongoDBShard()
-						mongodb.Spec.Version = framework.MongoDBCatalogName
+						mongodb.Spec.Version = framework.DBVersion
 						mongodb.Spec.ShardTopology.Shard.Shards = 3
 						mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 						shard := dbaapi.MongoDBShardNode{
@@ -246,7 +246,7 @@ var _ = Describe("MongoDB", func() {
 				Context("With Database Primary Shard", func() {
 					BeforeEach(func() {
 						mongodb = f.MongoDBShard()
-						mongodb.Spec.Version = framework.MongoDBCatalogName
+						mongodb.Spec.Version = framework.DBVersion
 						mongodb.Spec.ShardTopology.Shard.Shards = 3
 						mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 						shard := dbaapi.MongoDBShardNode{
@@ -291,7 +291,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Scale Up Shard & Replica", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBShard()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					shard := dbaapi.MongoDBShardNode{
 						Shards:   3,
@@ -308,7 +308,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Scale Down Shard & Replica", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBShard()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.ShardTopology.Shard.Shards = 3
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					shard := dbaapi.MongoDBShardNode{
@@ -326,7 +326,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Scale Down Shard & Scale Up Replica", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBShard()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.ShardTopology.Shard.Shards = 3
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					shard := dbaapi.MongoDBShardNode{
@@ -345,7 +345,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Scale Up Shard & Scale Down Replica", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBShard()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					shard := dbaapi.MongoDBShardNode{
 						Shards:   3,
@@ -364,7 +364,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Scale Up ConfigServer Replica", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBShard()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					confgSrvr := dbaapi.ConfigNode{
 						Replicas: 3,
@@ -381,7 +381,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Scale Down ConfigServer Replica", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBShard()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.ShardTopology.ConfigServer.Replicas = 3
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					confgSrvr := dbaapi.ConfigNode{
@@ -400,7 +400,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Scale Up Mongos Replica", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBShard()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					mongos := dbaapi.MongosNode{
 						Replicas: 3,
@@ -417,7 +417,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Scale Down Mongos Replica", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBShard()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.ShardTopology.Mongos.Replicas = 3
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					mongos := dbaapi.MongosNode{
@@ -436,7 +436,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Scale Up Mongodb ReplicaSet", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBRS()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					mongoOpsReq = f.MongoDBOpsRequestHorizontalScale(mongodb.Name, mongodb.Namespace, nil, nil, nil, pointer.Int32Ptr(3))
 				})
@@ -450,7 +450,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Scale Down Mongodb ReplicaSet", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBRS()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.Replicas = types.Int32P(3)
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					mongoOpsReq = f.MongoDBOpsRequestHorizontalScale(mongodb.Name, mongodb.Namespace, nil, nil, nil, pointer.Int32Ptr(2))
@@ -468,7 +468,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Scaling StandAlone Mongodb Resources", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBStandalone()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					standalone := &v1.ResourceRequirements{
 						Limits: map[v1.ResourceName]resource.Quantity{
@@ -492,7 +492,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Scaling ReplicaSet Resources", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBRS()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					replicaset := &v1.ResourceRequirements{
 						Limits: map[v1.ResourceName]resource.Quantity{
@@ -516,7 +516,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Scaling Mongos Resources", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBShard()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					mongos := &v1.ResourceRequirements{
 						Limits: map[v1.ResourceName]resource.Quantity{
@@ -540,7 +540,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Scaling ConfigServer Resources", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBShard()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					configServer := &v1.ResourceRequirements{
 						Limits: map[v1.ResourceName]resource.Quantity{
@@ -564,7 +564,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Scaling Shard Resources", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBShard()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					shard := &v1.ResourceRequirements{
 						Limits: map[v1.ResourceName]resource.Quantity{
@@ -588,7 +588,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Scaling All Mongos,ConfigServer and Shard Resources", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBShard()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					resource := &v1.ResourceRequirements{
 						Limits: map[v1.ResourceName]resource.Quantity{
@@ -622,7 +622,7 @@ var _ = Describe("MongoDB", func() {
 		Context("Standalone Instance", func() {
 			BeforeEach(func() {
 				mongodb = f.MongoDBStandalone()
-				mongodb.Spec.Version = framework.MongoDBCatalogName
+				mongodb.Spec.Version = framework.DBVersion
 				mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				standalone := resource.MustParse("2Gi")
 				mongoOpsReq = f.MongoDBOpsRequestVolumeExpansion(mongodb.Name, mongodb.Namespace, &standalone, nil, nil, nil)
@@ -636,7 +636,7 @@ var _ = Describe("MongoDB", func() {
 		Context("ReplicaSet Cluster", func() {
 			BeforeEach(func() {
 				mongodb = f.MongoDBRS()
-				mongodb.Spec.Version = framework.MongoDBCatalogName
+				mongodb.Spec.Version = framework.DBVersion
 				mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				replicaset := resource.MustParse("2Gi")
 				mongoOpsReq = f.MongoDBOpsRequestVolumeExpansion(mongodb.Name, mongodb.Namespace, nil, &replicaset, nil, nil)
@@ -650,7 +650,7 @@ var _ = Describe("MongoDB", func() {
 		Context("Scaling ConfigServer Resources", func() {
 			BeforeEach(func() {
 				mongodb = f.MongoDBShard()
-				mongodb.Spec.Version = framework.MongoDBCatalogName
+				mongodb.Spec.Version = framework.DBVersion
 				mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				configServer := resource.MustParse("2Gi")
 				mongoOpsReq = f.MongoDBOpsRequestVolumeExpansion(mongodb.Name, mongodb.Namespace, nil, nil, nil, &configServer)
@@ -664,7 +664,7 @@ var _ = Describe("MongoDB", func() {
 		Context("Scaling Shard Resources", func() {
 			BeforeEach(func() {
 				mongodb = f.MongoDBShard()
-				mongodb.Spec.Version = framework.MongoDBCatalogName
+				mongodb.Spec.Version = framework.DBVersion
 				mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				shard := resource.MustParse("2Gi")
 				mongoOpsReq = f.MongoDBOpsRequestVolumeExpansion(mongodb.Name, mongodb.Namespace, nil, nil, &shard, nil)
@@ -750,7 +750,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Standalone MongoDB", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBStandalone()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					mongodb.Spec.ConfigSource = &v1.VolumeSource{
 						ConfigMap: &v1.ConfigMapVolumeSource{
@@ -768,7 +768,7 @@ var _ = Describe("MongoDB", func() {
 			Context("With Replica Set", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBRS()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					mongodb.Spec.ConfigSource = &v1.VolumeSource{
 						ConfigMap: &v1.ConfigMapVolumeSource{
@@ -786,7 +786,7 @@ var _ = Describe("MongoDB", func() {
 			Context("With Sharding", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBShard()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					mongodb.Spec.ShardTopology.Shard.ConfigSource = &v1.VolumeSource{
 						ConfigMap: &v1.ConfigMapVolumeSource{
@@ -883,7 +883,7 @@ var _ = Describe("MongoDB", func() {
 			Context("Standalone MongoDB", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBStandalone()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					mongodb.Spec.ConfigSource = &v1.VolumeSource{
 						ConfigMap: &v1.ConfigMapVolumeSource{
@@ -917,7 +917,7 @@ var _ = Describe("MongoDB", func() {
 			Context("With Sharding", func() {
 				BeforeEach(func() {
 					mongodb = f.MongoDBShard()
-					mongodb.Spec.Version = framework.MongoDBCatalogName
+					mongodb.Spec.Version = framework.DBVersion
 					mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					mongodb.Spec.ShardTopology.Shard.ConfigSource = &v1.VolumeSource{
 						ConfigMap: &v1.ConfigMapVolumeSource{

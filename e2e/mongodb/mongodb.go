@@ -1990,7 +1990,7 @@ var _ = Describe("MongoDB", func() {
 		Context("Storage Engine inMemory", func() {
 			Context("With ReplicaSet", func() {
 				BeforeEach(func() {
-					if !strings.Contains(framework.MongoDBCatalogName, "percona") {
+					if !strings.Contains(framework.DBVersion, "percona") {
 						skipMessage = "Only Percona Supports StorageEngine"
 					}
 
@@ -2008,7 +2008,7 @@ var _ = Describe("MongoDB", func() {
 
 			Context("With Sharding", func() {
 				BeforeEach(func() {
-					if !strings.Contains(framework.MongoDBCatalogName, "percona") {
+					if !strings.Contains(framework.DBVersion, "percona") {
 						skipMessage = "Only Percona Supports StorageEngine"
 					}
 					mongodb = f.MongoDBShard()

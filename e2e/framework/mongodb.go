@@ -56,7 +56,7 @@ func (i *Invocation) MongoDBStandalone() *api.MongoDB {
 			},
 		},
 		Spec: api.MongoDBSpec{
-			Version: MongoDBCatalogName,
+			Version: DBVersion,
 			Storage: &core.PersistentVolumeClaimSpec{
 				Resources: core.ResourceRequirements{
 					Requests: core.ResourceList{
@@ -83,7 +83,7 @@ func (i *Invocation) MongoDBRS() *api.MongoDB {
 			},
 		},
 		Spec: api.MongoDBSpec{
-			Version:  MongoDBCatalogName,
+			Version:  DBVersion,
 			Replicas: types.Int32P(2),
 			ReplicaSet: &api.MongoDBReplicaSet{
 				Name: dbName,
@@ -111,7 +111,7 @@ func (i *Invocation) MongoDBShard() *api.MongoDB {
 			},
 		},
 		Spec: api.MongoDBSpec{
-			Version: MongoDBCatalogName,
+			Version: DBVersion,
 			ShardTopology: &api.MongoDBShardingTopology{
 				Shard: api.MongoDBShardNode{
 					Shards: 2,
@@ -152,7 +152,7 @@ func (i *Invocation) MongoDBShard() *api.MongoDB {
 }
 
 func (i *Invocation) MongoDBWithFlexibleProbeTimeout(db *api.MongoDB) *api.MongoDB {
-	dbVersion, err := i.GetMongoDBVersion(MongoDBCatalogName)
+	dbVersion, err := i.GetMongoDBVersion(DBVersion)
 	Expect(err).NotTo(HaveOccurred())
 	db.SetDefaults(dbVersion, i.topology)
 

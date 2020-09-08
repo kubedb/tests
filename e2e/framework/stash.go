@@ -249,14 +249,14 @@ func (f *Framework) EventuallyRestoreSessionPhase(meta metav1.ObjectMeta) Gomega
 }
 
 func (f *Framework) getStashMGBackupTaskName() string {
-	esVersion, err := f.dbClient.CatalogV1alpha1().MongoDBVersions().Get(context.TODO(), MongoDBCatalogName, metav1.GetOptions{})
+	esVersion, err := f.dbClient.CatalogV1alpha1().MongoDBVersions().Get(context.TODO(), DBVersion, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
 	return "mongodb-backup-" + esVersion.Spec.Version
 }
 
 func (f *Framework) getStashMGRestoreTaskName() string {
-	mongoVersion, err := f.dbClient.CatalogV1alpha1().MongoDBVersions().Get(context.TODO(), MongoDBCatalogName, metav1.GetOptions{})
+	mongoVersion, err := f.dbClient.CatalogV1alpha1().MongoDBVersions().Get(context.TODO(), DBVersion, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 	if mongoVersion.Spec.Version == "4.0.3" {
 		// mongorestore may not work for Replicaset and Sharding for 4.0.3. Use `4.0.11` image for restore purpose. issue link: http://mongodb.2344371.n4.nabble.com/mongorestore-oplogReplay-looping-forever-td25243.html
