@@ -17,6 +17,7 @@ limitations under the License.
 package e2e_test
 
 import (
+	"fmt"
 	"strings"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha1"
@@ -31,12 +32,13 @@ import (
 var _ = Describe("Storage Engine inMemory", func() {
 	var err error
 	to := testOptions{}
+	testName := framework.StorageEngine
 
 	BeforeEach(func() {
 		f := framework.NewInvocation()
 		to = testOptions{
 			Invocation:       f,
-			mongodb:          to.MongoDBStandalone(),
+			mongodb:          f.MongoDBStandalone(),
 			skipMessage:      "",
 			garbageMongoDB:   new(api.MongoDBList),
 			snapshotPVC:      nil,
@@ -47,6 +49,9 @@ var _ = Describe("Storage Engine inMemory", func() {
 		}
 		if to.StorageClass == "" {
 			Skip("Missing StorageClassName. Provide as flag to test this.")
+		}
+		if !runTestCommunity(testName) {
+			Skip(fmt.Sprintf("Provide test profile `%s` or `all` to test this.", testName))
 		}
 	})
 

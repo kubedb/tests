@@ -17,6 +17,8 @@ limitations under the License.
 package e2e_test
 
 import (
+	"fmt"
+
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
 
@@ -28,6 +30,7 @@ import (
 
 var _ = Describe("General SSL", func() {
 	to := testOptions{}
+	testName := framework.General
 	var err error
 	BeforeEach(func() {
 		f := framework.NewInvocation()
@@ -47,6 +50,9 @@ var _ = Describe("General SSL", func() {
 		}
 		if !framework.SSLEnabled {
 			Skip("Enable SSL to test this")
+		}
+		if !runTestCommunity(testName) {
+			Skip(fmt.Sprintf("Provide test profile `%s` or `all` to test this.", testName))
 		}
 	})
 

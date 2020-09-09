@@ -17,6 +17,8 @@ limitations under the License.
 package e2e_test
 
 import (
+	"fmt"
+
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
 	"kubedb.dev/tests/e2e/matcher"
@@ -40,12 +42,13 @@ var _ = Describe("Initialize With Stash", func() {
 	var repo *stashV1alpha1.Repository
 	var err error
 	to := testOptions{}
+	testName := framework.Initialize
 
 	BeforeEach(func() {
 		f := framework.NewInvocation()
 		to = testOptions{
 			Invocation:       f,
-			mongodb:          to.MongoDBStandalone(),
+			mongodb:          f.MongoDBStandalone(),
 			skipMessage:      "",
 			garbageMongoDB:   new(api.MongoDBList),
 			snapshotPVC:      nil,
@@ -61,6 +64,9 @@ var _ = Describe("Initialize With Stash", func() {
 
 		if !to.FoundStashCRDs() {
 			Skip("Skipping tests for stash integration. reason: stash operator is not running.")
+		}
+		if !runTestCommunity(testName) {
+			Skip(fmt.Sprintf("Provide test profile `%s` or `all` to test this.", testName))
 		}
 	})
 

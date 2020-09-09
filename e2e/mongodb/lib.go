@@ -1,6 +1,8 @@
 package e2e_test
 
 import (
+	"strings"
+
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha1"
 	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
@@ -149,4 +151,16 @@ func (to *testOptions) deleteTestResource() {
 
 	By("Wait for mongodb resources to be wipedOut")
 	to.EventuallyWipedOut(to.mongodb.ObjectMeta).Should(Succeed())
+}
+
+func runTestCommunity(testProfile string) bool {
+	return strings.Contains(framework.TestProfiles.String(), testProfile) ||
+		framework.TestProfiles.String() == framework.All ||
+		framework.TestProfiles.String() == framework.Community
+}
+
+func runTestEnterprise(testProfile string) bool {
+	return strings.Contains(framework.TestProfiles.String(), testProfile) ||
+		framework.TestProfiles.String() == framework.All ||
+		framework.TestProfiles.String() == framework.Enterprise
 }

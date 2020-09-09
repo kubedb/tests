@@ -30,12 +30,12 @@ import (
 
 var _ = Describe("Custom config", func() {
 	to := testOptions{}
-
+	testName := framework.CustomConfig
 	BeforeEach(func() {
 		f := framework.NewInvocation()
 		to = testOptions{
 			Invocation:       f,
-			mongodb:          to.MongoDBStandalone(),
+			mongodb:          f.MongoDBStandalone(),
 			skipMessage:      "",
 			garbageMongoDB:   new(api.MongoDBList),
 			snapshotPVC:      nil,
@@ -46,6 +46,9 @@ var _ = Describe("Custom config", func() {
 		}
 		if to.StorageClass == "" {
 			Skip("Missing StorageClassName. Provide as flag to test this.")
+		}
+		if !runTestCommunity(testName) {
+			Skip(fmt.Sprintf("Provide test profile `%s` or `all` to test this.", testName))
 		}
 	})
 

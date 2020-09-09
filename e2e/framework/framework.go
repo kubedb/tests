@@ -42,7 +42,7 @@ import (
 var (
 	DockerRegistry   = "kubedbci"
 	DBType           = api.ResourceSingularMongoDB
-	TestProfiles     []string
+	TestProfiles     TestProfile
 	DBVersion        = "4.1.4-v1"
 	DBUpdatedVersion = "4.2.3"
 	PullInterval     = time.Second * 2

@@ -75,6 +75,7 @@ func init() {
 	flag.StringVar(&framework.DBUpdatedVersion, "db-updated-version", framework.DBUpdatedVersion, "Upgraded database version")
 	flag.StringVar(&framework.StorageProvider, "storage-provider", framework.StorageProviderMinio, "Backend Storage Provider")
 	flag.BoolVar(&framework.SSLEnabled, "ssl", framework.SSLEnabled, "enable ssl")
+	flag.Var(&framework.TestProfiles, "test-profiles", "Test Profiles to test")
 }
 
 const (

@@ -14,19 +14,20 @@ import (
 
 var _ = Describe("Reconfigure", func() {
 	to := testOptions{}
+	testName := framework.Reconfigure
 	BeforeEach(func() {
 		to.Invocation = framework.NewInvocation()
+		if !runTestEnterprise(testName) {
+			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", testName))
+		}
 	})
 
 	AfterEach(func() {
 		err := to.CleanupTestResources()
 		Expect(err).NotTo(HaveOccurred())
-	})
-
-	AfterEach(func() {
 		//Delete MongoDB
 		By("Delete mongodb")
-		err := to.DeleteMongoDB(to.mongodb.ObjectMeta)
+		err = to.DeleteMongoDB(to.mongodb.ObjectMeta)
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Delete mongodb ops request")
