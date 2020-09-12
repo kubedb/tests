@@ -40,14 +40,14 @@ const (
 	Enterprise = "enterprise"
 )
 
-type TestProfile []string
+type stringSlice []string
 
-func (testProfile *TestProfile) String() string {
-	return strings.Join(*testProfile, ",")
+func (stringSlice *stringSlice) String() string {
+	return strings.Join(*stringSlice, ",")
 }
 
-func (testProfile *TestProfile) Set(value string) error {
+func (stringSlice *stringSlice) Set(value string) error {
 	s := strings.Split(value, ",")
-	*testProfile = append(*testProfile, s...)
+	*stringSlice = append(*stringSlice, s...)
 	return nil
 }
