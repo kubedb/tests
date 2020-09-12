@@ -95,4 +95,18 @@ var _ = Describe("Volume Expansion", func() {
 			to.shouldTestOpsRequest()
 		})
 	})
+	Context("Scaling Shard and ConfigServer Resources", func() {
+		BeforeEach(func() {
+			to.mongodb = to.MongoDBShard()
+			to.mongodb.Spec.Version = framework.DBVersion
+			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+			streq := resource.MustParse("2Gi")
+			to.mongoOpsReq = to.MongoDBOpsRequestVolumeExpansion(to.mongodb.Name, to.mongodb.Namespace, nil, nil, &streq, &streq)
+
+		})
+
+		It("Should Scale Shard and ConfigServer Resources", func() {
+			to.shouldTestOpsRequest()
+		})
+	})
 })
