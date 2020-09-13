@@ -201,6 +201,51 @@ var _ = Describe("Horizontal Scaling", func() {
 
 	})
 
+	Context("Scale Up Shard, Shard Replicas, ConfigServer and Mongos", func() {
+		BeforeEach(func() {
+			to.mongodb = to.MongoDBShard()
+			shard := dbaapi.MongoDBShardNode{
+				Shards:   3,
+				Replicas: 3,
+			}
+			confgSrvr := dbaapi.ConfigNode{
+				Replicas: 3,
+			}
+			mongos := dbaapi.MongosNode{
+				Replicas: 3,
+			}
+			to.mongoOpsReq = to.MongoDBOpsRequestHorizontalScale(to.mongodb.Name, to.mongodb.Namespace, &shard, &confgSrvr, &mongos, nil)
+		})
+
+		It("Should Scale Up Shard, Shard Replicas, ConfigServer and Mongosa", func() {
+			to.shouldTestOpsRequest()
+		})
+	})
+	Context("Scale Down Shard, Shard Replicas, ConfigServer and Mongos", func() {
+		BeforeEach(func() {
+			to.mongodb = to.MongoDBShard()
+			to.mongodb.Spec.ShardTopology.Shard.Shards = 3
+			to.mongodb.Spec.ShardTopology.Shard.Replicas = 3
+			to.mongodb.Spec.ShardTopology.Mongos.Replicas = 3
+			to.mongodb.Spec.ShardTopology.ConfigServer.Replicas = 3
+			shard := dbaapi.MongoDBShardNode{
+				Shards:   2,
+				Replicas: 2,
+			}
+			confgSrvr := dbaapi.ConfigNode{
+				Replicas: 2,
+			}
+			mongos := dbaapi.MongosNode{
+				Replicas: 2,
+			}
+			to.mongoOpsReq = to.MongoDBOpsRequestHorizontalScale(to.mongodb.Name, to.mongodb.Namespace, &shard, &confgSrvr, &mongos, nil)
+		})
+
+		It("Scale Up Shard, Shard Replicas, ConfigServer and Mongos", func() {
+			to.shouldTestOpsRequest()
+		})
+	})
+
 	Context("Scale Up ConfigServer Replica", func() {
 		BeforeEach(func() {
 			to.mongodb = to.MongoDBShard()
