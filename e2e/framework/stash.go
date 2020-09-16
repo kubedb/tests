@@ -1,11 +1,11 @@
 /*
 Copyright AppsCode Inc. and Contributors
 
-Licensed under the PolyForm Noncommercial License 1.0.0 (the "License");
+Licensed under the AppsCode Free Trial License 1.0.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    https://github.com/appscode/licenses/raw/1.0.0/PolyForm-Noncommercial-1.0.0.md
+    https://github.com/appscode/licenses/raw/1.0.0/AppsCode-Free-Trial-1.0.0.md
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -249,14 +249,14 @@ func (f *Framework) EventuallyRestoreSessionPhase(meta metav1.ObjectMeta) Gomega
 }
 
 func (f *Framework) getStashMGBackupTaskName() string {
-	esVersion, err := f.dbClient.CatalogV1alpha1().MongoDBVersions().Get(context.TODO(), MongoDBCatalogName, metav1.GetOptions{})
+	esVersion, err := f.dbClient.CatalogV1alpha1().MongoDBVersions().Get(context.TODO(), DBVersion, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
 	return "mongodb-backup-" + esVersion.Spec.Version
 }
 
 func (f *Framework) getStashMGRestoreTaskName() string {
-	mongoVersion, err := f.dbClient.CatalogV1alpha1().MongoDBVersions().Get(context.TODO(), MongoDBCatalogName, metav1.GetOptions{})
+	mongoVersion, err := f.dbClient.CatalogV1alpha1().MongoDBVersions().Get(context.TODO(), DBVersion, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 	if mongoVersion.Spec.Version == "4.0.3" {
 		// mongorestore may not work for Replicaset and Sharding for 4.0.3. Use `4.0.11` image for restore purpose. issue link: http://mongodb.2344371.n4.nabble.com/mongorestore-oplogReplay-looping-forever-td25243.html
