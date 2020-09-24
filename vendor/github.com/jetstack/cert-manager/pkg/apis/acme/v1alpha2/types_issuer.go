@@ -42,6 +42,17 @@ type ACMEIssuer struct {
 	// Only ACME v2 endpoints (i.e. RFC 8555) are supported.
 	Server string `json:"server"`
 
+	// PreferredChain is the chain to use if the ACME server outputs multiple.
+	// PreferredChain is no guarantee that this one gets delivered by the ACME
+	// endpoint.
+	// For example, for Let's Encrypt's DST crosssign you would use:
+	// "DST Root CA X3" or "ISRG Root X1" for the newer Let's Encrypt root CA.
+	// This value picks the first certificate bundle in the ACME alternative
+	// chains that has a certificate with this value as its issuer's CN
+	// +optional
+	// +kubebuilder:validation:MaxLength=64
+	PreferredChain string `json:"preferredChain"`
+
 	// Enables or disables validation of the ACME server TLS certificate.
 	// If true, requests to the ACME server will not have their TLS certificate
 	// validated (i.e. insecure connections will be allowed).
@@ -73,6 +84,15 @@ type ACMEIssuer struct {
 	// For more information, see: https://cert-manager.io/docs/configuration/acme/
 	// +optional
 	Solvers []ACMEChallengeSolver `json:"solvers,omitempty"`
+
+	// Enables or disables generating a new ACME account key.
+	// If true, the Issuer resource will *not* request a new account but will expect
+	// the account key to be supplied via an existing secret.
+	// If false, the cert-manager system will generate a new ACME account key
+	// for the Issuer.
+	// Defaults to false.
+	// +optional
+	DisableAccountKeyGeneration bool `json:"disableAccountKeyGeneration,omitempty"`
 }
 
 // ACMEExternalAccountBinding is a reference to a CA external account of the ACME
@@ -215,8 +235,9 @@ type ACMEChallengeSolverHTTP01IngressPodTemplate struct {
 	ACMEChallengeSolverHTTP01IngressPodObjectMeta `json:"metadata"`
 
 	// PodSpec defines overrides for the HTTP01 challenge solver pod.
-	// Only the 'nodeSelector', 'affinity' and 'tolerations' fields are
-	// supported currently. All other fields will be ignored.
+	// Only the 'priorityClassName', 'nodeSelector', 'affinity',
+	// 'serviceAccountName' and 'tolerations' fields are supported currently.
+	// All other fields will be ignored.
 	// +optional
 	Spec ACMEChallengeSolverHTTP01IngressPodSpec `json:"spec"`
 }
@@ -245,6 +266,14 @@ type ACMEChallengeSolverHTTP01IngressPodSpec struct {
 	// If specified, the pod's tolerations.
 	// +optional
 	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
+
+	// If specified, the pod's priorityClassName.
+	// +optional
+	PriorityClassName string `json:"priorityClassName,omitempty"`
+
+	// If specified, the pod's service account
+	// +optional
+	ServiceAccountName string `json:"serviceAccountName,omitempty"`
 }
 
 type ACMEChallengeSolverHTTP01IngressTemplate struct {

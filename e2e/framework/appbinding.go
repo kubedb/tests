@@ -115,3 +115,24 @@ func (f *Framework) EnsureCustomAppBinding(db *api.MongoDB, customAppBindingName
 func (f *Framework) DeleteAppBinding(meta metav1.ObjectMeta) error {
 	return f.appCatalogClient.AppBindings(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInForeground())
 }
+
+func (f *Framework) CheckMySQLAppBindingSpec(meta metav1.ObjectMeta) error {
+	mysql, err := f.GetMySQL(meta)
+	Expect(err).NotTo(HaveOccurred())
+
+	appBinding, err := f.appCatalogClient.AppBindings(mysql.Namespace).Get(context.TODO(), mysql.Name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	if appBinding.Spec.ClientConfig.Service == nil ||
+		appBinding.Spec.ClientConfig.Service.Name != mysql.ServiceName() ||
+		appBinding.Spec.ClientConfig.Service.Port != 3306 {
+		return fmt.Errorf("appbinding %v/%v contains invalid data", appBinding.Namespace, appBinding.Name)
+	}
+	if appBinding.Spec.Secret == nil ||
+		appBinding.Spec.Secret.Name != mysql.Spec.DatabaseSecret.SecretName {
+		return fmt.Errorf("appbinding %v/%v contains invalid data", appBinding.Namespace, appBinding.Name)
+	}
+	return nil
+}

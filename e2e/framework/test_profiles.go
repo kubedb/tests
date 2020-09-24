@@ -46,6 +46,7 @@ const (
 	TerminationPolicy   = "termination_policy"
 
 	Upgrade           = "upgrade"
+	Scale             = "scale"
 	VerticalScaling   = "vertical_scaling"
 	HorizontalScaling = "horizontal_scaling"
 	Reconfigure       = "reconfigure"

@@ -4,24 +4,26 @@ go 1.14
 
 require (
 	github.com/appscode/go v0.0.0-20201006035845-a0302ac8e3d3
-	github.com/aws/aws-sdk-go v1.31.9
+	github.com/aws/aws-sdk-go v1.31.13
 	github.com/codeskyblue/go-sh v0.0.0-20200712050446-30169cf553fe
-	github.com/jetstack/cert-manager v0.16.0
-	github.com/onsi/ginkgo v1.11.0
-	github.com/onsi/gomega v1.8.1
+	github.com/go-sql-driver/mysql v1.5.0
+	github.com/jetstack/cert-manager v1.0.3
+	github.com/onsi/ginkgo v1.12.1
+	github.com/onsi/gomega v1.10.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/prom2json v1.3.0
-	github.com/spf13/afero v1.2.2
 	github.com/xdg/stringprep v1.0.0 // indirect
 	go.mongodb.org/mongo-driver v1.3.2
+	gocloud.dev v0.20.0
+	gomodules.xyz/blobfs v0.1.4
 	gomodules.xyz/cert v1.0.3
-	k8s.io/api v0.18.9
-	k8s.io/apiextensions-apiserver v0.18.9
-	k8s.io/apimachinery v0.18.9
-	k8s.io/client-go v0.18.9
-	k8s.io/kube-aggregator v0.18.9
-	k8s.io/utils v0.0.0-20200414100711-2df71ebbae66
+	k8s.io/api v0.19.0
+	k8s.io/apiextensions-apiserver v0.19.0
+	k8s.io/apimachinery v0.19.0
+	k8s.io/client-go v0.19.0
+	k8s.io/kube-aggregator v0.19.0
+	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
 	kmodules.xyz/client-go v0.0.0-20201013083546-b17c1e15f1a3
 	kmodules.xyz/constants v0.0.0-20200506032633-a21e58ceec72
 	kmodules.xyz/custom-resources v0.0.0-20201008012351-6d8090f759d4
@@ -30,6 +32,7 @@ require (
 	kmodules.xyz/offshoot-api v0.0.0-20200922211229-36acc531abab
 	kubedb.dev/apimachinery v0.14.0-beta.3.0.20201019203146-5201c39b4eac
 	stash.appscode.dev/apimachinery v0.11.2
+	xorm.io/xorm v1.0.5
 )
 
 replace bitbucket.org/ww/goautoneg => gomodules.xyz/goautoneg v0.0.0-20120707110453-a547fc61f48d
