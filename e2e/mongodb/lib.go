@@ -17,6 +17,7 @@ limitations under the License.
 package e2e_test
 
 import (
+	"fmt"
 	"strings"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha1"
@@ -38,7 +39,21 @@ const (
 	MONGO_INITDB_DATABASE      = "MONGO_INITDB_DATABASE"
 )
 
-var dbName = "kubedb"
+var (
+	dbName                     = "kubedb"
+	newMaxIncomingConnections  = int32(20000)
+	prevMaxIncomingConnections = int32(10000)
+	customConfigs              = []string{
+		fmt.Sprintf(`   maxIncomingConnections: %v`, prevMaxIncomingConnections),
+	}
+	newCustomConfigs = []string{
+		fmt.Sprintf(`   maxIncomingConnections: %v`, newMaxIncomingConnections),
+	}
+	data = map[string]string{
+		"mongod.conf": fmt.Sprintf(`net:
+   maxIncomingConnections: %v`, newMaxIncomingConnections),
+	}
+)
 
 type testOptions struct {
 	*framework.Invocation
@@ -167,6 +182,47 @@ func (to *testOptions) deleteTestResource() {
 
 	By("Wait for mongodb resources to be wipedOut")
 	to.EventuallyWipedOut(to.mongodb.ObjectMeta).Should(Succeed())
+}
+
+func (to *testOptions) runWithUserProvidedConfig(userConfig, newUserConfig *core.ConfigMap) {
+	if to.skipMessage != "" {
+		Skip(to.skipMessage)
+	}
+
+	By("Creating configMap: " + userConfig.Name)
+	err := to.CreateConfigMap(userConfig)
+	Expect(err).NotTo(HaveOccurred())
+
+	if newUserConfig != nil {
+		By("Creating configMap: " + newUserConfig.Name)
+		err = to.CreateConfigMap(newUserConfig)
+		Expect(err).NotTo(HaveOccurred())
+	}
+
+	to.createAndWaitForRunning()
+
+	By("Checking maxIncomingConnections from mongodb config")
+	to.EventuallyMaxIncomingConnections(to.mongodb.ObjectMeta).Should(Equal(prevMaxIncomingConnections))
+
+	By("Insert Document Inside DB")
+	to.EventuallyInsertDocument(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
+
+	By("Checking Inserted Document")
+	to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
+
+	By("Updating MongoDB")
+	err = to.CreateMongoDBOpsRequest(to.mongoOpsReq)
+	Expect(err).NotTo(HaveOccurred())
+
+	By("Waiting for MongoDB Ops Request Phase to be Successful")
+	to.EventuallyMongoDBOpsRequestPhase(to.mongoOpsReq.ObjectMeta).Should(Equal(dbaapi.OpsRequestPhaseSuccessful))
+
+	// Retrieve Inserted Data
+	By("Checking Inserted Document after update")
+	to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
+
+	By("Checking updated maxIncomingConnections from mongodb config")
+	to.EventuallyMaxIncomingConnections(to.mongodb.ObjectMeta).Should(Equal(newMaxIncomingConnections))
 }
 
 func runTestCommunity(testProfile string) bool {

@@ -32,6 +32,17 @@ import (
 var _ = Describe("Vertical Scaling", func() {
 	to := testOptions{}
 	testName := framework.VerticalScaling
+	resource := &v1.ResourceRequirements{
+		Limits: map[v1.ResourceName]resource.Quantity{
+			v1.ResourceMemory: resource.MustParse("300Mi"),
+			v1.ResourceCPU:    resource.MustParse(".2"),
+		},
+		Requests: map[v1.ResourceName]resource.Quantity{
+			v1.ResourceMemory: resource.MustParse("200Mi"),
+			v1.ResourceCPU:    resource.MustParse(".1"),
+		},
+	}
+
 	BeforeEach(func() {
 		to.Invocation = framework.NewInvocation()
 		if !runTestEnterprise(testName) {
@@ -59,17 +70,7 @@ var _ = Describe("Vertical Scaling", func() {
 				to.mongodb = to.MongoDBStandalone()
 				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-				standalone := &v1.ResourceRequirements{
-					Limits: map[v1.ResourceName]resource.Quantity{
-						v1.ResourceMemory: resource.MustParse("300Mi"),
-						v1.ResourceCPU:    resource.MustParse(".2"),
-					},
-					Requests: map[v1.ResourceName]resource.Quantity{
-						v1.ResourceMemory: resource.MustParse("200Mi"),
-						v1.ResourceCPU:    resource.MustParse(".1"),
-					},
-				}
-				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, standalone, nil, nil, nil, nil, nil)
+				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, resource, nil, nil, nil, nil, nil)
 			})
 
 			It("Should Scale StandAlone Mongodb Resources", func() {
@@ -82,17 +83,7 @@ var _ = Describe("Vertical Scaling", func() {
 				to.mongodb = to.MongoDBRS()
 				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-				replicaset := &v1.ResourceRequirements{
-					Limits: map[v1.ResourceName]resource.Quantity{
-						v1.ResourceMemory: resource.MustParse("300Mi"),
-						v1.ResourceCPU:    resource.MustParse(".2"),
-					},
-					Requests: map[v1.ResourceName]resource.Quantity{
-						v1.ResourceMemory: resource.MustParse("200Mi"),
-						v1.ResourceCPU:    resource.MustParse(".1"),
-					},
-				}
-				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, replicaset, nil, nil, nil, nil)
+				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, resource, nil, nil, nil, nil)
 			})
 
 			It("Should Scale ReplicaSet Resources", func() {
@@ -106,17 +97,7 @@ var _ = Describe("Vertical Scaling", func() {
 				to.mongodb = to.MongoDBShard()
 				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-				mongos := &v1.ResourceRequirements{
-					Limits: map[v1.ResourceName]resource.Quantity{
-						v1.ResourceMemory: resource.MustParse("300Mi"),
-						v1.ResourceCPU:    resource.MustParse(".2"),
-					},
-					Requests: map[v1.ResourceName]resource.Quantity{
-						v1.ResourceMemory: resource.MustParse("200Mi"),
-						v1.ResourceCPU:    resource.MustParse(".1"),
-					},
-				}
-				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, mongos, nil, nil, nil)
+				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, resource, nil, nil, nil)
 			})
 
 			It("Should Scale Mongos Resources", func() {
@@ -129,17 +110,7 @@ var _ = Describe("Vertical Scaling", func() {
 				to.mongodb = to.MongoDBShard()
 				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-				configServer := &v1.ResourceRequirements{
-					Limits: map[v1.ResourceName]resource.Quantity{
-						v1.ResourceMemory: resource.MustParse("300Mi"),
-						v1.ResourceCPU:    resource.MustParse(".2"),
-					},
-					Requests: map[v1.ResourceName]resource.Quantity{
-						v1.ResourceMemory: resource.MustParse("200Mi"),
-						v1.ResourceCPU:    resource.MustParse(".1"),
-					},
-				}
-				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, nil, configServer, nil, nil)
+				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, nil, resource, nil, nil)
 			})
 
 			It("Should Scale ConfigServer Resources", func() {
@@ -152,17 +123,7 @@ var _ = Describe("Vertical Scaling", func() {
 				to.mongodb = to.MongoDBShard()
 				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-				shard := &v1.ResourceRequirements{
-					Limits: map[v1.ResourceName]resource.Quantity{
-						v1.ResourceMemory: resource.MustParse("300Mi"),
-						v1.ResourceCPU:    resource.MustParse(".2"),
-					},
-					Requests: map[v1.ResourceName]resource.Quantity{
-						v1.ResourceMemory: resource.MustParse("200Mi"),
-						v1.ResourceCPU:    resource.MustParse(".1"),
-					},
-				}
-				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, nil, nil, shard, nil)
+				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, nil, nil, resource, nil)
 			})
 
 			It("Should Scale Shard Resources", func() {
@@ -175,16 +136,6 @@ var _ = Describe("Vertical Scaling", func() {
 				to.mongodb = to.MongoDBShard()
 				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-				resource := &v1.ResourceRequirements{
-					Limits: map[v1.ResourceName]resource.Quantity{
-						v1.ResourceMemory: resource.MustParse("300Mi"),
-						v1.ResourceCPU:    resource.MustParse(".2"),
-					},
-					Requests: map[v1.ResourceName]resource.Quantity{
-						v1.ResourceMemory: resource.MustParse("200Mi"),
-						v1.ResourceCPU:    resource.MustParse(".1"),
-					},
-				}
 				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, resource, resource, resource, nil)
 			})
 
@@ -213,12 +164,20 @@ var _ = Describe("Vertical Scaling", func() {
 		Context("From Data", func() {
 			var userConfig *v1.ConfigMap
 			var newCustomConfig *dbaapi.MongoDBCustomConfig
+			var configSource *v1.VolumeSource
 			BeforeEach(func() {
 				to.skipMessage = ""
 				configName := to.App() + "-previous-config"
 				userConfig = to.GetCustomConfig(customConfigs, configName)
 				newCustomConfig = &dbaapi.MongoDBCustomConfig{
 					Data: data,
+				}
+				configSource = &v1.VolumeSource{
+					ConfigMap: &v1.ConfigMapVolumeSource{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: userConfig.Name,
+						},
+					},
 				}
 			})
 
@@ -228,138 +187,42 @@ var _ = Describe("Vertical Scaling", func() {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			runWithUserProvidedConfig := func() {
-				if to.skipMessage != "" {
-					Skip(to.skipMessage)
-				}
-
-				By("Creating configMap: " + userConfig.Name)
-				err := to.CreateConfigMap(userConfig)
-				Expect(err).NotTo(HaveOccurred())
-
-				to.createAndWaitForRunning()
-
-				By("Checking maxIncomingConnections from mongodb config")
-				to.EventuallyMaxIncomingConnections(to.mongodb.ObjectMeta).Should(Equal(prevMaxIncomingConnections))
-
-				// Insert Data
-				By("Insert Document Inside DB")
-				to.EventuallyInsertDocument(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
-
-				By("Checking Inserted Document")
-				to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
-
-				// Update Database
-				By("Updating MongoDB")
-				err = to.CreateMongoDBOpsRequest(to.mongoOpsReq)
-				Expect(err).NotTo(HaveOccurred())
-
-				By("Waiting for MongoDB Ops Request Phase to be Successful")
-				to.EventuallyMongoDBOpsRequestPhase(to.mongoOpsReq.ObjectMeta).Should(Equal(dbaapi.OpsRequestPhaseSuccessful))
-
-				// Retrieve Inserted Data
-				By("Checking Inserted Document after update")
-				to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
-
-				By("Checking updated maxIncomingConnections from mongodb config")
-				to.EventuallyMaxIncomingConnections(to.mongodb.ObjectMeta).Should(Equal(newMaxIncomingConnections))
-			}
-
 			Context("Standalone MongoDB", func() {
 				BeforeEach(func() {
 					to.mongodb = to.MongoDBStandalone()
-					to.mongodb.Spec.ConfigSource = &v1.VolumeSource{
-						ConfigMap: &v1.ConfigMapVolumeSource{
-							LocalObjectReference: v1.LocalObjectReference{
-								Name: userConfig.Name,
-							},
-						},
-					}
-
-					resource := &v1.ResourceRequirements{
-						Limits: map[v1.ResourceName]resource.Quantity{
-							v1.ResourceMemory: resource.MustParse("300Mi"),
-							v1.ResourceCPU:    resource.MustParse(".2"),
-						},
-						Requests: map[v1.ResourceName]resource.Quantity{
-							v1.ResourceMemory: resource.MustParse("200Mi"),
-							v1.ResourceCPU:    resource.MustParse(".1"),
-						},
-					}
+					to.mongodb.Spec.ConfigSource = configSource
 					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, resource, nil, nil, nil, nil, nil)
 					to.mongoOpsReq.Spec.CustomConfig = &dbaapi.MongoDBCustomConfigSpec{
 						Standalone: newCustomConfig,
 					}
 				})
 
-				It("should run successfully", runWithUserProvidedConfig)
+				It("should run successfully", func() {
+					to.runWithUserProvidedConfig(userConfig, nil)
+				})
 			})
 
 			Context("With ReplicaSet", func() {
 				BeforeEach(func() {
 					to.mongodb = to.MongoDBRS()
-					to.mongodb.Spec.ConfigSource = &v1.VolumeSource{
-						ConfigMap: &v1.ConfigMapVolumeSource{
-							LocalObjectReference: v1.LocalObjectReference{
-								Name: userConfig.Name,
-							},
-						},
-					}
-					replicaset := &v1.ResourceRequirements{
-						Limits: map[v1.ResourceName]resource.Quantity{
-							v1.ResourceMemory: resource.MustParse("300Mi"),
-							v1.ResourceCPU:    resource.MustParse(".2"),
-						},
-						Requests: map[v1.ResourceName]resource.Quantity{
-							v1.ResourceMemory: resource.MustParse("200Mi"),
-							v1.ResourceCPU:    resource.MustParse(".1"),
-						},
-					}
-					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, replicaset, nil, nil, nil, nil)
+					to.mongodb.Spec.ConfigSource = configSource
+					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, resource, nil, nil, nil, nil)
 					to.mongoOpsReq.Spec.CustomConfig = &dbaapi.MongoDBCustomConfigSpec{
 						ReplicaSet: newCustomConfig,
 					}
 				})
 
-				It("should run successfully", runWithUserProvidedConfig)
+				It("should run successfully", func() {
+					to.runWithUserProvidedConfig(userConfig, nil)
+				})
 			})
 
 			Context("With Sharding", func() {
 				BeforeEach(func() {
 					to.mongodb = to.MongoDBShard()
-					to.mongodb.Spec.ShardTopology.Shard.ConfigSource = &v1.VolumeSource{
-						ConfigMap: &v1.ConfigMapVolumeSource{
-							LocalObjectReference: v1.LocalObjectReference{
-								Name: userConfig.Name,
-							},
-						},
-					}
-					to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSource = &v1.VolumeSource{
-						ConfigMap: &v1.ConfigMapVolumeSource{
-							LocalObjectReference: v1.LocalObjectReference{
-								Name: userConfig.Name,
-							},
-						},
-					}
-					to.mongodb.Spec.ShardTopology.Mongos.ConfigSource = &v1.VolumeSource{
-						ConfigMap: &v1.ConfigMapVolumeSource{
-							LocalObjectReference: v1.LocalObjectReference{
-								Name: userConfig.Name,
-							},
-						},
-					}
-
-					resource := &v1.ResourceRequirements{
-						Limits: map[v1.ResourceName]resource.Quantity{
-							v1.ResourceMemory: resource.MustParse("300Mi"),
-							v1.ResourceCPU:    resource.MustParse(".2"),
-						},
-						Requests: map[v1.ResourceName]resource.Quantity{
-							v1.ResourceMemory: resource.MustParse("200Mi"),
-							v1.ResourceCPU:    resource.MustParse(".1"),
-						},
-					}
-
+					to.mongodb.Spec.ShardTopology.Shard.ConfigSource = configSource
+					to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSource = configSource
+					to.mongodb.Spec.ShardTopology.Mongos.ConfigSource = configSource
 					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, resource, resource, resource, nil)
 					to.mongoOpsReq.Spec.CustomConfig = &dbaapi.MongoDBCustomConfigSpec{
 						Mongos:       newCustomConfig,
@@ -368,7 +231,9 @@ var _ = Describe("Vertical Scaling", func() {
 					}
 				})
 
-				It("should run successfully", runWithUserProvidedConfig)
+				It("should run successfully", func() {
+					to.runWithUserProvidedConfig(userConfig, nil)
+				})
 			})
 		})
 
@@ -376,6 +241,7 @@ var _ = Describe("Vertical Scaling", func() {
 			var userConfig *v1.ConfigMap
 			var newUserConfig *v1.ConfigMap
 			var newCustomConfig *dbaapi.MongoDBCustomConfig
+			var configSource *v1.VolumeSource
 
 			BeforeEach(func() {
 				prevConfigName := to.App() + "-previous-config"
@@ -387,6 +253,13 @@ var _ = Describe("Vertical Scaling", func() {
 						Name: newUserConfig.Name,
 					},
 				}
+				configSource = &v1.VolumeSource{
+					ConfigMap: &v1.ConfigMapVolumeSource{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: userConfig.Name,
+						},
+					},
+				}
 			})
 
 			AfterEach(func() {
@@ -395,140 +268,42 @@ var _ = Describe("Vertical Scaling", func() {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			runWithUserProvidedConfig := func() {
-				if to.skipMessage != "" {
-					Skip(to.skipMessage)
-				}
-
-				By("Creating configMap: " + userConfig.Name)
-				err := to.CreateConfigMap(userConfig)
-				Expect(err).NotTo(HaveOccurred())
-
-				By("Creating configMap: " + newUserConfig.Name)
-				err = to.CreateConfigMap(newUserConfig)
-				Expect(err).NotTo(HaveOccurred())
-
-				to.createAndWaitForRunning()
-
-				By("Checking maxIncomingConnections from mongodb config")
-				to.EventuallyMaxIncomingConnections(to.mongodb.ObjectMeta).Should(Equal(prevMaxIncomingConnections))
-
-				By("Insert Document Inside DB")
-				to.EventuallyInsertDocument(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
-
-				By("Checking Inserted Document")
-				to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
-
-				By("Updating MongoDB")
-				err = to.CreateMongoDBOpsRequest(to.mongoOpsReq)
-				Expect(err).NotTo(HaveOccurred())
-
-				By("Waiting for MongoDB Ops Request Phase to be Successful")
-				to.EventuallyMongoDBOpsRequestPhase(to.mongoOpsReq.ObjectMeta).Should(Equal(dbaapi.OpsRequestPhaseSuccessful))
-
-				// Retrieve Inserted Data
-				By("Checking Inserted Document after update")
-				to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
-
-				By("Checking updated maxIncomingConnections from mongodb config")
-				to.EventuallyMaxIncomingConnections(to.mongodb.ObjectMeta).Should(Equal(newMaxIncomingConnections))
-			}
-
 			Context("Standalone MongoDB", func() {
 				BeforeEach(func() {
 					to.mongodb = to.MongoDBStandalone()
-					to.mongodb.Spec.ConfigSource = &v1.VolumeSource{
-						ConfigMap: &v1.ConfigMapVolumeSource{
-							LocalObjectReference: v1.LocalObjectReference{
-								Name: userConfig.Name,
-							},
-						},
-					}
-
-					standalone := &v1.ResourceRequirements{
-						Limits: map[v1.ResourceName]resource.Quantity{
-							v1.ResourceMemory: resource.MustParse("300Mi"),
-							v1.ResourceCPU:    resource.MustParse(".2"),
-						},
-						Requests: map[v1.ResourceName]resource.Quantity{
-							v1.ResourceMemory: resource.MustParse("200Mi"),
-							v1.ResourceCPU:    resource.MustParse(".1"),
-						},
-					}
-					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, standalone, nil, nil, nil, nil, nil)
+					to.mongodb.Spec.ConfigSource = configSource
+					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, resource, nil, nil, nil, nil, nil)
 					to.mongoOpsReq.Spec.CustomConfig = &dbaapi.MongoDBCustomConfigSpec{
 						Standalone: newCustomConfig,
 					}
 				})
 
-				It("should run successfully", runWithUserProvidedConfig)
+				It("should run successfully", func() {
+					to.runWithUserProvidedConfig(userConfig, newUserConfig)
+				})
 			})
 
 			Context("With Replica Set", func() {
 				BeforeEach(func() {
 					to.mongodb = to.MongoDBRS()
-					to.mongodb.Spec.ConfigSource = &v1.VolumeSource{
-						ConfigMap: &v1.ConfigMapVolumeSource{
-							LocalObjectReference: v1.LocalObjectReference{
-								Name: userConfig.Name,
-							},
-						},
-					}
-
-					replicaset := &v1.ResourceRequirements{
-						Limits: map[v1.ResourceName]resource.Quantity{
-							v1.ResourceMemory: resource.MustParse("300Mi"),
-							v1.ResourceCPU:    resource.MustParse(".2"),
-						},
-						Requests: map[v1.ResourceName]resource.Quantity{
-							v1.ResourceMemory: resource.MustParse("200Mi"),
-							v1.ResourceCPU:    resource.MustParse(".1"),
-						},
-					}
-					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, replicaset, nil, nil, nil, nil)
+					to.mongodb.Spec.ConfigSource = configSource
+					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, resource, nil, nil, nil, nil)
 					to.mongoOpsReq.Spec.CustomConfig = &dbaapi.MongoDBCustomConfigSpec{
 						ReplicaSet: newCustomConfig,
 					}
 				})
 
-				It("should run successfully", runWithUserProvidedConfig)
+				It("should run successfully", func() {
+					to.runWithUserProvidedConfig(userConfig, newUserConfig)
+				})
 			})
 
 			Context("With Sharding", func() {
 				BeforeEach(func() {
 					to.mongodb = to.MongoDBShard()
-					to.mongodb.Spec.ShardTopology.Shard.ConfigSource = &v1.VolumeSource{
-						ConfigMap: &v1.ConfigMapVolumeSource{
-							LocalObjectReference: v1.LocalObjectReference{
-								Name: userConfig.Name,
-							},
-						},
-					}
-					to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSource = &v1.VolumeSource{
-						ConfigMap: &v1.ConfigMapVolumeSource{
-							LocalObjectReference: v1.LocalObjectReference{
-								Name: userConfig.Name,
-							},
-						},
-					}
-					to.mongodb.Spec.ShardTopology.Mongos.ConfigSource = &v1.VolumeSource{
-						ConfigMap: &v1.ConfigMapVolumeSource{
-							LocalObjectReference: v1.LocalObjectReference{
-								Name: userConfig.Name,
-							},
-						},
-					}
-
-					resource := &v1.ResourceRequirements{
-						Limits: map[v1.ResourceName]resource.Quantity{
-							v1.ResourceMemory: resource.MustParse("300Mi"),
-							v1.ResourceCPU:    resource.MustParse(".2"),
-						},
-						Requests: map[v1.ResourceName]resource.Quantity{
-							v1.ResourceMemory: resource.MustParse("200Mi"),
-							v1.ResourceCPU:    resource.MustParse(".1"),
-						},
-					}
+					to.mongodb.Spec.ShardTopology.Shard.ConfigSource = configSource
+					to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSource = configSource
+					to.mongodb.Spec.ShardTopology.Mongos.ConfigSource = configSource
 					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, resource, resource, resource, nil)
 					to.mongoOpsReq.Spec.CustomConfig = &dbaapi.MongoDBCustomConfigSpec{
 						Mongos:       newCustomConfig,
@@ -537,7 +312,9 @@ var _ = Describe("Vertical Scaling", func() {
 					}
 				})
 
-				It("should run successfully", runWithUserProvidedConfig)
+				It("should run successfully", func() {
+					to.runWithUserProvidedConfig(userConfig, newUserConfig)
+				})
 			})
 		})
 	})

@@ -54,29 +54,23 @@ var _ = Describe("Reconfigure", func() {
 		to.EventuallyWipedOut(to.mongodb.ObjectMeta).Should(Succeed())
 	})
 
-	var prevMaxIncomingConnections = int32(10000)
-	customConfigs := []string{
-		fmt.Sprintf(`   maxIncomingConnections: %v`, prevMaxIncomingConnections),
-	}
-
-	var newMaxIncomingConnections = int32(20000)
-	newCustomConfigs := []string{
-		fmt.Sprintf(`   maxIncomingConnections: %v`, newMaxIncomingConnections),
-	}
-	data := map[string]string{
-		"mongod.conf": fmt.Sprintf(`net:
-   maxIncomingConnections: %v`, newMaxIncomingConnections),
-	}
-
 	Context("From Data", func() {
 		var userConfig *v1.ConfigMap
 		var newCustomConfig *dbaapi.MongoDBCustomConfig
+		var configSource *v1.VolumeSource
 		BeforeEach(func() {
 			to.skipMessage = ""
 			configName := to.App() + "-previous-config"
 			userConfig = to.GetCustomConfig(customConfigs, configName)
 			newCustomConfig = &dbaapi.MongoDBCustomConfig{
 				Data: data,
+			}
+			configSource = &v1.VolumeSource{
+				ConfigMap: &v1.ConfigMapVolumeSource{
+					LocalObjectReference: v1.LocalObjectReference{
+						Name: userConfig.Name,
+					},
+				},
 			}
 		})
 
@@ -86,59 +80,18 @@ var _ = Describe("Reconfigure", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		runWithUserProvidedConfig := func() {
-			if to.skipMessage != "" {
-				Skip(to.skipMessage)
-			}
-
-			By("Creating configMap: " + userConfig.Name)
-			err := to.CreateConfigMap(userConfig)
-			Expect(err).NotTo(HaveOccurred())
-
-			to.createAndWaitForRunning()
-
-			By("Checking maxIncomingConnections from mongodb config")
-			to.EventuallyMaxIncomingConnections(to.mongodb.ObjectMeta).Should(Equal(prevMaxIncomingConnections))
-
-			// Insert Data
-			By("Insert Document Inside DB")
-			to.EventuallyInsertDocument(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
-
-			By("Checking Inserted Document")
-			to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
-
-			// Update Database
-			By("Updating MongoDB")
-			err = to.CreateMongoDBOpsRequest(to.mongoOpsReq)
-			Expect(err).NotTo(HaveOccurred())
-
-			By("Waiting for MongoDB Ops Request Phase to be Successful")
-			to.EventuallyMongoDBOpsRequestPhase(to.mongoOpsReq.ObjectMeta).Should(Equal(dbaapi.OpsRequestPhaseSuccessful))
-
-			// Retrieve Inserted Data
-			By("Checking Inserted Document after update")
-			to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
-
-			By("Checking updated maxIncomingConnections from mongodb config")
-			to.EventuallyMaxIncomingConnections(to.mongodb.ObjectMeta).Should(Equal(newMaxIncomingConnections))
-		}
-
 		Context("Standalone MongoDB", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBStandalone()
 				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-				to.mongodb.Spec.ConfigSource = &v1.VolumeSource{
-					ConfigMap: &v1.ConfigMapVolumeSource{
-						LocalObjectReference: v1.LocalObjectReference{
-							Name: userConfig.Name,
-						},
-					},
-				}
+				to.mongodb.Spec.ConfigSource = configSource
 				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, newCustomConfig, nil, nil, nil, nil)
 			})
 
-			It("should run successfully", runWithUserProvidedConfig)
+			It("should run successfully", func() {
+				to.runWithUserProvidedConfig(userConfig, nil)
+			})
 		})
 
 		Context("With Replica Set", func() {
@@ -146,17 +99,13 @@ var _ = Describe("Reconfigure", func() {
 				to.mongodb = to.MongoDBRS()
 				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-				to.mongodb.Spec.ConfigSource = &v1.VolumeSource{
-					ConfigMap: &v1.ConfigMapVolumeSource{
-						LocalObjectReference: v1.LocalObjectReference{
-							Name: userConfig.Name,
-						},
-					},
-				}
+				to.mongodb.Spec.ConfigSource = configSource
 				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, nil, newCustomConfig, nil, nil, nil)
 			})
 
-			It("should run successfully", runWithUserProvidedConfig)
+			It("should run successfully", func() {
+				to.runWithUserProvidedConfig(userConfig, nil)
+			})
 		})
 
 		Context("With Sharding", func() {
@@ -164,33 +113,16 @@ var _ = Describe("Reconfigure", func() {
 				to.mongodb = to.MongoDBShard()
 				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-				to.mongodb.Spec.ShardTopology.Shard.ConfigSource = &v1.VolumeSource{
-					ConfigMap: &v1.ConfigMapVolumeSource{
-						LocalObjectReference: v1.LocalObjectReference{
-							Name: userConfig.Name,
-						},
-					},
-				}
-				to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSource = &v1.VolumeSource{
-					ConfigMap: &v1.ConfigMapVolumeSource{
-						LocalObjectReference: v1.LocalObjectReference{
-							Name: userConfig.Name,
-						},
-					},
-				}
-				to.mongodb.Spec.ShardTopology.Mongos.ConfigSource = &v1.VolumeSource{
-					ConfigMap: &v1.ConfigMapVolumeSource{
-						LocalObjectReference: v1.LocalObjectReference{
-							Name: userConfig.Name,
-						},
-					},
-				}
-
+				to.mongodb.Spec.ShardTopology.Shard.ConfigSource = configSource
+				to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSource = configSource
+				to.mongodb.Spec.ShardTopology.Mongos.ConfigSource = configSource
 				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, nil, nil, newCustomConfig, newCustomConfig, newCustomConfig)
 
 			})
 
-			It("should run successfully", runWithUserProvidedConfig)
+			It("should run successfully", func() {
+				to.runWithUserProvidedConfig(userConfig, nil)
+			})
 		})
 	})
 
@@ -198,6 +130,7 @@ var _ = Describe("Reconfigure", func() {
 		var userConfig *v1.ConfigMap
 		var newUserConfig *v1.ConfigMap
 		var newCustomConfig *dbaapi.MongoDBCustomConfig
+		var configSource *v1.VolumeSource
 
 		BeforeEach(func() {
 			prevConfigName := to.App() + "-previous-config"
@@ -209,6 +142,13 @@ var _ = Describe("Reconfigure", func() {
 					Name: newUserConfig.Name,
 				},
 			}
+			configSource = &v1.VolumeSource{
+				ConfigMap: &v1.ConfigMapVolumeSource{
+					LocalObjectReference: v1.LocalObjectReference{
+						Name: userConfig.Name,
+					},
+				},
+			}
 		})
 
 		AfterEach(func() {
@@ -217,77 +157,30 @@ var _ = Describe("Reconfigure", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		runWithUserProvidedConfig := func() {
-			if to.skipMessage != "" {
-				Skip(to.skipMessage)
-			}
-
-			By("Creating configMap: " + userConfig.Name)
-			err := to.CreateConfigMap(userConfig)
-			Expect(err).NotTo(HaveOccurred())
-
-			By("Creating configMap: " + newUserConfig.Name)
-			err = to.CreateConfigMap(newUserConfig)
-			Expect(err).NotTo(HaveOccurred())
-
-			to.createAndWaitForRunning()
-
-			By("Checking maxIncomingConnections from mongodb config")
-			to.EventuallyMaxIncomingConnections(to.mongodb.ObjectMeta).Should(Equal(prevMaxIncomingConnections))
-
-			By("Insert Document Inside DB")
-			to.EventuallyInsertDocument(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
-
-			By("Checking Inserted Document")
-			to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
-
-			By("Updating MongoDB")
-			err = to.CreateMongoDBOpsRequest(to.mongoOpsReq)
-			Expect(err).NotTo(HaveOccurred())
-
-			By("Waiting for MongoDB Ops Request Phase to be Successful")
-			to.EventuallyMongoDBOpsRequestPhase(to.mongoOpsReq.ObjectMeta).Should(Equal(dbaapi.OpsRequestPhaseSuccessful))
-
-			// Retrieve Inserted Data
-			By("Checking Inserted Document after update")
-			to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
-
-			By("Checking updated maxIncomingConnections from mongodb config")
-			to.EventuallyMaxIncomingConnections(to.mongodb.ObjectMeta).Should(Equal(newMaxIncomingConnections))
-		}
-
 		Context("Standalone MongoDB", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBStandalone()
 				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-				to.mongodb.Spec.ConfigSource = &v1.VolumeSource{
-					ConfigMap: &v1.ConfigMapVolumeSource{
-						LocalObjectReference: v1.LocalObjectReference{
-							Name: userConfig.Name,
-						},
-					},
-				}
+				to.mongodb.Spec.ConfigSource = configSource
 				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, newCustomConfig, nil, nil, nil, nil)
 			})
 
-			It("should run successfully", runWithUserProvidedConfig)
+			It("should run successfully", func() {
+				to.runWithUserProvidedConfig(userConfig, newUserConfig)
+			})
 		})
 
 		Context("With Replica Set", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBRS()
-				to.mongodb.Spec.ConfigSource = &v1.VolumeSource{
-					ConfigMap: &v1.ConfigMapVolumeSource{
-						LocalObjectReference: v1.LocalObjectReference{
-							Name: userConfig.Name,
-						},
-					},
-				}
+				to.mongodb.Spec.ConfigSource = configSource
 				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, nil, newCustomConfig, nil, nil, nil)
 			})
 
-			It("should run successfully", runWithUserProvidedConfig)
+			It("should run successfully", func() {
+				to.runWithUserProvidedConfig(userConfig, newUserConfig)
+			})
 		})
 
 		Context("With Sharding", func() {
@@ -295,32 +188,15 @@ var _ = Describe("Reconfigure", func() {
 				to.mongodb = to.MongoDBShard()
 				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-				to.mongodb.Spec.ShardTopology.Shard.ConfigSource = &v1.VolumeSource{
-					ConfigMap: &v1.ConfigMapVolumeSource{
-						LocalObjectReference: v1.LocalObjectReference{
-							Name: userConfig.Name,
-						},
-					},
-				}
-				to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSource = &v1.VolumeSource{
-					ConfigMap: &v1.ConfigMapVolumeSource{
-						LocalObjectReference: v1.LocalObjectReference{
-							Name: userConfig.Name,
-						},
-					},
-				}
-				to.mongodb.Spec.ShardTopology.Mongos.ConfigSource = &v1.VolumeSource{
-					ConfigMap: &v1.ConfigMapVolumeSource{
-						LocalObjectReference: v1.LocalObjectReference{
-							Name: userConfig.Name,
-						},
-					},
-				}
-
+				to.mongodb.Spec.ShardTopology.Shard.ConfigSource = configSource
+				to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSource = configSource
+				to.mongodb.Spec.ShardTopology.Mongos.ConfigSource = configSource
 				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, nil, nil, newCustomConfig, newCustomConfig, newCustomConfig)
 			})
 
-			It("should run successfully", runWithUserProvidedConfig)
+			It("should run successfully", func() {
+				to.runWithUserProvidedConfig(userConfig, newUserConfig)
+			})
 		})
 	})
 })
