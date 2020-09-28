@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha1"
+	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
 
 	. "github.com/onsi/ginkgo"
@@ -31,6 +32,17 @@ import (
 var _ = Describe("Vertical Scaling", func() {
 	to := testOptions{}
 	testName := framework.VerticalScaling
+	resource := &v1.ResourceRequirements{
+		Limits: map[v1.ResourceName]resource.Quantity{
+			v1.ResourceMemory: resource.MustParse("300Mi"),
+			v1.ResourceCPU:    resource.MustParse(".2"),
+		},
+		Requests: map[v1.ResourceName]resource.Quantity{
+			v1.ResourceMemory: resource.MustParse("200Mi"),
+			v1.ResourceCPU:    resource.MustParse(".1"),
+		},
+	}
+
 	BeforeEach(func() {
 		to.Invocation = framework.NewInvocation()
 		if !runTestEnterprise(testName) {
@@ -52,144 +64,258 @@ var _ = Describe("Vertical Scaling", func() {
 		By("Wait for mongodb resources to be wipedOut")
 		to.EventuallyWipedOut(to.mongodb.ObjectMeta).Should(Succeed())
 	})
+	Context("Without Custom Config", func() {
+		Context("Scaling StandAlone Mongodb Resources", func() {
+			BeforeEach(func() {
+				to.mongodb = to.MongoDBStandalone()
+				to.mongodb.Spec.Version = framework.DBVersion
+				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, resource, nil, nil, nil, nil, nil)
+			})
 
-	Context("Scaling StandAlone Mongodb Resources", func() {
-		BeforeEach(func() {
-			to.mongodb = to.MongoDBStandalone()
-			to.mongodb.Spec.Version = framework.DBVersion
-			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-			standalone := &v1.ResourceRequirements{
-				Limits: map[v1.ResourceName]resource.Quantity{
-					v1.ResourceMemory: resource.MustParse("300Mi"),
-					v1.ResourceCPU:    resource.MustParse(".2"),
-				},
-				Requests: map[v1.ResourceName]resource.Quantity{
-					v1.ResourceMemory: resource.MustParse("200Mi"),
-					v1.ResourceCPU:    resource.MustParse(".1"),
-				},
-			}
-			to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, standalone, nil, nil, nil, nil, nil)
+			It("Should Scale StandAlone Mongodb Resources", func() {
+				to.shouldTestOpsRequest()
+			})
+
 		})
+		Context("Scaling ReplicaSet Resources", func() {
+			BeforeEach(func() {
+				to.mongodb = to.MongoDBRS()
+				to.mongodb.Spec.Version = framework.DBVersion
+				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, resource, nil, nil, nil, nil)
+			})
 
-		It("Should Scale StandAlone Mongodb Resources", func() {
-			to.shouldTestOpsRequest()
+			It("Should Scale ReplicaSet Resources", func() {
+				to.shouldTestOpsRequest()
+
+			})
+
 		})
+		Context("Scaling Mongos Resources", func() {
+			BeforeEach(func() {
+				to.mongodb = to.MongoDBShard()
+				to.mongodb.Spec.Version = framework.DBVersion
+				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, resource, nil, nil, nil)
+			})
 
+			It("Should Scale Mongos Resources", func() {
+				to.shouldTestOpsRequest()
+			})
+
+		})
+		Context("Scaling ConfigServer Resources", func() {
+			BeforeEach(func() {
+				to.mongodb = to.MongoDBShard()
+				to.mongodb.Spec.Version = framework.DBVersion
+				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, nil, resource, nil, nil)
+			})
+
+			It("Should Scale ConfigServer Resources", func() {
+				to.shouldTestOpsRequest()
+			})
+
+		})
+		Context("Scaling Shard Resources", func() {
+			BeforeEach(func() {
+				to.mongodb = to.MongoDBShard()
+				to.mongodb.Spec.Version = framework.DBVersion
+				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, nil, nil, resource, nil)
+			})
+
+			It("Should Scale Shard Resources", func() {
+				to.shouldTestOpsRequest()
+			})
+
+		})
+		Context("Scaling All Mongos,ConfigServer and Shard Resources", func() {
+			BeforeEach(func() {
+				to.mongodb = to.MongoDBShard()
+				to.mongodb.Spec.Version = framework.DBVersion
+				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, resource, resource, resource, nil)
+			})
+
+			It("Should Scale All Mongos,ConfigServer and Shard Resources", func() {
+				to.shouldTestOpsRequest()
+			})
+
+		})
 	})
-	Context("Scaling ReplicaSet Resources", func() {
-		BeforeEach(func() {
-			to.mongodb = to.MongoDBRS()
-			to.mongodb.Spec.Version = framework.DBVersion
-			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-			replicaset := &v1.ResourceRequirements{
-				Limits: map[v1.ResourceName]resource.Quantity{
-					v1.ResourceMemory: resource.MustParse("300Mi"),
-					v1.ResourceCPU:    resource.MustParse(".2"),
-				},
-				Requests: map[v1.ResourceName]resource.Quantity{
-					v1.ResourceMemory: resource.MustParse("200Mi"),
-					v1.ResourceCPU:    resource.MustParse(".1"),
-				},
-			}
-			to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, replicaset, nil, nil, nil, nil)
+
+	Context("With Custom Config", func() {
+		var prevMaxIncomingConnections = int32(10000)
+		customConfigs := []string{
+			fmt.Sprintf(`   maxIncomingConnections: %v`, prevMaxIncomingConnections),
+		}
+
+		var newMaxIncomingConnections = int32(20000)
+		newCustomConfigs := []string{
+			fmt.Sprintf(`   maxIncomingConnections: %v`, newMaxIncomingConnections),
+		}
+		data := map[string]string{
+			"mongod.conf": fmt.Sprintf(`net:
+   maxIncomingConnections: %v`, newMaxIncomingConnections),
+		}
+
+		Context("From Data", func() {
+			var userConfig *v1.ConfigMap
+			var newCustomConfig *dbaapi.MongoDBCustomConfig
+			var configSource *v1.VolumeSource
+			BeforeEach(func() {
+				to.skipMessage = ""
+				configName := to.App() + "-previous-config"
+				userConfig = to.GetCustomConfig(customConfigs, configName)
+				newCustomConfig = &dbaapi.MongoDBCustomConfig{
+					Data: data,
+				}
+				configSource = &v1.VolumeSource{
+					ConfigMap: &v1.ConfigMapVolumeSource{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: userConfig.Name,
+						},
+					},
+				}
+			})
+
+			AfterEach(func() {
+				By("Deleting configMap: " + userConfig.Name)
+				err := to.DeleteConfigMap(userConfig.ObjectMeta)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			Context("Standalone MongoDB", func() {
+				BeforeEach(func() {
+					to.mongodb = to.MongoDBStandalone()
+					to.mongodb.Spec.ConfigSource = configSource
+					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, resource, nil, nil, nil, nil, nil)
+					to.mongoOpsReq.Spec.CustomConfig = &dbaapi.MongoDBCustomConfigSpec{
+						Standalone: newCustomConfig,
+					}
+				})
+
+				It("should run successfully", func() {
+					to.runWithUserProvidedConfig(userConfig, nil)
+				})
+			})
+
+			Context("With ReplicaSet", func() {
+				BeforeEach(func() {
+					to.mongodb = to.MongoDBRS()
+					to.mongodb.Spec.ConfigSource = configSource
+					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, resource, nil, nil, nil, nil)
+					to.mongoOpsReq.Spec.CustomConfig = &dbaapi.MongoDBCustomConfigSpec{
+						ReplicaSet: newCustomConfig,
+					}
+				})
+
+				It("should run successfully", func() {
+					to.runWithUserProvidedConfig(userConfig, nil)
+				})
+			})
+
+			Context("With Sharding", func() {
+				BeforeEach(func() {
+					to.mongodb = to.MongoDBShard()
+					to.mongodb.Spec.ShardTopology.Shard.ConfigSource = configSource
+					to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSource = configSource
+					to.mongodb.Spec.ShardTopology.Mongos.ConfigSource = configSource
+					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, resource, resource, resource, nil)
+					to.mongoOpsReq.Spec.CustomConfig = &dbaapi.MongoDBCustomConfigSpec{
+						Mongos:       newCustomConfig,
+						ConfigServer: newCustomConfig,
+						Shard:        newCustomConfig,
+					}
+				})
+
+				It("should run successfully", func() {
+					to.runWithUserProvidedConfig(userConfig, nil)
+				})
+			})
 		})
 
-		It("Should Scale ReplicaSet Resources", func() {
-			to.shouldTestOpsRequest()
+		Context("From New ConfigMap", func() {
+			var userConfig *v1.ConfigMap
+			var newUserConfig *v1.ConfigMap
+			var newCustomConfig *dbaapi.MongoDBCustomConfig
+			var configSource *v1.VolumeSource
 
+			BeforeEach(func() {
+				prevConfigName := to.App() + "-previous-config"
+				newConfigName := to.App() + "-new-config"
+				userConfig = to.GetCustomConfig(customConfigs, prevConfigName)
+				newUserConfig = to.GetCustomConfig(newCustomConfigs, newConfigName)
+				newCustomConfig = &dbaapi.MongoDBCustomConfig{
+					ConfigMap: &v1.LocalObjectReference{
+						Name: newUserConfig.Name,
+					},
+				}
+				configSource = &v1.VolumeSource{
+					ConfigMap: &v1.ConfigMapVolumeSource{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: userConfig.Name,
+						},
+					},
+				}
+			})
+
+			AfterEach(func() {
+				By("Deleting configMap: " + userConfig.Name)
+				err := to.DeleteConfigMap(userConfig.ObjectMeta)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			Context("Standalone MongoDB", func() {
+				BeforeEach(func() {
+					to.mongodb = to.MongoDBStandalone()
+					to.mongodb.Spec.ConfigSource = configSource
+					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, resource, nil, nil, nil, nil, nil)
+					to.mongoOpsReq.Spec.CustomConfig = &dbaapi.MongoDBCustomConfigSpec{
+						Standalone: newCustomConfig,
+					}
+				})
+
+				It("should run successfully", func() {
+					to.runWithUserProvidedConfig(userConfig, newUserConfig)
+				})
+			})
+
+			Context("With Replica Set", func() {
+				BeforeEach(func() {
+					to.mongodb = to.MongoDBRS()
+					to.mongodb.Spec.ConfigSource = configSource
+					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, resource, nil, nil, nil, nil)
+					to.mongoOpsReq.Spec.CustomConfig = &dbaapi.MongoDBCustomConfigSpec{
+						ReplicaSet: newCustomConfig,
+					}
+				})
+
+				It("should run successfully", func() {
+					to.runWithUserProvidedConfig(userConfig, newUserConfig)
+				})
+			})
+
+			Context("With Sharding", func() {
+				BeforeEach(func() {
+					to.mongodb = to.MongoDBShard()
+					to.mongodb.Spec.ShardTopology.Shard.ConfigSource = configSource
+					to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSource = configSource
+					to.mongodb.Spec.ShardTopology.Mongos.ConfigSource = configSource
+					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, resource, resource, resource, nil)
+					to.mongoOpsReq.Spec.CustomConfig = &dbaapi.MongoDBCustomConfigSpec{
+						Mongos:       newCustomConfig,
+						ConfigServer: newCustomConfig,
+						Shard:        newCustomConfig,
+					}
+				})
+
+				It("should run successfully", func() {
+					to.runWithUserProvidedConfig(userConfig, newUserConfig)
+				})
+			})
 		})
-
-	})
-	Context("Scaling Mongos Resources", func() {
-		BeforeEach(func() {
-			to.mongodb = to.MongoDBShard()
-			to.mongodb.Spec.Version = framework.DBVersion
-			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-			mongos := &v1.ResourceRequirements{
-				Limits: map[v1.ResourceName]resource.Quantity{
-					v1.ResourceMemory: resource.MustParse("300Mi"),
-					v1.ResourceCPU:    resource.MustParse(".2"),
-				},
-				Requests: map[v1.ResourceName]resource.Quantity{
-					v1.ResourceMemory: resource.MustParse("200Mi"),
-					v1.ResourceCPU:    resource.MustParse(".1"),
-				},
-			}
-			to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, mongos, nil, nil, nil)
-		})
-
-		It("Should Scale Mongos Resources", func() {
-			to.shouldTestOpsRequest()
-		})
-
-	})
-	Context("Scaling ConfigServer Resources", func() {
-		BeforeEach(func() {
-			to.mongodb = to.MongoDBShard()
-			to.mongodb.Spec.Version = framework.DBVersion
-			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-			configServer := &v1.ResourceRequirements{
-				Limits: map[v1.ResourceName]resource.Quantity{
-					v1.ResourceMemory: resource.MustParse("300Mi"),
-					v1.ResourceCPU:    resource.MustParse(".2"),
-				},
-				Requests: map[v1.ResourceName]resource.Quantity{
-					v1.ResourceMemory: resource.MustParse("200Mi"),
-					v1.ResourceCPU:    resource.MustParse(".1"),
-				},
-			}
-			to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, nil, configServer, nil, nil)
-		})
-
-		It("Should Scale ConfigServer Resources", func() {
-			to.shouldTestOpsRequest()
-		})
-
-	})
-	Context("Scaling Shard Resources", func() {
-		BeforeEach(func() {
-			to.mongodb = to.MongoDBShard()
-			to.mongodb.Spec.Version = framework.DBVersion
-			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-			shard := &v1.ResourceRequirements{
-				Limits: map[v1.ResourceName]resource.Quantity{
-					v1.ResourceMemory: resource.MustParse("300Mi"),
-					v1.ResourceCPU:    resource.MustParse(".2"),
-				},
-				Requests: map[v1.ResourceName]resource.Quantity{
-					v1.ResourceMemory: resource.MustParse("200Mi"),
-					v1.ResourceCPU:    resource.MustParse(".1"),
-				},
-			}
-			to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, nil, nil, shard, nil)
-		})
-
-		It("Should Scale Shard Resources", func() {
-			to.shouldTestOpsRequest()
-		})
-
-	})
-	Context("Scaling All Mongos,ConfigServer and Shard Resources", func() {
-		BeforeEach(func() {
-			to.mongodb = to.MongoDBShard()
-			to.mongodb.Spec.Version = framework.DBVersion
-			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-			resource := &v1.ResourceRequirements{
-				Limits: map[v1.ResourceName]resource.Quantity{
-					v1.ResourceMemory: resource.MustParse("300Mi"),
-					v1.ResourceCPU:    resource.MustParse(".2"),
-				},
-				Requests: map[v1.ResourceName]resource.Quantity{
-					v1.ResourceMemory: resource.MustParse("200Mi"),
-					v1.ResourceCPU:    resource.MustParse(".1"),
-				},
-			}
-			to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, resource, resource, resource, nil)
-		})
-
-		It("Should Scale All Mongos,ConfigServer and Shard Resources", func() {
-			to.shouldTestOpsRequest()
-		})
-
 	})
 })
