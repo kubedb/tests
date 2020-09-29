@@ -29,7 +29,7 @@ require (
 	kmodules.xyz/monitoring-agent-api v0.0.0-20200828051750-42aa8e7852f3
 	kmodules.xyz/objectstore-api v0.0.0-20200521103120-92080446e04d
 	kmodules.xyz/offshoot-api v0.0.0-20200521035628-e135bf07b226
-	kubedb.dev/apimachinery v0.14.0-beta.2
+	kubedb.dev/apimachinery v0.14.0-beta.3.0.20200929115449-5779a5d7c3ff
 	stash.appscode.dev/apimachinery v0.10.0
 )
 
