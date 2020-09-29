@@ -3,8 +3,8 @@ module kubedb.dev/tests
 go 1.14
 
 require (
-	github.com/appscode/go v0.0.0-20200323182826-54e98e09185a
-	github.com/aws/aws-sdk-go v1.31.3
+	github.com/appscode/go v0.0.0-20200928211031-cc0c23082d91
+	github.com/aws/aws-sdk-go v1.31.9
 	github.com/codeskyblue/go-sh v0.0.0-20190412065543-76bd3d59ff27
 	github.com/jetstack/cert-manager v0.16.0
 	github.com/onsi/ginkgo v1.11.0
@@ -13,22 +13,23 @@ require (
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/prom2json v1.3.0
 	github.com/spf13/afero v1.2.2
-	github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c // indirect
 	github.com/xdg/stringprep v1.0.0 // indirect
-	go.mongodb.org/mongo-driver v1.1.2
+	go.mongodb.org/mongo-driver v1.3.2
 	gomodules.xyz/cert v1.0.3
-	k8s.io/api v0.18.5
-	k8s.io/apiextensions-apiserver v0.18.5
-	k8s.io/apimachinery v0.18.5
+	k8s.io/api v0.18.9
+	k8s.io/apiextensions-apiserver v0.18.9
+	k8s.io/apimachinery v0.18.9
 	k8s.io/client-go v12.0.0+incompatible
-	k8s.io/kube-aggregator v0.18.5
-	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
-	kmodules.xyz/client-go v0.0.0-20200903033732-dab39b86c81b
+	k8s.io/kube-aggregator v0.18.9
+	k8s.io/kubernetes v1.18.9 // indirect
+	k8s.io/utils v0.0.0-20200414100711-2df71ebbae66
+	kmodules.xyz/client-go v0.0.0-20200929030759-cce6a3c623c1
 	kmodules.xyz/constants v0.0.0-20200506032633-a21e58ceec72
-	kmodules.xyz/custom-resources v0.0.0-20200604135349-9e9f5c4fdba9
-	kmodules.xyz/monitoring-agent-api v0.0.0-20200828051750-42aa8e7852f3
-	kmodules.xyz/objectstore-api v0.0.0-20200521103120-92080446e04d
-	kmodules.xyz/offshoot-api v0.0.0-20200521035628-e135bf07b226
+	kmodules.xyz/custom-resources v0.0.0-20200922210108-70f2815a43bb
+	kmodules.xyz/monitoring-agent-api v0.0.0-20200922204510-b8b5610e5385
+	kmodules.xyz/objectstore-api v0.0.0-20200922210707-59bab27e5d41
+	kmodules.xyz/offshoot-api v0.0.0-20200922211229-36acc531abab
+	kmodules.xyz/prober v0.0.0-20200922212142-743a6514664e // indirect
 	kubedb.dev/apimachinery v0.14.0-beta.2
 	stash.appscode.dev/apimachinery v0.10.0
 )
@@ -67,9 +68,15 @@ replace github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.1
 
 replace github.com/golang/protobuf => github.com/golang/protobuf v1.3.2
 
+replace github.com/googleapis/gnostic => github.com/googleapis/gnostic v0.3.1
+
 replace github.com/imdario/mergo => github.com/imdario/mergo v0.3.5
 
-replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.0.0
+replace github.com/prometheus-operator/prometheus-operator => github.com/prometheus-operator/prometheus-operator v0.42.0
+
+replace github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring => github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.42.0
+
+replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.7.1
 
 replace go.etcd.io/etcd => go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
 
@@ -79,12 +86,20 @@ replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20191115
 
 replace google.golang.org/grpc => google.golang.org/grpc v1.26.0
 
-replace k8s.io/api => github.com/kmodules/api v0.18.4-0.20200524125823-c8bc107809b9
+replace k8s.io/api => github.com/kmodules/api v0.18.10-0.20200922195318-d60fe725dea0
 
-replace k8s.io/apimachinery => github.com/kmodules/apimachinery v0.19.0-alpha.0.0.20200520235721-10b58e57a423
+replace k8s.io/apimachinery => github.com/kmodules/apimachinery v0.19.0-alpha.0.0.20200922195535-0c9a1b86beec
 
-replace k8s.io/apiserver => github.com/kmodules/apiserver v0.18.4-0.20200521000930-14c5f6df9625
+replace k8s.io/apiserver => github.com/kmodules/apiserver v0.18.10-0.20200922195747-1bd1cc8f00d1
 
-replace k8s.io/client-go => k8s.io/client-go v0.18.3
+replace k8s.io/cli-runtime => k8s.io/cli-runtime v0.18.9
 
-replace k8s.io/kubernetes => github.com/kmodules/kubernetes v1.19.0-alpha.0.0.20200521033432-49d3646051ad
+replace k8s.io/client-go => github.com/kmodules/k8s-client-go v0.18.10-0.20200922201634-73fedf3d677e
+
+replace k8s.io/component-base => k8s.io/component-base v0.18.9
+
+replace k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6
+
+replace k8s.io/kubernetes => github.com/kmodules/kubernetes v1.19.0-alpha.0.0.20200922200158-8b13196d8dc4
+
+replace k8s.io/utils => k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
