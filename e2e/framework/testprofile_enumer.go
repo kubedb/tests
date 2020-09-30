@@ -74,7 +74,7 @@ package framework
 //}
 //
 //// TestProfileString retrieves an enum value from the enum constants string name.
-//// Throws an error if the param is not part of the enum.
+//// Throws an error if the Param is not part of the enum.
 //func TestProfileString(s string) (TestProfile, error) {
 //	if val, ok := _TestProfileNameToValueMap[s]; ok {
 //		return val, nil

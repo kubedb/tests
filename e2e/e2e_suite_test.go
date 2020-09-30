@@ -24,10 +24,12 @@ import (
 	"testing"
 	"time"
 
+	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	cs "kubedb.dev/apimachinery/client/clientset/versioned"
 	"kubedb.dev/apimachinery/client/clientset/versioned/scheme"
 	"kubedb.dev/tests/e2e/framework"
 	_ "kubedb.dev/tests/e2e/mongodb"
+	_ "kubedb.dev/tests/e2e/mysql"
 
 	cm "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
 	. "github.com/onsi/ginkgo"
@@ -74,6 +76,7 @@ func init() {
 	flag.StringVar(&framework.DBVersion, "db-version", framework.DBVersion, "Database version")
 	flag.StringVar(&framework.DBUpdatedVersion, "db-updated-version", framework.DBUpdatedVersion, "Upgraded database version")
 	flag.StringVar(&framework.StorageProvider, "storage-provider", framework.StorageProviderMinio, "Backend Storage Provider")
+	flag.StringVar(&framework.DBType, "db-type", api.ResourceSingularMongoDB, "Database type test")
 	flag.BoolVar(&framework.SSLEnabled, "ssl", framework.SSLEnabled, "enable ssl")
 	flag.Var(&framework.TestProfiles, "test-profiles", "Test Profiles to test")
 }

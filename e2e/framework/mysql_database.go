@@ -18,6 +18,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"strings"
+	"time"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 
@@ -36,15 +37,23 @@ const (
 	RequiredSecureTransportON  = "ON"
 	RequiredSecureTransportOFF = "OFF"
 	TLSCustomConfig            = "custom"
-	dbName                     = "mysql"
+	DBMySQL                    = "mysql"
 	MySQLRootUser              = "root"
-	MySQLRequiredSSLUser       = "ssl-user"
-	MySQLRequiredSSLPassword   = "ssl-pass"
+	MySQLRequiredSSLUser       = "ssl-User"
+	MySQLRequiredSSLPassword   = "not@secret"
 )
 
-type KubedbMySQLTable struct {
-	Id   int64
-	Name string `xorm:"varchar(25) not null unique 'usr_name' comment('NickName')"`
+//type KubedbMySQLTable struct {
+//	Id   int64
+//	Name string `xorm:"varchar(25) not null unique 'usr_name' comment('NickName')"`
+//}
+
+type DatabaseConnectionInfo struct {
+	StatefulSetOrdinal int
+	ClientPodIndex     int
+	DatabaseName       string
+	User               string
+	Param              string
 }
 
 func (f *Framework) forwardPort(meta metav1.ObjectMeta, stsOrdinal, clientPodIndex int) (*portforward.Tunnel, error) {
@@ -69,124 +78,94 @@ func (f *Framework) forwardPort(meta metav1.ObjectMeta, stsOrdinal, clientPodInd
 	return tunnel, nil
 }
 
-// ================================ get mysql client with different configuration ==================================
-
-func (f *Framework) getMySQLClient(meta metav1.ObjectMeta, tunnel *portforward.Tunnel) (*xorm.Engine, error) {
+func (f *Framework) getMySQLClient(meta metav1.ObjectMeta, tunnel *portforward.Tunnel, dbInfo DatabaseConnectionInfo) (*xorm.Engine, error) {
 	mysql, err := f.GetMySQL(meta)
 	if err != nil {
 		return nil, err
 	}
+
 	pass, err := f.GetMySQLRootPassword(mysql)
 	if err != nil {
 		return nil, err
 	}
 
-	cnnstr := fmt.Sprintf("root:%v@tcp(127.0.0.1:%v)/%s", pass, tunnel.Local, dbName)
-	en, err := xorm.NewEngine("mysql", cnnstr)
-	if err != nil {
-		return en, err
-	}
-	en.ShowSQL(true)
-	return en, nil
-}
+	if strings.Contains(dbInfo.Param, "tls") {
+		serverSecret, err := f.kubeClient.CoreV1().Secrets(f.Namespace()).Get(context.TODO(), mysql.MustCertSecretName(api.MySQLServerCert), metav1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
+		cacrt := serverSecret.Data["ca.crt"]
+		certPool := x509.NewCertPool()
+		certPool.AppendCertsFromPEM(cacrt)
+		// get client-secret
+		clientSecret, err := f.kubeClient.CoreV1().Secrets(f.Namespace()).Get(context.TODO(), mysql.MustCertSecretName(api.MySQLClientCert), metav1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
+		ccrt := clientSecret.Data["tls.crt"]
+		ckey := clientSecret.Data["tls.key"]
+		cert, err := tls.X509KeyPair(ccrt, ckey)
+		if err != nil {
+			return nil, err
+		}
+		var clientCert []tls.Certificate
+		clientCert = append(clientCert, cert)
+		// tls custom setup
+		if dbInfo.User == MySQLRootUser {
+			err = sql_driver.RegisterTLSConfig(TLSCustomConfig, &tls.Config{
+				RootCAs: certPool,
+			})
+			if err != nil {
+				return nil, err
+			}
+		}
 
-func (f *Framework) getMySQLClientWithConfiguredRootCAs(meta metav1.ObjectMeta, tunnel *portforward.Tunnel, param string) (*xorm.Engine, error) {
-	mysql, err := f.GetMySQL(meta)
-	if err != nil {
-		return nil, err
-	}
-	pass, err := f.GetMySQLRootPassword(mysql)
-	if err != nil {
-		return nil, err
-	}
-	// get server-secret
-	secret, err := f.kubeClient.CoreV1().Secrets(f.Namespace()).Get(context.TODO(), mysql.MustCertSecretName(api.MySQLServerCert), metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	cacrt := secret.Data["ca.crt"]
-	certPool := x509.NewCertPool()
-	certPool.AppendCertsFromPEM(cacrt)
-	// tls custom setup
-	err = sql_driver.RegisterTLSConfig(TLSCustomConfig, &tls.Config{
-		RootCAs: certPool,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	cnnstr := fmt.Sprintf("%s:%v@tcp(127.0.0.1:%v)/%s?%s", MySQLRootUser, pass, tunnel.Local, dbName, param)
-	en, err := xorm.NewEngine("mysql", cnnstr)
-	en.ShowSQL(true)
-	return en, err
-}
-
-func (f *Framework) getMySQLClientWithConfiguredClientCerts(meta metav1.ObjectMeta, tunnel *portforward.Tunnel, param string) (*xorm.Engine, error) {
-	mysql, err := f.GetMySQL(meta)
-	if err != nil {
-		return nil, err
-	}
-	serverSecret, err := f.kubeClient.CoreV1().Secrets(f.Namespace()).Get(context.TODO(), mysql.MustCertSecretName(api.MySQLServerCert), metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	cacrt := serverSecret.Data["ca.crt"]
-	certPool := x509.NewCertPool()
-	certPool.AppendCertsFromPEM(cacrt)
-
-	// get client-secret
-	clientSecret, err := f.kubeClient.CoreV1().Secrets(f.Namespace()).Get(context.TODO(), mysql.MustCertSecretName(api.MySQLClientCert), metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	ccrt := clientSecret.Data["tls.crt"]
-	ckey := clientSecret.Data["tls.key"]
-	cert, err := tls.X509KeyPair(ccrt, ckey)
-	if err != nil {
-		return nil, err
-	}
-	var clientCert []tls.Certificate
-	clientCert = append(clientCert, cert)
-
-	// tls custom setup
-	err = sql_driver.RegisterTLSConfig(TLSCustomConfig, &tls.Config{
-		RootCAs:      certPool,
-		Certificates: clientCert,
-	})
-	if err != nil {
-		return nil, err
+		if dbInfo.User == MySQLRequiredSSLUser {
+			pass = MySQLRequiredSSLPassword
+			// tls custom setup
+			err = sql_driver.RegisterTLSConfig(TLSCustomConfig, &tls.Config{
+				RootCAs:      certPool,
+				Certificates: clientCert,
+			})
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
-	cnnstr := fmt.Sprintf("%v:%v@tcp(127.0.0.1:%v)/%s?%s", MySQLRequiredSSLUser, MySQLRequiredSSLPassword, tunnel.Local, dbName, param)
+	cnnstr := fmt.Sprintf("%v:%v@tcp(127.0.0.1:%v)/%s?%s", dbInfo.User, pass, tunnel.Local, dbInfo.DatabaseName, dbInfo.Param)
 	en, err := xorm.NewEngine("mysql", cnnstr)
 	en.ShowSQL(true)
 	return en, err
+
 }
 
-// ==========================================================================================================================
-
-func (f *Framework) EventuallyCreateUserWithRequiredSSL(meta metav1.ObjectMeta, param string) GomegaAsyncAssertion {
+func (f *Framework) EventuallyCreateUserWithRequiredSSL(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) GomegaAsyncAssertion {
 	sql := fmt.Sprintf("CREATE USER '%s'@'%s' IDENTIFIED BY '%s' REQUIRE SSL;", MySQLRequiredSSLUser, "%", MySQLRequiredSSLPassword)
 	privilege := fmt.Sprintf("GRANT ALL ON mysql.* TO '%s'@'%s';", MySQLRequiredSSLUser, "%")
 	flush := "FLUSH PRIVILEGES;"
 	return Eventually(
 		func() bool {
-			tunnel, err := f.forwardPort(meta, 0, 0)
+			tunnel, err := f.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
 			if err != nil {
 				return false
 			}
 			defer tunnel.Close()
 
-			en, err := f.getMySQLClientWithConfiguredRootCAs(meta, tunnel, param)
+			en, err := f.getMySQLClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return false
 			}
 			defer en.Close()
-			// create new user
+
+			if err := en.Ping(); err != nil {
+				return false
+			}
+			// create new User
 			if _, err = en.Query(sql); err != nil {
 				return false
 			}
-			// grand all permission for the new user
+			// grand all permission for the new User
 			if _, err = en.Query(privilege); err != nil {
 				return false
 			}
@@ -203,18 +182,18 @@ func (f *Framework) EventuallyCreateUserWithRequiredSSL(meta metav1.ObjectMeta, 
 	)
 }
 
-func (f *Framework) EventuallyCheckSSLSettings(meta metav1.ObjectMeta, param, config string) GomegaAsyncAssertion {
+func (f *Framework) EventuallyCheckSSLSettings(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo, config string) GomegaAsyncAssertion {
 	sslConfigVarPair := strings.Split(config, "=")
 	sql := fmt.Sprintf("SHOW VARIABLES LIKE '%s';", sslConfigVarPair[0])
 	return Eventually(
 		func() []map[string][]byte {
-			tunnel, err := f.forwardPort(meta, 0, 0)
+			tunnel, err := f.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
 			if err != nil {
 				return nil
 			}
 			defer tunnel.Close()
 
-			en, err := f.getMySQLClientWithConfiguredRootCAs(meta, tunnel, param)
+			en, err := f.getMySQLClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return nil
 			}
@@ -231,33 +210,18 @@ func (f *Framework) EventuallyCheckSSLSettings(meta metav1.ObjectMeta, param, co
 	)
 }
 
-func (f *Framework) EventuallyDBConnection(meta metav1.ObjectMeta, stsOrdinal, clientPodIndex int, user, param string) GomegaAsyncAssertion {
+func (f *Framework) EventuallyDBConnection(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			tunnel, err := f.forwardPort(meta, stsOrdinal, clientPodIndex)
+			tunnel, err := f.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
 			if err != nil {
 				return false
 			}
 			defer tunnel.Close()
 
-			var en *xorm.Engine
-			if user == MySQLRequiredSSLUser && strings.Contains(param, "tls=") {
-				en, err = f.getMySQLClientWithConfiguredClientCerts(meta, tunnel, param)
-				if err != nil {
-					return false
-				}
-			}
-			if user == MySQLRootUser && strings.Contains(param, "tls=") {
-				en, err = f.getMySQLClientWithConfiguredRootCAs(meta, tunnel, param)
-				if err != nil {
-					return false
-				}
-			}
-			if user == MySQLRootUser && param == "" {
-				en, err = f.getMySQLClient(meta, tunnel)
-				if err != nil {
-					return false
-				}
+			en, err := f.getMySQLClient(meta, tunnel, dbInfo)
+			if err != nil {
+				return false
 			}
 			defer en.Close()
 
@@ -271,74 +235,44 @@ func (f *Framework) EventuallyDBConnection(meta metav1.ObjectMeta, stsOrdinal, c
 	)
 }
 
-func (f *Framework) EventuallyCreateTable(meta metav1.ObjectMeta, stsOrdinal, clientPodIndex int, user, param string) GomegaAsyncAssertion {
+func (f *Framework) EventuallyCreateTable(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			tunnel, err := f.forwardPort(meta, stsOrdinal, clientPodIndex)
+			tunnel, err := f.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
 			if err != nil {
 				return false
 			}
 			defer tunnel.Close()
 
-			var en *xorm.Engine
-			if user == MySQLRequiredSSLUser && strings.Contains(param, "tls=") {
-				en, err = f.getMySQLClientWithConfiguredClientCerts(meta, tunnel, param)
-				if err != nil {
-					return false
-				}
-			}
-			if user == MySQLRootUser && strings.Contains(param, "tls=") {
-				en, err = f.getMySQLClientWithConfiguredRootCAs(meta, tunnel, param)
-				if err != nil {
-					return false
-				}
-			}
-			if user == MySQLRootUser && param == "" {
-				en, err = f.getMySQLClient(meta, tunnel)
-				if err != nil {
-					return false
-				}
+			en, err := f.getMySQLClient(meta, tunnel, dbInfo)
+			if err != nil {
+				return false
 			}
 			defer en.Close()
 
 			if err := en.Ping(); err != nil {
 				return false
 			}
-			return en.Charset("utf8mb4").StoreEngine("InnoDB").Sync2(new(KubedbMySQLTable)) == nil
+			return en.Charset("utf8mb4").StoreEngine("InnoDB").Sync2(new(KubedbTable)) == nil
 		},
 		Timeout,
 		RetryInterval,
 	)
 }
 
-func (f *Framework) EventuallyInsertRow(meta metav1.ObjectMeta, stsOrdinal, clientPodIndex int, user, param string, total int) GomegaAsyncAssertion {
+func (f *Framework) EventuallyInsertRow(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo, total int) GomegaAsyncAssertion {
 	count := 0
 	return Eventually(
 		func() bool {
-			tunnel, err := f.forwardPort(meta, stsOrdinal, clientPodIndex)
+			tunnel, err := f.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
 			if err != nil {
 				return false
 			}
 			defer tunnel.Close()
 
-			var en *xorm.Engine
-			if user == MySQLRequiredSSLUser && strings.Contains(param, "tls=") {
-				en, err = f.getMySQLClientWithConfiguredClientCerts(meta, tunnel, param)
-				if err != nil {
-					return false
-				}
-			}
-			if user == MySQLRootUser && strings.Contains(param, "tls=") {
-				en, err = f.getMySQLClientWithConfiguredRootCAs(meta, tunnel, param)
-				if err != nil {
-					return false
-				}
-			}
-			if user == MySQLRootUser && param == "" {
-				en, err = f.getMySQLClient(meta, tunnel)
-				if err != nil {
-					return false
-				}
+			en, err := f.getMySQLClient(meta, tunnel, dbInfo)
+			if err != nil {
+				return false
 			}
 			defer en.Close()
 
@@ -347,7 +281,7 @@ func (f *Framework) EventuallyInsertRow(meta metav1.ObjectMeta, stsOrdinal, clie
 			}
 
 			for i := count; i < total; i++ {
-				if _, err := en.Insert(&KubedbMySQLTable{
+				if _, err := en.Insert(&KubedbTable{
 					//Id:   int64(i),
 					Name: fmt.Sprintf("KubedbName-%v", i),
 				}); err != nil {
@@ -362,33 +296,18 @@ func (f *Framework) EventuallyInsertRow(meta metav1.ObjectMeta, stsOrdinal, clie
 	)
 }
 
-func (f *Framework) EventuallyCountRow(meta metav1.ObjectMeta, stsOrdinal, clientPodIndex int, user, param string) GomegaAsyncAssertion {
+func (f *Framework) EventuallyCountRow(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) GomegaAsyncAssertion {
 	return Eventually(
 		func() int {
-			tunnel, err := f.forwardPort(meta, stsOrdinal, clientPodIndex)
+			tunnel, err := f.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
 			if err != nil {
 				return -1
 			}
 			defer tunnel.Close()
 
-			var en *xorm.Engine
-			if user == MySQLRequiredSSLUser && strings.Contains(param, "tls=") {
-				en, err = f.getMySQLClientWithConfiguredClientCerts(meta, tunnel, param)
-				if err != nil {
-					return -1
-				}
-			}
-			if user == MySQLRootUser && strings.Contains(param, "tls=") {
-				en, err = f.getMySQLClientWithConfiguredRootCAs(meta, tunnel, param)
-				if err != nil {
-					return -1
-				}
-			}
-			if user == MySQLRootUser && param == "" {
-				en, err = f.getMySQLClient(meta, tunnel)
-				if err != nil {
-					return -1
-				}
+			en, err := f.getMySQLClient(meta, tunnel, dbInfo)
+			if err != nil {
+				return -1
 			}
 			defer en.Close()
 
@@ -396,7 +315,7 @@ func (f *Framework) EventuallyCountRow(meta metav1.ObjectMeta, stsOrdinal, clien
 				return -1
 			}
 
-			kubedb := new(KubedbMySQLTable)
+			kubedb := new(KubedbTable)
 			total, err := en.Count(kubedb)
 			if err != nil {
 				return -1
@@ -408,33 +327,18 @@ func (f *Framework) EventuallyCountRow(meta metav1.ObjectMeta, stsOrdinal, clien
 	)
 }
 
-func (f *Framework) EventuallyONLINEMembersCount(meta metav1.ObjectMeta, stsOrdinal, clientPodIndex int, user, param string) GomegaAsyncAssertion {
+func (f *Framework) EventuallyONLINEMembersCount(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) GomegaAsyncAssertion {
 	return Eventually(
 		func() int {
-			tunnel, err := f.forwardPort(meta, stsOrdinal, clientPodIndex)
+			tunnel, err := f.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
 			if err != nil {
 				return -1
 			}
 			defer tunnel.Close()
 
-			var en *xorm.Engine
-			if user == MySQLRequiredSSLUser && strings.Contains(param, "tls=") {
-				en, err = f.getMySQLClientWithConfiguredClientCerts(meta, tunnel, param)
-				if err != nil {
-					return -1
-				}
-			}
-			if user == MySQLRootUser && strings.Contains(param, "tls=") {
-				en, err = f.getMySQLClientWithConfiguredRootCAs(meta, tunnel, param)
-				if err != nil {
-					return -1
-				}
-			}
-			if user == MySQLRootUser && param == "" {
-				en, err = f.getMySQLClient(meta, tunnel)
-				if err != nil {
-					return -1
-				}
+			en, err := f.getMySQLClient(meta, tunnel, dbInfo)
+			if err != nil {
+				return -1
 			}
 			defer en.Close()
 
@@ -454,34 +358,19 @@ func (f *Framework) EventuallyONLINEMembersCount(meta metav1.ObjectMeta, stsOrdi
 	)
 }
 
-func (f *Framework) EventuallyDatabaseVersionUpdated(meta metav1.ObjectMeta, stsOrdinal, clientPodIndex int, targetedVersion string, user, param string) GomegaAsyncAssertion {
+func (f *Framework) EventuallyDatabaseVersionUpdated(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo, targetedVersion string) GomegaAsyncAssertion {
 	query := `SHOW VARIABLES LIKE "version";`
 	return Eventually(
 		func() bool {
-			tunnel, err := f.forwardPort(meta, stsOrdinal, clientPodIndex)
+			tunnel, err := f.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
 			if err != nil {
 				return false
 			}
 			defer tunnel.Close()
 
-			var en *xorm.Engine
-			if user == MySQLRequiredSSLUser && strings.Contains(param, "tls=") {
-				en, err = f.getMySQLClientWithConfiguredClientCerts(meta, tunnel, param)
-				if err != nil {
-					return false
-				}
-			}
-			if user == MySQLRootUser && strings.Contains(param, "tls=") {
-				en, err = f.getMySQLClientWithConfiguredRootCAs(meta, tunnel, param)
-				if err != nil {
-					return false
-				}
-			}
-			if user == MySQLRootUser && param == "" {
-				en, err = f.getMySQLClient(meta, tunnel)
-				if err != nil {
-					return false
-				}
+			en, err := f.getMySQLClient(meta, tunnel, dbInfo)
+			if err != nil {
+				return false
 			}
 			defer en.Close()
 
@@ -501,5 +390,37 @@ func (f *Framework) EventuallyDatabaseVersionUpdated(meta metav1.ObjectMeta, sts
 		},
 		Timeout,
 		RetryInterval,
+	)
+}
+
+func (f *Framework) EventuallyMySQLVariable(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo, config string) GomegaAsyncAssertion {
+	configPair := strings.Split(config, "=")
+	sql := fmt.Sprintf("SHOW VARIABLES LIKE '%s';", configPair[0])
+	return Eventually(
+		func() []map[string][]byte {
+			tunnel, err := f.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
+			if err != nil {
+				return nil
+			}
+			defer tunnel.Close()
+
+			en, err := f.getMySQLClient(meta, tunnel, dbInfo)
+			if err != nil {
+				return nil
+			}
+			defer en.Close()
+
+			if err := en.Ping(); err != nil {
+				return nil
+			}
+
+			results, err := en.Query(sql)
+			if err != nil {
+				return nil
+			}
+			return results
+		},
+		time.Minute*5,
+		time.Second*5,
 	)
 }

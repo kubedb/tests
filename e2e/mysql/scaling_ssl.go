@@ -110,15 +110,28 @@ var _ = Describe("MySQL", func() {
 					}
 				})
 				Expect(err).NotTo(HaveOccurred())
+				dbInfo := framework.DatabaseConnectionInfo{
+					StatefulSetOrdinal: 0,
+					ClientPodIndex:     0,
+					DatabaseName:       framework.DBMySQL,
+					User:               framework.MySQLRootUser,
+					Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+				}
+
+				// Create a mysql User with required SSL
+				By("Create mysql User with required SSL")
+				fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
+				dbInfo.User = framework.MySQLRequiredSSLUser
+				fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
 
 				By("Creating Table")
-				fi.EventuallyCreateTable(my.ObjectMeta, 0, 0, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(BeTrue())
+				fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
 
 				By("Inserting Rows")
-				fi.EventuallyInsertRow(my.ObjectMeta, 0, 0, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig), 3).Should(BeTrue())
+				fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
 
 				By("Checking Row Count of Table")
-				fi.EventuallyCountRow(my.ObjectMeta, 0, 0, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(Equal(3))
+				fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 
 				By("Configuring MySQL group member scaled up")
 				myORUp := fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
@@ -132,7 +145,9 @@ var _ = Describe("MySQL", func() {
 				By("Checking MySQL horizontal scaled up")
 				for i := int32(0); i < *myORUp.Spec.HorizontalScaling.Member; i++ {
 					By(fmt.Sprintf("Checking ONLINE member count from Pod '%s-%d'", my.Name, i))
-					fi.EventuallyONLINEMembersCount(my.ObjectMeta, 0, int(i), framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(Equal(int(*myORUp.Spec.HorizontalScaling.Member)))
+					dbInfo.ClientPodIndex = int(1)
+					dbInfo.User = framework.MySQLRootUser
+					fi.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*myORUp.Spec.HorizontalScaling.Member)))
 				}
 
 				By("Configuring MySQL group member scaled down")
@@ -147,12 +162,16 @@ var _ = Describe("MySQL", func() {
 				By("Checking MySQL horizontal scaled down")
 				for i := int32(0); i < *myORDown.Spec.HorizontalScaling.Member; i++ {
 					By(fmt.Sprintf("Checking ONLINE member count from Pod '%s-%d'", my.Name, i))
-					fi.EventuallyONLINEMembersCount(my.ObjectMeta, 0, int(i), framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(Equal(int(*myORDown.Spec.HorizontalScaling.Member)))
+					dbInfo.ClientPodIndex = int(i)
+					dbInfo.User = framework.MySQLRootUser
+					fi.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*myORDown.Spec.HorizontalScaling.Member)))
 				}
 
 				// Retrieve Inserted Data
 				By("Checking Row Count of Table")
-				fi.EventuallyCountRow(my.ObjectMeta, 0, 3, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(Equal(3))
+				dbInfo.ClientPodIndex = int(3)
+				dbInfo.User = framework.MySQLRequiredSSLUser
+				fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 			})
 		})
 
@@ -195,15 +214,29 @@ var _ = Describe("MySQL", func() {
 					}
 				})
 				Expect(err).NotTo(HaveOccurred())
+				dbInfo := framework.DatabaseConnectionInfo{
+					StatefulSetOrdinal: 0,
+					ClientPodIndex:     0,
+					DatabaseName:       framework.DBMySQL,
+					User:               framework.MySQLRootUser,
+					Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+				}
+				fi.EventuallyDBReady(my, dbInfo)
+
+				// Create a mysql User with required SSL
+				By("Create mysql User with required SSL")
+				fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
+				dbInfo.User = framework.MySQLRequiredSSLUser
+				fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
 
 				By("Creating Table")
-				fi.EventuallyCreateTable(my.ObjectMeta, 0, 0, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(BeTrue())
+				fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
 
 				By("Inserting Rows")
-				fi.EventuallyInsertRow(my.ObjectMeta, 0, 0, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig), 3).Should(BeTrue())
+				fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
 
 				By("Checking Row Count of Table")
-				fi.EventuallyCountRow(my.ObjectMeta, 0, 0, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(Equal(3))
+				fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 
 				// Vertical Scaling MySQL resources
 				myOR := fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
@@ -229,7 +262,7 @@ var _ = Describe("MySQL", func() {
 
 				// Retrieve Inserted Data
 				By("Checking Row Count of Table")
-				fi.EventuallyCountRow(my.ObjectMeta, 0, 0, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(Equal(3))
+				fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 			})
 		})
 		Context("Vertical scale", func() {
@@ -279,15 +312,29 @@ var _ = Describe("MySQL", func() {
 					}
 				})
 				Expect(err).NotTo(HaveOccurred())
+				dbInfo := framework.DatabaseConnectionInfo{
+					StatefulSetOrdinal: 0,
+					ClientPodIndex:     0,
+					DatabaseName:       framework.DBMySQL,
+					User:               framework.MySQLRootUser,
+					Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+				}
+				fi.EventuallyDBReady(my, dbInfo)
+
+				// Create a mysql User with required SSL
+				By("Create mysql User with required SSL")
+				fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
+				dbInfo.User = framework.MySQLRequiredSSLUser
+				fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
 
 				By("Creating Table")
-				fi.EventuallyCreateTable(my.ObjectMeta, 0, 0, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(BeTrue())
+				fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
 
 				By("Inserting Rows")
-				fi.EventuallyInsertRow(my.ObjectMeta, 0, 0, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig), 3).Should(BeTrue())
+				fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
 
 				By("Checking Row Count of Table")
-				fi.EventuallyCountRow(my.ObjectMeta, 0, 0, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(Equal(3))
+				fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 
 				// Vertical Scaling MySQL resources
 				myOR := fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
@@ -313,7 +360,7 @@ var _ = Describe("MySQL", func() {
 
 				// Retrieve Inserted Data
 				By("Checking Row Count of Table")
-				fi.EventuallyCountRow(my.ObjectMeta, 0, 0, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(Equal(3))
+				fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 			})
 		})
 	})

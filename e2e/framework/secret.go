@@ -214,7 +214,7 @@ func (f *Framework) CheckSecret(secret *core.Secret) error {
 }
 
 func (i *Invocation) SecretForDatabaseAuthentication(meta metav1.ObjectMeta, mangedByKubeDB bool) *core.Secret {
-	//mangedByKubeDB mimics a secret created and manged by kubedb and not user.
+	//mangedByKubeDB mimics a secret created and manged by kubedb and not User.
 	// It should get deleted during wipeout
 	randPassword := ""
 

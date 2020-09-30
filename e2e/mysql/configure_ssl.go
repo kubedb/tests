@@ -103,6 +103,14 @@ var _ = Describe("MySQL TLS/SSL", func() {
 						fi.AddMySQLMonitor(in)
 					})
 					Expect(err).NotTo(HaveOccurred())
+					dbInfo := framework.DatabaseConnectionInfo{
+						StatefulSetOrdinal: 0,
+						ClientPodIndex:     0,
+						DatabaseName:       framework.DBMySQL,
+						User:               framework.MySQLRootUser,
+						Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+					}
+					fi.EventuallyDBReady(my, dbInfo)
 
 					By("Verify exporter")
 					err = fi.VerifyMySQLExporter(my.ObjectMeta, my.Spec.Version)
@@ -161,6 +169,14 @@ var _ = Describe("MySQL TLS/SSL", func() {
 						fi.AddMySQLMonitor(in)
 					})
 					Expect(err).NotTo(HaveOccurred())
+					dbInfo := framework.DatabaseConnectionInfo{
+						StatefulSetOrdinal: 0,
+						ClientPodIndex:     0,
+						DatabaseName:       framework.DBMySQL,
+						User:               framework.MySQLRootUser,
+						Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+					}
+					fi.EventuallyDBReady(my, dbInfo)
 
 					By("Verify exporter")
 					err = fi.VerifyMySQLExporter(my.ObjectMeta, my.Spec.Version)
@@ -212,15 +228,29 @@ var _ = Describe("MySQL TLS/SSL", func() {
 							}
 						})
 						Expect(err).NotTo(HaveOccurred())
+						dbInfo := framework.DatabaseConnectionInfo{
+							StatefulSetOrdinal: 0,
+							ClientPodIndex:     0,
+							DatabaseName:       framework.DBMySQL,
+							User:               framework.MySQLRootUser,
+							Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+						}
+						fi.EventuallyDBReady(my, dbInfo)
+
+						// Create a mysql User with required SSL
+						By("Create mysql User with required SSL")
+						fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
+						dbInfo.User = framework.MySQLRequiredSSLUser
+						fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
 
 						By("Creating Table")
-						fi.EventuallyCreateTable(my.ObjectMeta, 0, 0, framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(BeTrue())
+						fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
 
 						By("Inserting Rows")
-						fi.EventuallyInsertRow(my.ObjectMeta, 0, 0, framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig), 3).Should(BeTrue())
+						fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
 
 						By("Checking Row Count of Table")
-						fi.EventuallyCountRow(my.ObjectMeta, 0, 0, framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(Equal(3))
+						fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 					})
 				})
 
@@ -273,15 +303,29 @@ var _ = Describe("MySQL TLS/SSL", func() {
 							}
 						})
 						Expect(err).NotTo(HaveOccurred())
+						dbInfo := framework.DatabaseConnectionInfo{
+							StatefulSetOrdinal: 0,
+							ClientPodIndex:     0,
+							DatabaseName:       framework.DBMySQL,
+							User:               framework.MySQLRootUser,
+							Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+						}
+						fi.EventuallyDBReady(my, dbInfo)
+
+						// Create a mysql User with required SSL
+						By("Create mysql User with required SSL")
+						fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
+						dbInfo.User = framework.MySQLRequiredSSLUser
+						fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
 
 						By("Creating Table")
-						fi.EventuallyCreateTable(my.ObjectMeta, 0, 0, framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(BeTrue())
+						fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
 
 						By("Inserting Rows")
-						fi.EventuallyInsertRow(my.ObjectMeta, 0, 0, framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig), 3).Should(BeTrue())
+						fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
 
 						By("Checking Row Count of Table")
-						fi.EventuallyCountRow(my.ObjectMeta, 0, 0, framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(Equal(3))
+						fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 					})
 				})
 			})
@@ -327,15 +371,29 @@ var _ = Describe("MySQL TLS/SSL", func() {
 							}
 						})
 						Expect(err).NotTo(HaveOccurred())
+						dbInfo := framework.DatabaseConnectionInfo{
+							StatefulSetOrdinal: 0,
+							ClientPodIndex:     0,
+							DatabaseName:       framework.DBMySQL,
+							User:               framework.MySQLRootUser,
+							Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+						}
+						fi.EventuallyDBReady(my, dbInfo)
+
+						// Create a mysql User with required SSL
+						By("Create mysql User with required SSL")
+						fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
+						dbInfo.User = framework.MySQLRequiredSSLUser
+						fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
 
 						By("Creating Table")
-						fi.EventuallyCreateTable(my.ObjectMeta, 0, 0, framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(BeTrue())
+						fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
 
 						By("Inserting Rows")
-						fi.EventuallyInsertRow(my.ObjectMeta, 0, 0, framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig), 3).Should(BeTrue())
+						fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
 
 						By("Checking Row Count of Table")
-						fi.EventuallyCountRow(my.ObjectMeta, 0, 0, framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(Equal(3))
+						fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 					})
 				})
 
@@ -388,15 +446,29 @@ var _ = Describe("MySQL TLS/SSL", func() {
 							}
 						})
 						Expect(err).NotTo(HaveOccurred())
+						dbInfo := framework.DatabaseConnectionInfo{
+							StatefulSetOrdinal: 0,
+							ClientPodIndex:     0,
+							DatabaseName:       framework.DBMySQL,
+							User:               framework.MySQLRootUser,
+							Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+						}
+						fi.EventuallyDBReady(my, dbInfo)
+
+						// Create a mysql User with required SSL
+						By("Create mysql User with required SSL")
+						fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
+						dbInfo.User = framework.MySQLRequiredSSLUser
+						fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
 
 						By("Creating Table")
-						fi.EventuallyCreateTable(my.ObjectMeta, 0, 0, framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(BeTrue())
+						fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
 
 						By("Inserting Rows")
-						fi.EventuallyInsertRow(my.ObjectMeta, 0, 0, framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig), 3).Should(BeTrue())
+						fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
 
 						By("Checking Row Count of Table")
-						fi.EventuallyCountRow(my.ObjectMeta, 0, 0, framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(Equal(3))
+						fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 					})
 				})
 			})

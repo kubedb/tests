@@ -47,6 +47,7 @@ import (
 	meta_util "kmodules.xyz/client-go/meta"
 	"kmodules.xyz/client-go/tools/portforward"
 	mona "kmodules.xyz/monitoring-agent-api/api/v1"
+	"stash.appscode.dev/apimachinery/apis"
 )
 
 const (
@@ -335,6 +336,14 @@ func getGVRAndObjectMeta(obj interface{}) (schema.GroupVersionResource, metav1.O
 		w.GetObjectKind().SetGroupVersionKind(core.SchemeGroupVersion.WithKind("Secret"))
 		gvk := w.GroupVersionKind()
 		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: "secrets"}, w.ObjectMeta, nil
+	case *core.Service:
+		w.GetObjectKind().SetGroupVersionKind(core.SchemeGroupVersion.WithKind(apis.KindService))
+		gvk := w.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: apis.ResourcePluralService}, w.ObjectMeta, nil
+	case *core.ConfigMap:
+		w.GetObjectKind().SetGroupVersionKind(core.SchemeGroupVersion.WithKind("ConfigMap"))
+		gvk := w.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: "configmaps"}, w.ObjectMeta, nil
 	case *cm_api.Issuer:
 		w.GetObjectKind().SetGroupVersionKind(cm_api.SchemeGroupVersion.WithKind(cm_api.IssuerKind))
 		gvk := w.GroupVersionKind()

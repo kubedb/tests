@@ -101,15 +101,30 @@ var _ = Describe("MySQL", func() {
 					}
 				})
 				Expect(err).NotTo(HaveOccurred())
+				// Database connection information
+				dbInfo := framework.DatabaseConnectionInfo{
+					StatefulSetOrdinal: 0,
+					ClientPodIndex:     0,
+					DatabaseName:       framework.DBMySQL,
+					User:               framework.MySQLRootUser,
+					Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+				}
+				fi.EventuallyDBReady(my, dbInfo)
+
+				// Create a mysql User with required SSL
+				By("Create mysql User with required SSL")
+				fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
+				dbInfo.User = framework.MySQLRequiredSSLUser
+				fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
 
 				By("Creating Table")
-				fi.EventuallyCreateTable(my.ObjectMeta, 0, 0, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(BeTrue())
+				fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
 
 				By("Inserting Rows")
-				fi.EventuallyInsertRow(my.ObjectMeta, 0, 0, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig), 3).Should(BeTrue())
+				fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
 
 				By("Checking Row Count of Table")
-				fi.EventuallyCountRow(my.ObjectMeta, 0, 0, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(Equal(3))
+				fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 				// Upgrade MySQL Version and waiting for success
 				myOR := fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
 					in.Spec.Type = opsapi.OpsRequestTypeUpgrade
@@ -121,11 +136,11 @@ var _ = Describe("MySQL", func() {
 				By("Checking MySQL version upgraded")
 				targetedVersion, err := fi.DBClient().CatalogV1alpha1().MySQLVersions().Get(context.TODO(), myOR.Spec.Upgrade.TargetVersion, metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
-				fi.EventuallyDatabaseVersionUpdated(my.ObjectMeta, 0, 0, targetedVersion.Spec.Version, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(BeTrue())
+				fi.EventuallyDatabaseVersionUpdated(my.ObjectMeta, dbInfo, targetedVersion.Spec.Version).Should(BeTrue())
 
 				// Retrieve Inserted Data
 				By("Checking Row Count of Table")
-				fi.EventuallyCountRow(my.ObjectMeta, 0, 0, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(Equal(3))
+				fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 			})
 		})
 		Context("MySQL Group Replication", func() {
@@ -176,15 +191,30 @@ var _ = Describe("MySQL", func() {
 						}
 					})
 					Expect(err).NotTo(HaveOccurred())
+					// Database connection information
+					dbInfo := framework.DatabaseConnectionInfo{
+						StatefulSetOrdinal: 0,
+						ClientPodIndex:     0,
+						DatabaseName:       framework.DBMySQL,
+						User:               framework.MySQLRootUser,
+						Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+					}
+					fi.EventuallyDBReady(my, dbInfo)
+
+					// Create a mysql User with required SSL
+					By("Create mysql User with required SSL")
+					fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
+					dbInfo.User = framework.MySQLRequiredSSLUser
+					fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
 
 					By("Creating Table")
-					fi.EventuallyCreateTable(my.ObjectMeta, 0, 0, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(BeTrue())
+					fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
 
 					By("Inserting Rows")
-					fi.EventuallyInsertRow(my.ObjectMeta, 0, 0, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig), 3).Should(BeTrue())
+					fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
 
 					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(my.ObjectMeta, 0, 0, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(Equal(3))
+					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 
 					// Upgrade MySQL Version and waiting for success
 					myOR := fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
@@ -197,11 +227,13 @@ var _ = Describe("MySQL", func() {
 					By("Checking MySQL version upgraded")
 					targetedVersion, err := fi.DBClient().CatalogV1alpha1().MySQLVersions().Get(context.TODO(), myOR.Spec.Upgrade.TargetVersion, metav1.GetOptions{})
 					Expect(err).NotTo(HaveOccurred())
-					fi.EventuallyDatabaseVersionUpdated(my.ObjectMeta, 1, 0, targetedVersion.Spec.Version, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(BeTrue())
+					// for major version upgrading, StatefulSet ordinal will be changed
+					dbInfo.StatefulSetOrdinal = 1
+					fi.EventuallyDatabaseVersionUpdated(my.ObjectMeta, dbInfo, targetedVersion.Spec.Version).Should(BeTrue())
 
 					// Retrieve Inserted Data
 					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(my.ObjectMeta, 1, 0, framework.MySQLRequiredSSLUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig)).Should(Equal(3))
+					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 				})
 			})
 		})

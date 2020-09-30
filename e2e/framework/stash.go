@@ -23,8 +23,10 @@ import (
 	"time"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
+	"kubedb.dev/tests/e2e/matcher"
 
 	"github.com/appscode/go/log"
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -74,9 +76,8 @@ func (i *Invocation) BackupConfiguration(dbMeta metav1.ObjectMeta, repo *stashV1
 	}
 }
 
-func (f *Framework) CreateBackupConfiguration(backupCfg *stashv1beta1.BackupConfiguration) error {
-	_, err := f.stashClient.StashV1beta1().BackupConfigurations(backupCfg.Namespace).Create(context.TODO(), backupCfg, metav1.CreateOptions{})
-	return err
+func (f *Framework) CreateBackupConfiguration(backupCfg *stashv1beta1.BackupConfiguration) (*stashv1beta1.BackupConfiguration, error) {
+	return f.stashClient.StashV1beta1().BackupConfigurations(backupCfg.Namespace).Create(context.TODO(), backupCfg, metav1.CreateOptions{})
 }
 
 func (f *Framework) DeleteBackupConfiguration(meta metav1.ObjectMeta) error {
@@ -168,10 +169,8 @@ func (i *Invocation) swiftBackend(dbMeta metav1.ObjectMeta, secretName string) s
 	}
 }
 
-func (f *Framework) CreateRepository(repo *stashV1alpha1.Repository) error {
-	_, err := f.stashClient.StashV1alpha1().Repositories(repo.Namespace).Create(context.TODO(), repo, metav1.CreateOptions{})
-
-	return err
+func (f *Framework) CreateRepository(repo *stashV1alpha1.Repository) (*stashV1alpha1.Repository, error) {
+	return f.stashClient.StashV1alpha1().Repositories(repo.Namespace).Create(context.TODO(), repo, metav1.CreateOptions{})
 }
 
 func (f *Framework) DeleteRepository(meta metav1.ObjectMeta) error {
@@ -227,9 +226,8 @@ func (i *Invocation) RestoreSession(dbMeta metav1.ObjectMeta, repo *stashV1alpha
 	}
 }
 
-func (f *Framework) CreateRestoreSession(restoreSession *stashv1beta1.RestoreSession) error {
-	_, err := f.stashClient.StashV1beta1().RestoreSessions(restoreSession.Namespace).Create(context.TODO(), restoreSession, metav1.CreateOptions{})
-	return err
+func (f *Framework) CreateRestoreSession(restoreSession *stashv1beta1.RestoreSession) (*stashv1beta1.RestoreSession, error) {
+	return f.stashClient.StashV1beta1().RestoreSessions(restoreSession.Namespace).Create(context.TODO(), restoreSession, metav1.CreateOptions{})
 }
 
 func (f Framework) DeleteRestoreSession(meta metav1.ObjectMeta) error {
@@ -263,4 +261,47 @@ func (f *Framework) getStashMGRestoreTaskName() string {
 		mongoVersion.Spec.Version = "4.0.11"
 	}
 	return "mongodb-restore-" + mongoVersion.Spec.Version
+}
+
+func (fi *Invocation) BackupDataIntoGCSBucket(dbMeta metav1.ObjectMeta) (*stashV1alpha1.Repository, error) {
+	By("Create Repository Secret")
+	secret := fi.SecretForBackend()
+	secret = fi.PatchSecretForRestic(secret)
+	secret, err := fi.CreateSecret(secret)
+	if err != nil {
+		return nil, err
+	}
+	fi.AppendToCleanupList(secret)
+
+	By("Create Repository")
+	repo := fi.Repository(dbMeta, secret.Name)
+	repo.Spec.Backend = store.Backend{
+		GCS: &store.GCSSpec{
+			Bucket: os.Getenv("GCS_BUCKET_NAME"),
+			Prefix: fmt.Sprintf("stash/%v/%v", dbMeta.Namespace, dbMeta.Name),
+		},
+		StorageSecretName: secret.Name,
+	}
+	repo, err = fi.CreateRepository(repo)
+	if err != nil {
+		return repo, err
+	}
+	fi.AppendToCleanupList(repo)
+
+	By("Create backupConfiguration")
+	bc := fi.BackupConfiguration(dbMeta, repo)
+	bc, err = fi.CreateBackupConfiguration(bc)
+	if err != nil {
+		return repo, err
+	}
+	fi.AppendToCleanupList(bc)
+	By("Check for snapshot count in stash-repository")
+	fi.EventuallySnapshotInRepository(repo.ObjectMeta).Should(matcher.MoreThan(2))
+
+	By("Pause BackupConfiguration to stop backup scheduling")
+	err = fi.PauseBackupConfiguration(bc.ObjectMeta)
+	if err != nil {
+		return repo, err
+	}
+	return repo, nil
 }
