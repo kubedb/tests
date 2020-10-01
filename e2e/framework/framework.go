@@ -19,6 +19,7 @@ package framework
 import (
 	"context"
 	"fmt"
+	"kmodules.xyz/client-go/tools/portforward"
 	"path/filepath"
 	"time"
 
@@ -75,6 +76,9 @@ type Framework struct {
 	StorageClass      string
 	CertStore         *certstore.CertStore
 	certManagerClient cm.Interface
+
+	// for RedisOpsRequest test
+	tunnel *portforward.Tunnel
 }
 
 func New(

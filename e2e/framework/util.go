@@ -20,6 +20,8 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"net/http"
 	"os"
 	"strings"
@@ -245,6 +247,51 @@ func (f *Framework) ForwardToPort(meta metav1.ObjectMeta, clientPodName string, 
 	}
 
 	return tunnel, nil
+}
+
+func ForwardPort(
+	kubeClient kubernetes.Interface,
+	restConfig *rest.Config,
+	meta metav1.ObjectMeta, clientPodName string, port int) (*portforward.Tunnel, error) {
+	tunnel := portforward.NewTunnel(
+		kubeClient.CoreV1().RESTClient(),
+		restConfig,
+		meta.Namespace,
+		clientPodName,
+		port,
+	)
+
+	if err := tunnel.ForwardPort(); err != nil {
+		return nil, err
+	}
+	return tunnel, nil
+}
+
+func FowardedPodsIPWithTunnel(
+	kubeClient kubernetes.Interface, restConfig *rest.Config,
+	redis *api.Redis) ([][]string, [][]*portforward.Tunnel, error) {
+
+	var (
+		rdAddresses [][]string
+		tunnels     [][]*portforward.Tunnel
+		err         error
+		podName     string
+	)
+	rdAddresses = make([][]string, int(*redis.Spec.Cluster.Master))
+	tunnels = make([][]*portforward.Tunnel, int(*redis.Spec.Cluster.Master))
+	for i := 0; i < int(*redis.Spec.Cluster.Master); i++ {
+		rdAddresses[i] = make([]string, int(*redis.Spec.Cluster.Replicas)+1)
+		tunnels[i] = make([]*portforward.Tunnel, int(*redis.Spec.Cluster.Replicas)+1)
+		for j := 0; j <= int(*redis.Spec.Cluster.Replicas); j++ {
+			podName = fmt.Sprintf("%s-shard%d-%d", redis.Name, i, j)
+			if tunnels[i][j], err = ForwardPort(kubeClient, restConfig, redis.ObjectMeta, podName, 6379); err != nil {
+				return nil, nil, err
+			}
+			rdAddresses[i][j] = fmt.Sprintf("%d", tunnels[i][j].Local)
+		}
+	}
+
+	return rdAddresses, tunnels, nil
 }
 
 func (fi *Invocation) PrintDebugInfoOnFailure() {

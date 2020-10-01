@@ -30,6 +30,7 @@ import (
 	"kubedb.dev/tests/e2e/framework"
 	_ "kubedb.dev/tests/e2e/mongodb"
 	_ "kubedb.dev/tests/e2e/mysql"
+	_ "kubedb.dev/tests/e2e/redis"
 
 	cm "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
 	. "github.com/onsi/ginkgo"
