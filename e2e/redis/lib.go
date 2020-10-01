@@ -1,7 +1,29 @@
+/*
+Copyright AppsCode Inc. and Contributors
+
+Licensed under the AppsCode Free Trial License 1.0.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://github.com/appscode/licenses/raw/1.0.0/AppsCode-Free-Trial-1.0.0.md
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 package redis
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
+	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha1"
+	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
+	"kubedb.dev/tests/e2e/framework"
+
 	rd "github.com/go-redis/redis"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -45,7 +67,7 @@ func (to *testOptions) getConfiguredClusterInfo() {
 	}
 }
 
-func(to *testOptions) clusterSlots() ([]rd.ClusterSlot, error) {
+func (to *testOptions) clusterSlots() ([]rd.ClusterSlot, error) {
 	var slots []rd.ClusterSlot
 	for i := range to.nodes {
 		for k := range to.nodes[i][0].SlotStart {
@@ -67,7 +89,7 @@ func(to *testOptions) clusterSlots() ([]rd.ClusterSlot, error) {
 	return slots, nil
 }
 
-func(to *testOptions) initializeCLusterClient() {
+func (to *testOptions) initializeCLusterClient() {
 	By("Initializing cluster client")
 	err := to.client.ForEachMaster(func(master *rd.Client) error {
 		return master.FlushDB().Err()
@@ -75,7 +97,7 @@ func(to *testOptions) initializeCLusterClient() {
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func(to *testOptions) createClusterClient() {
+func (to *testOptions) createClusterClient() {
 	By(fmt.Sprintf("Creating cluster client using ports %v", to.ports))
 	to.opt = &rd.ClusterOptions{
 		ClusterSlots:  to.clusterSlots,
@@ -113,7 +135,7 @@ func (to *testOptions) getValue() {
 	}, 30*time.Second).Should(Equal("VALUE"))
 }
 
-func (to *testOptions) createRedis () {
+func (to *testOptions) createRedis() {
 	By("Create Redis: " + to.redis.Name)
 	err := to.CreateRedis(to.redis)
 	Expect(err).NotTo(HaveOccurred())
@@ -129,9 +151,10 @@ func (to *testOptions) createRedis () {
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func (to *testOptions) shouldTestHorizontalOpsReq() {
+func (to *testOptions) shouldTestClusterOpsReq() {
 	// Create Redis
 	to.createRedis()
+	time.Sleep(1 * time.Minute)
 
 	to.getConfiguredClusterInfo()
 	to.createAndInitializeClusterClient()
@@ -145,7 +168,7 @@ func (to *testOptions) shouldTestHorizontalOpsReq() {
 	to.getValue()
 
 	// Scaling Database
-	By("Horizontal Scaling Redis")
+	By("Applying the OpsRequest")
 	_, err := to.CreateRedisOpsRequest(to.redisOpsReq)
 	Expect(err).NotTo(HaveOccurred())
 

@@ -128,7 +128,6 @@ func (f *Framework) CheckRedisAppBindingSpec(meta metav1.ObjectMeta) error {
 	return nil
 }
 
-
 // DeleteAppBinding deletes the custom appBinding that is created in test
 func (f *Framework) DeleteAppBinding(meta metav1.ObjectMeta) error {
 	return f.appCatalogClient.AppBindings(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInForeground())

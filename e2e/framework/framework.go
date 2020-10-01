@@ -38,6 +38,7 @@ import (
 	"k8s.io/client-go/rest"
 	ka "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	core_util "kmodules.xyz/client-go/core/v1"
+	"kmodules.xyz/client-go/tools/portforward"
 	appcat_cs "kmodules.xyz/custom-resources/client/clientset/versioned/typed/appcatalog/v1alpha1"
 	scs "stash.appscode.dev/apimachinery/client/clientset/versioned"
 )
@@ -51,8 +52,8 @@ var (
 	DockerRegistry   = "kubedbci"
 	DBType           = api.ResourceSingularMongoDB
 	TestProfiles     stringSlice
-	DBVersion        = "4.1.4-v1"
-	DBUpdatedVersion = "4.2.3"
+	DBVersion        = "4.0.6-v2"
+	DBUpdatedVersion = "5.0.3-v1"
 	PullInterval     = time.Second * 2
 	WaitTimeOut      = time.Minute * 3
 	StorageProvider  string

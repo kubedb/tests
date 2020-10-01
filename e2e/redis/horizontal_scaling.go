@@ -1,11 +1,11 @@
 /*
-Copyright The KubeDB Authors.
+Copyright AppsCode Inc. and Contributors
 
-Licensed under the Apache License, Version 2.0 (the "License");
+Licensed under the AppsCode Free Trial License 1.0.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+    https://github.com/appscode/licenses/raw/1.0.0/AppsCode-Free-Trial-1.0.0.md
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,21 +13,24 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package redis
 
 import (
 	"fmt"
+
+	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
+	"kubedb.dev/tests/e2e/framework"
+
 	rd "github.com/go-redis/redis"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/utils/pointer"
-	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
-	"kubedb.dev/tests/e2e/framework"
 )
 
-var _ = Describe("Horizontal Scaling", func() {
+var _ = Describe("Horizontal Scaling Redis", func() {
 	to := testOptions{}
-	testName := framework.HorizontalScaling
+	testName := framework.RedisHorizontalScaling
 	BeforeEach(func() {
 		to.Invocation = framework.NewInvocation()
 		if !runTestEnterprise(testName) {
@@ -60,7 +63,7 @@ var _ = Describe("Horizontal Scaling", func() {
 
 	Context("Scale up cluster master", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisClusterWithSpec(framework.DBUpdatedVersion, pointer.Int32Ptr(3), pointer.Int32Ptr(1))
+			to.redis = to.RedisClusterWithSpec(framework.DBVersion, pointer.Int32Ptr(3), pointer.Int32Ptr(1))
 			scalingSpec := &dbaapi.RedisHorizontalScalingSpec{
 				Master:   pointer.Int32Ptr(5),
 				Replicas: nil,
@@ -69,12 +72,12 @@ var _ = Describe("Horizontal Scaling", func() {
 		})
 
 		It("Should Scale up the master of Redis Cluster", func() {
-			to.shouldTestHorizontalOpsReq()
+			to.shouldTestClusterOpsReq()
 		})
 	})
 	Context("Scale down cluster master", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisClusterWithSpec(framework.DBUpdatedVersion, pointer.Int32Ptr(4), pointer.Int32Ptr(1))
+			to.redis = to.RedisClusterWithSpec(framework.DBVersion, pointer.Int32Ptr(4), pointer.Int32Ptr(1))
 			scalingSpec := &dbaapi.RedisHorizontalScalingSpec{
 				Master:   pointer.Int32Ptr(3),
 				Replicas: nil,
@@ -83,13 +86,13 @@ var _ = Describe("Horizontal Scaling", func() {
 		})
 
 		It("Should Scale down the master of Redis Cluster", func() {
-			to.shouldTestHorizontalOpsReq()
+			to.shouldTestClusterOpsReq()
 		})
 	})
 
 	Context("Scale up cluster replicas", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisClusterWithSpec(framework.DBUpdatedVersion, pointer.Int32Ptr(3), pointer.Int32Ptr(1))
+			to.redis = to.RedisClusterWithSpec(framework.DBVersion, pointer.Int32Ptr(3), pointer.Int32Ptr(1))
 			scalingSpec := &dbaapi.RedisHorizontalScalingSpec{
 				Master:   nil,
 				Replicas: pointer.Int32Ptr(3),
@@ -98,12 +101,12 @@ var _ = Describe("Horizontal Scaling", func() {
 		})
 
 		It("Should Scale up the replicas of Redis Cluster", func() {
-			to.shouldTestHorizontalOpsReq()
+			to.shouldTestClusterOpsReq()
 		})
 	})
 	Context("Scale down cluster replicas", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisClusterWithSpec(framework.DBUpdatedVersion, pointer.Int32Ptr(4), pointer.Int32Ptr(2))
+			to.redis = to.RedisClusterWithSpec(framework.DBVersion, pointer.Int32Ptr(4), pointer.Int32Ptr(2))
 			scalingSpec := &dbaapi.RedisHorizontalScalingSpec{
 				Master:   nil,
 				Replicas: pointer.Int32Ptr(1),
@@ -112,13 +115,13 @@ var _ = Describe("Horizontal Scaling", func() {
 		})
 
 		It("Should Scale down the replicas of Redis Cluster", func() {
-			to.shouldTestHorizontalOpsReq()
+			to.shouldTestClusterOpsReq()
 		})
 	})
 
 	Context("Scale up both cluster master & replicas", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisClusterWithSpec(framework.DBUpdatedVersion, pointer.Int32Ptr(3), pointer.Int32Ptr(1))
+			to.redis = to.RedisClusterWithSpec(framework.DBVersion, pointer.Int32Ptr(3), pointer.Int32Ptr(1))
 			scalingSpec := &dbaapi.RedisHorizontalScalingSpec{
 				Master:   pointer.Int32Ptr(5),
 				Replicas: pointer.Int32Ptr(1),
@@ -127,12 +130,12 @@ var _ = Describe("Horizontal Scaling", func() {
 		})
 
 		It("Should Scale up the master & replicas of Redis Cluster", func() {
-			to.shouldTestHorizontalOpsReq()
+			to.shouldTestClusterOpsReq()
 		})
 	})
 	Context("Scale down both cluster master & replicas", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisClusterWithSpec(framework.DBUpdatedVersion, pointer.Int32Ptr(4), pointer.Int32Ptr(3))
+			to.redis = to.RedisClusterWithSpec(framework.DBVersion, pointer.Int32Ptr(4), pointer.Int32Ptr(3))
 			scalingSpec := &dbaapi.RedisHorizontalScalingSpec{
 				Master:   pointer.Int32Ptr(3),
 				Replicas: pointer.Int32Ptr(1),
@@ -141,13 +144,13 @@ var _ = Describe("Horizontal Scaling", func() {
 		})
 
 		It("Should Scale down the master & replicas of Redis Cluster", func() {
-			to.shouldTestHorizontalOpsReq()
+			to.shouldTestClusterOpsReq()
 		})
 	})
 
 	Context("Scale up cluster master & Scale down cluster replicas", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisClusterWithSpec(framework.DBUpdatedVersion, pointer.Int32Ptr(3), pointer.Int32Ptr(3))
+			to.redis = to.RedisClusterWithSpec(framework.DBVersion, pointer.Int32Ptr(3), pointer.Int32Ptr(3))
 			scalingSpec := &dbaapi.RedisHorizontalScalingSpec{
 				Master:   pointer.Int32Ptr(4),
 				Replicas: pointer.Int32Ptr(1),
@@ -156,12 +159,12 @@ var _ = Describe("Horizontal Scaling", func() {
 		})
 
 		It("Should Scale up cluster master & Scale down cluster replicas", func() {
-			to.shouldTestHorizontalOpsReq()
+			to.shouldTestClusterOpsReq()
 		})
 	})
 	Context("Scale down cluster master & Scale up cluster replicas", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisClusterWithSpec(framework.DBUpdatedVersion, pointer.Int32Ptr(4), pointer.Int32Ptr(2))
+			to.redis = to.RedisClusterWithSpec(framework.DBVersion, pointer.Int32Ptr(4), pointer.Int32Ptr(2))
 			scalingSpec := &dbaapi.RedisHorizontalScalingSpec{
 				Master:   pointer.Int32Ptr(3),
 				Replicas: pointer.Int32Ptr(3),
@@ -170,7 +173,7 @@ var _ = Describe("Horizontal Scaling", func() {
 		})
 
 		It("Should Scale down cluster master & Scale up cluster replicas", func() {
-			to.shouldTestHorizontalOpsReq()
+			to.shouldTestClusterOpsReq()
 		})
 	})
 })

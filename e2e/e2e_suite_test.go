@@ -123,7 +123,7 @@ var _ = BeforeSuite(func() {
 	err = framework.RootFramework.CreateNamespace()
 	Expect(err).NotTo(HaveOccurred())
 
-	framework.RootFramework.EventuallyCRD().Should(Succeed())
+	//framework.RootFramework.EventuallyCRD().Should(Succeed())
 
 	if framework.StorageProvider == framework.StorageProviderMinio {
 		By("Deploy TLS secured Minio Server")
