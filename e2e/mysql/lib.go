@@ -16,6 +16,7 @@ package mysql
 import (
 	"strings"
 
+	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
 )
 
@@ -31,6 +32,6 @@ func runTestEnterprise(testProfile string) bool {
 		framework.TestProfiles.String() == framework.Enterprise
 }
 
-func runTestDatabaseType(testDB string) bool {
-	return strings.Compare(framework.DBType, testDB) == 0
+func runTestDatabaseType() bool {
+	return strings.Compare(framework.DBType, api.ResourceSingularMySQL) == 0
 }

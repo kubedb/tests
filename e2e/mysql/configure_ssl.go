@@ -38,7 +38,7 @@ var _ = Describe("MySQL TLS/SSL", func() {
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
 
-		if !runTestDatabaseType(api.ResourceSingularMySQL) {
+		if !runTestDatabaseType() {
 			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
 		}
 		if !runTestEnterprise(framework.Enterprise) {

@@ -34,6 +34,13 @@ var _ = Describe("MySQL", func() {
 
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
+
+		if !runTestDatabaseType() {
+			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
+		}
+		if !runTestCommunity(framework.TerminationPolicy) {
+			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.TerminationPolicy))
+		}
 	})
 
 	JustAfterEach(func() {
@@ -48,9 +55,9 @@ var _ = Describe("MySQL", func() {
 
 	Describe("Test", func() {
 
-		Context("Termination Policy DoNotTerminate", func() {
+		Context("Termination Policy", func() {
 
-			Context("with TerminationDoNotTerminate", func() {
+			Context("with TerminationPolicyDoNotTerminate", func() {
 
 				It("should work successfully", func() {
 					// MySQL ObjectMeta
@@ -114,8 +121,8 @@ var _ = Describe("MySQL", func() {
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
 						in.Name = myMeta.Name
 						in.Namespace = myMeta.Namespace
-						// Set termination policy DoNotTerminate to rejects attempt to delete database using ValidationWebhook
-						in.Spec.TerminationPolicy = api.TerminationPolicyDoNotTerminate
+						// Set termination policy Halt to leave the PVCs and secrets intact for reuse
+						in.Spec.TerminationPolicy = api.TerminationPolicyHalt
 					})
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
@@ -165,10 +172,10 @@ var _ = Describe("MySQL", func() {
 					fi.EventuallyMySQL(myMeta).Should(BeFalse())
 
 					By("Checking PVC hasn't been deleted")
-					fi.EventuallyPVCCount(myMeta).Should(Equal(1))
+					fi.EventuallyPVCCount(myMeta, api.ResourceKindMySQL).Should(Equal(1))
 
 					By("Checking Secret hasn't been deleted")
-					fi.EventuallyDBSecretCount(myMeta).Should(Equal(1))
+					fi.EventuallyDBSecretCount(myMeta, api.ResourceKindMySQL).Should(Equal(1))
 
 					// Create MySQL object again to resume it
 					_, err = fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -227,10 +234,10 @@ var _ = Describe("MySQL", func() {
 					fi.EventuallyMySQL(myMeta).Should(BeFalse())
 
 					By("Checking PVC has been deleted")
-					fi.EventuallyPVCCount(myMeta).Should(Equal(0))
+					fi.EventuallyPVCCount(myMeta, api.ResourceKindMySQL).Should(Equal(0))
 
 					By("Checking Secret hasn't been deleted")
-					fi.EventuallyDBSecretCount(myMeta).Should(Equal(1))
+					fi.EventuallyDBSecretCount(myMeta, api.ResourceKindMySQL).Should(Equal(1))
 
 					// Need to delete existing MySQL secret
 					secretMeta := metav1.ObjectMeta{
@@ -276,10 +283,10 @@ var _ = Describe("MySQL", func() {
 					fi.EventuallyMySQL(myMeta).Should(BeFalse())
 
 					By("Checking PVCs has been deleted")
-					fi.EventuallyPVCCount(myMeta).Should(Equal(0))
+					fi.EventuallyPVCCount(myMeta, api.ResourceKindMySQL).Should(Equal(0))
 
 					By("Checking Secrets has been deleted")
-					fi.EventuallyDBSecretCount(myMeta).Should(Equal(0))
+					fi.EventuallyDBSecretCount(myMeta, api.ResourceKindMySQL).Should(Equal(0))
 				})
 			})
 		})

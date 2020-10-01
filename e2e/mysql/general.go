@@ -17,6 +17,8 @@ limitations under the License.
 package mysql
 
 import (
+	"fmt"
+
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
 
@@ -35,6 +37,13 @@ var _ = Describe("MySQL", func() {
 
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
+
+		if !runTestDatabaseType() {
+			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
+		}
+		if !runTestCommunity(framework.General) {
+			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.General))
+		}
 	})
 
 	JustAfterEach(func() {
@@ -91,7 +100,7 @@ var _ = Describe("MySQL", func() {
 				fi.EventuallyMySQL(myMeta).Should(BeFalse())
 
 				// Create MySQL object again to resume it
-				_, err = fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
+				my, err = fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
 					in.Name = myMeta.Name
 					in.Namespace = myMeta.Namespace
 					// Set termination policy WipeOut to delete all mysql resources permanently
@@ -153,7 +162,7 @@ var _ = Describe("MySQL", func() {
 				if err != nil {
 					if kerr.IsNotFound(err) {
 						// MySQL was not created. Hence, rest of cleanup is not necessary.
-						log.Infof("Skipping rest of cleanup. Reason: MySQL %s/%s is not found.", myMeta.Name)
+						log.Infof("Skipping rest of cleanup. Reason: MySQL %s/%s is not found.", myMeta.Namespace, myMeta.Name)
 						return
 					}
 					Expect(err).NotTo(HaveOccurred())

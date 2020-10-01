@@ -17,6 +17,8 @@ limitations under the License.
 package mysql
 
 import (
+	"fmt"
+
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
 
@@ -31,6 +33,13 @@ var _ = Describe("MySQL", func() {
 
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
+
+		if !runTestDatabaseType() {
+			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
+		}
+		if !runTestCommunity(framework.Initialize) {
+			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.Initialize))
+		}
 	})
 
 	JustAfterEach(func() {

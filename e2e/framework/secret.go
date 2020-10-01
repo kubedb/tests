@@ -184,9 +184,9 @@ func (f *Framework) DeleteSecret(meta metav1.ObjectMeta) error {
 	return f.kubeClient.CoreV1().Secrets(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInForeground())
 }
 
-func (f *Framework) EventuallyDBSecretCount(meta metav1.ObjectMeta) GomegaAsyncAssertion {
+func (f *Framework) EventuallyDBSecretCount(meta metav1.ObjectMeta, kind string) GomegaAsyncAssertion {
 	labelMap := map[string]string{
-		api.LabelDatabaseKind: api.ResourceKindMongoDB,
+		api.LabelDatabaseKind: kind,
 		api.LabelDatabaseName: meta.Name,
 	}
 	labelSelector := labels.SelectorFromSet(labelMap)

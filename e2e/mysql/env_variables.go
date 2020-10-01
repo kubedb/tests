@@ -18,6 +18,7 @@ package mysql
 
 import (
 	"context"
+	"fmt"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha2/util"
@@ -41,6 +42,13 @@ var _ = Describe("MySQL", func() {
 
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
+
+		if !runTestDatabaseType() {
+			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
+		}
+		if !runTestCommunity(framework.EnvironmentVariable) {
+			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.EnvironmentVariable))
+		}
 	})
 
 	JustAfterEach(func() {

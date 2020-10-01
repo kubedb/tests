@@ -16,6 +16,7 @@ package mysql
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	opsapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
@@ -37,11 +38,8 @@ var _ = Describe("MySQL", func() {
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
 
-		if !runTestDatabaseType(api.ResourceSingularMySQL) {
+		if !runTestDatabaseType() {
 			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
-		}
-		if !runTestEnterprise(framework.Enterprise) {
-			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.Enterprise))
 		}
 		if !runTestEnterprise(framework.Upgrade) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.Upgrade))
@@ -228,7 +226,10 @@ var _ = Describe("MySQL", func() {
 					targetedVersion, err := fi.DBClient().CatalogV1alpha1().MySQLVersions().Get(context.TODO(), myOR.Spec.Upgrade.TargetVersion, metav1.GetOptions{})
 					Expect(err).NotTo(HaveOccurred())
 					// for major version upgrading, StatefulSet ordinal will be changed
-					dbInfo.StatefulSetOrdinal = 1
+					// for major version upgrading, StatefulSet ordinal will be changed
+					if strings.Compare(strings.Split(framework.DBVersion, ".")[0], strings.Split(framework.DBUpdatedVersion, ".")[0]) != 0 {
+						dbInfo.StatefulSetOrdinal = 1
+					}
 					fi.EventuallyDatabaseVersionUpdated(my.ObjectMeta, dbInfo, targetedVersion.Spec.Version).Should(BeTrue())
 
 					// Retrieve Inserted Data

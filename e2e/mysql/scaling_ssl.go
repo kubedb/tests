@@ -39,11 +39,8 @@ var _ = Describe("MySQL", func() {
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
 
-		if !runTestDatabaseType(api.ResourceSingularMySQL) {
+		if !runTestDatabaseType() {
 			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
-		}
-		if !runTestEnterprise(framework.Enterprise) {
-			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.Enterprise))
 		}
 		if !runTestEnterprise(framework.Scale) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.Scale))

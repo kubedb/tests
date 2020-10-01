@@ -35,6 +35,13 @@ var _ = Describe("MySQL", func() {
 
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
+
+		if !runTestDatabaseType() {
+			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
+		}
+		if !runTestCommunity(framework.Resume) {
+			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.Resume))
+		}
 	})
 
 	JustAfterEach(func() {
@@ -233,14 +240,22 @@ var _ = Describe("MySQL", func() {
 					_, err = fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
 						in.Name = myMeta.Name
 						in.Namespace = myMeta.Namespace
+						in.Spec.Init = &api.InitSpec{
+							ScriptSource: &api.ScriptSourceSpec{
+								VolumeSource: core.VolumeSource{
+									ConfigMap: &core.ConfigMapVolumeSource{
+										LocalObjectReference: core.LocalObjectReference{
+											Name: cm.Name,
+										},
+									},
+								},
+							},
+						}
 						// Set termination policy WipeOut to delete all mysql resources permanently
 						in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					})
 					Expect(err).NotTo(HaveOccurred())
 					fi.EventuallyDBReady(my, dbInfo)
-
-					By("Wait for Running mysql")
-					fi.EventuallyMySQLRunning(myMeta).Should(BeTrue())
 
 					By("Checking Row Count of Table")
 					fi.EventuallyCountRow(myMeta, dbInfo).Should(Equal(3))
@@ -311,14 +326,22 @@ var _ = Describe("MySQL", func() {
 						_, err = fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
 							in.Name = myMeta.Name
 							in.Namespace = myMeta.Namespace
+							in.Spec.Init = &api.InitSpec{
+								ScriptSource: &api.ScriptSourceSpec{
+									VolumeSource: core.VolumeSource{
+										ConfigMap: &core.ConfigMapVolumeSource{
+											LocalObjectReference: core.LocalObjectReference{
+												Name: cm.Name,
+											},
+										},
+									},
+								},
+							}
 							// Set termination policy WipeOut to delete all mysql resources permanently
 							in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 						})
 						Expect(err).NotTo(HaveOccurred())
 						fi.EventuallyDBReady(my, dbInfo)
-
-						By("Wait for Running mysql")
-						fi.EventuallyMySQLRunning(myMeta).Should(BeTrue())
 
 						By("Checking Row Count of Table")
 						fi.EventuallyCountRow(myMeta, dbInfo).Should(Equal(3))
@@ -331,6 +354,13 @@ var _ = Describe("MySQL", func() {
 						_, err = meta_util.GetString(my.Annotations, api.AnnotationInitialized)
 						Expect(err).To(HaveOccurred())
 					}
+					By("Update mysql to set spec.terminationPolicy = WipeOut")
+					_, err = fi.PatchMySQL(myMeta, func(in *api.MySQL) *api.MySQL {
+						// Set termination policy WipeOut to delete all mysql resources permanently
+						in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+						return in
+					})
+					Expect(err).NotTo(HaveOccurred())
 				})
 			})
 		})
