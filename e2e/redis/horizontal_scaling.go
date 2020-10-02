@@ -22,7 +22,6 @@ import (
 	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
 
-	rd "github.com/go-redis/redis"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/utils/pointer"
@@ -39,14 +38,17 @@ var _ = Describe("Horizontal Scaling Redis", func() {
 	})
 
 	AfterEach(func() {
-		err := to.client.ForEachMaster(func(master *rd.Client) error {
-			return master.FlushDB().Err()
-		})
+		//err := to.client.ForEachMaster(func(master *rd.Client) error {
+		//	return master.FlushDB().Err()
+		//})
+		//Expect(err).NotTo(HaveOccurred())
+		//
+		//Expect(to.client.Close()).NotTo(HaveOccurred())
+		//
+		//to.closeExistingTunnels()
+
+		_, err := to.Invocation.TestConfig().FlushDBForCluster(to.redis)
 		Expect(err).NotTo(HaveOccurred())
-
-		Expect(to.client.Close()).NotTo(HaveOccurred())
-
-		to.closeExistingTunnels()
 
 		//Delete Redis
 		By("Delete redis")

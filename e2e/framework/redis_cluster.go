@@ -226,14 +226,11 @@ func Sync(addrs [][]string, redis *api.Redis) ([][]RedisNode, [][]*rd.Client) {
 	return nodes, rdClients
 }
 
-func (f *Framework) WaitUntilRedisClusterConfigured(redis *api.Redis, port string) error {
+func (f *Framework) WaitUntilRedisClusterConfigured(redis *api.Redis) error {
 	return wait.PollImmediate(time.Second*5, time.Minute*5, func() (bool, error) {
-		rdClient := rd.NewClient(&rd.Options{
-			Addr: fmt.Sprintf(":%s", port),
-		})
-
-		slots, err := rdClient.ClusterSlots().Result()
+		slots, err := f.testConfig.GetClusterSlots(redis)
 		if err != nil {
+			fmt.Print("===================>", err)
 			return false, nil
 		}
 

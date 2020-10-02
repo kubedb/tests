@@ -25,6 +25,7 @@ import (
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	cs "kubedb.dev/apimachinery/client/clientset/versioned"
+	test_util "kubedb.dev/tests/e2e/redis/testing"
 
 	"github.com/appscode/go/crypto/rand"
 	cm "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
@@ -38,7 +39,6 @@ import (
 	"k8s.io/client-go/rest"
 	ka "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	core_util "kmodules.xyz/client-go/core/v1"
-	"kmodules.xyz/client-go/tools/portforward"
 	appcat_cs "kmodules.xyz/custom-resources/client/clientset/versioned/typed/appcatalog/v1alpha1"
 	scs "stash.appscode.dev/apimachinery/client/clientset/versioned"
 )
@@ -79,7 +79,8 @@ type Framework struct {
 	certManagerClient cm.Interface
 
 	// for RedisOpsRequest test
-	tunnel *portforward.Tunnel
+	testConfig        *test_util.TestConfig
+	//tunnel *portforward.Tunnel
 }
 
 func New(
@@ -108,7 +109,15 @@ func New(
 		return nil, err
 	}
 
+	testConfig := &test_util.TestConfig{
+		RestConfig:    restConfig,
+		KubeClient:    kubeClient,
+		DBCatalogName: DBVersion,
+		WithTLS:       false,
+	}
+
 	return &Framework{
+		testConfig: 	   testConfig,
 		restConfig:        restConfig,
 		kubeClient:        kubeClient,
 		apiExtKubeClient:  apiExtKubeClient,
@@ -150,4 +159,7 @@ type Invocation struct {
 	*Framework
 	app           string
 	testResources []interface{}
+}
+func (fi *Invocation) TestConfig() *test_util.TestConfig {
+	return fi.testConfig
 }

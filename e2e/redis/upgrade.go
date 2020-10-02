@@ -22,12 +22,11 @@ import (
 	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
 
-	rd "github.com/go-redis/redis"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Vertical Scaling Redis", func() {
+var _ = FDescribe("Vertical Scaling Redis", func() {
 	to := testOptions{}
 	testName := framework.RedisUpgrade
 	BeforeEach(func() {
@@ -48,10 +47,10 @@ var _ = Describe("Vertical Scaling Redis", func() {
 				to.createRedis()
 
 				By("Inserting item into database")
-				to.EventuallySetItem(to.redis.ObjectMeta, "A", "VALUE").Should(BeTrue())
+				to.EventuallySetItem(to.redis, "A", "VALUE").Should(BeTrue())
 
 				By("Retrieving item from database")
-				to.EventuallyGetItem(to.redis.ObjectMeta, "A").Should(BeEquivalentTo("VALUE"))
+				to.EventuallyGetItem(to.redis, "A").Should(BeEquivalentTo("VALUE"))
 
 				// Update Database
 				By("Updating Redis")
@@ -62,7 +61,7 @@ var _ = Describe("Vertical Scaling Redis", func() {
 
 				// Retrieve Inserted Data
 				By("Checking key value after update")
-				to.EventuallyGetItem(to.redis.ObjectMeta, "A").Should(BeEquivalentTo("VALUE"))
+				to.EventuallyGetItem(to.redis, "A").Should(BeEquivalentTo("VALUE"))
 			})
 
 			AfterEach(func() {
@@ -87,14 +86,17 @@ var _ = Describe("Vertical Scaling Redis", func() {
 			})
 
 			AfterEach(func() {
-				err := to.client.ForEachMaster(func(master *rd.Client) error {
-					return master.FlushDB().Err()
-				})
+				//err := to.client.ForEachMaster(func(master *rd.Client) error {
+				//	return master.FlushDB().Err()
+				//})
+				//Expect(err).NotTo(HaveOccurred())
+				//
+				//Expect(to.client.Close()).NotTo(HaveOccurred())
+				//
+				//to.closeExistingTunnels()
+
+				_, err := to.Invocation.TestConfig().FlushDBForCluster(to.redis)
 				Expect(err).NotTo(HaveOccurred())
-
-				Expect(to.client.Close()).NotTo(HaveOccurred())
-
-				to.closeExistingTunnels()
 
 				//Delete Redis
 				By("Delete redis")

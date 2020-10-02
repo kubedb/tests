@@ -45,6 +45,7 @@ func (fi *Invocation) RedisStandalone(version string) *api.Redis {
 		},
 		Spec: api.RedisSpec{
 			Version:           version,
+			Mode: 				api.RedisModeStandalone,
 			TerminationPolicy: api.TerminationPolicyWipeOut,
 			StorageType:       api.StorageTypeDurable,
 			Storage: &core.PersistentVolumeClaimSpec{
