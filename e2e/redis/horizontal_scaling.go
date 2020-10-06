@@ -18,12 +18,15 @@ package redis
 
 import (
 	"fmt"
+	"strings"
 
+	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	kerr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/pointer"
 )
 
@@ -35,19 +38,30 @@ var _ = Describe("Horizontal Scaling Redis", func() {
 		if !runTestEnterprise(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", testName))
 		}
+		if framework.SSLEnabled && !strings.HasPrefix(framework.DBVersion, "6.") {
+			Skip(fmt.Sprintf("TLS is not supported for version `%s` in redis", framework.DBVersion))
+		}
 	})
 
 	AfterEach(func() {
-		//err := to.client.ForEachMaster(func(master *rd.Client) error {
-		//	return master.FlushDB().Err()
-		//})
-		//Expect(err).NotTo(HaveOccurred())
-		//
-		//Expect(to.client.Close()).NotTo(HaveOccurred())
-		//
-		//to.closeExistingTunnels()
-
 		_, err := to.Invocation.TestConfig().FlushDBForCluster(to.redis)
+		Expect(err).NotTo(HaveOccurred())
+
+		By("Check if Redis " + to.redis.Name + " exists.")
+		rd, err := to.GetRedis(to.redis.ObjectMeta)
+		if err != nil {
+			if kerr.IsNotFound(err) {
+				// Redis was not created. Hence, rest of cleanup is not necessary.
+				return
+			}
+			Expect(err).NotTo(HaveOccurred())
+		}
+
+		By("Update redis to set spec.terminationPolicy = WipeOut")
+		_, err = to.PatchRedis(rd.ObjectMeta, func(in *api.Redis) *api.Redis {
+			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+			return in
+		})
 		Expect(err).NotTo(HaveOccurred())
 
 		//Delete Redis
@@ -65,7 +79,7 @@ var _ = Describe("Horizontal Scaling Redis", func() {
 
 	Context("Scale up cluster master", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisClusterWithSpec(framework.DBVersion, pointer.Int32Ptr(3), pointer.Int32Ptr(1))
+			to.redis = to.RedisCluster(framework.DBVersion, pointer.Int32Ptr(3), pointer.Int32Ptr(1))
 			scalingSpec := &dbaapi.RedisHorizontalScalingSpec{
 				Master:   pointer.Int32Ptr(5),
 				Replicas: nil,
@@ -79,7 +93,7 @@ var _ = Describe("Horizontal Scaling Redis", func() {
 	})
 	Context("Scale down cluster master", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisClusterWithSpec(framework.DBVersion, pointer.Int32Ptr(4), pointer.Int32Ptr(1))
+			to.redis = to.RedisCluster(framework.DBVersion, pointer.Int32Ptr(4), pointer.Int32Ptr(1))
 			scalingSpec := &dbaapi.RedisHorizontalScalingSpec{
 				Master:   pointer.Int32Ptr(3),
 				Replicas: nil,
@@ -94,7 +108,7 @@ var _ = Describe("Horizontal Scaling Redis", func() {
 
 	Context("Scale up cluster replicas", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisClusterWithSpec(framework.DBVersion, pointer.Int32Ptr(3), pointer.Int32Ptr(1))
+			to.redis = to.RedisCluster(framework.DBVersion, pointer.Int32Ptr(3), pointer.Int32Ptr(1))
 			scalingSpec := &dbaapi.RedisHorizontalScalingSpec{
 				Master:   nil,
 				Replicas: pointer.Int32Ptr(3),
@@ -108,7 +122,7 @@ var _ = Describe("Horizontal Scaling Redis", func() {
 	})
 	Context("Scale down cluster replicas", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisClusterWithSpec(framework.DBVersion, pointer.Int32Ptr(4), pointer.Int32Ptr(2))
+			to.redis = to.RedisCluster(framework.DBVersion, pointer.Int32Ptr(4), pointer.Int32Ptr(2))
 			scalingSpec := &dbaapi.RedisHorizontalScalingSpec{
 				Master:   nil,
 				Replicas: pointer.Int32Ptr(1),
@@ -123,7 +137,7 @@ var _ = Describe("Horizontal Scaling Redis", func() {
 
 	Context("Scale up both cluster master & replicas", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisClusterWithSpec(framework.DBVersion, pointer.Int32Ptr(3), pointer.Int32Ptr(1))
+			to.redis = to.RedisCluster(framework.DBVersion, pointer.Int32Ptr(3), pointer.Int32Ptr(1))
 			scalingSpec := &dbaapi.RedisHorizontalScalingSpec{
 				Master:   pointer.Int32Ptr(5),
 				Replicas: pointer.Int32Ptr(1),
@@ -137,7 +151,7 @@ var _ = Describe("Horizontal Scaling Redis", func() {
 	})
 	Context("Scale down both cluster master & replicas", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisClusterWithSpec(framework.DBVersion, pointer.Int32Ptr(4), pointer.Int32Ptr(3))
+			to.redis = to.RedisCluster(framework.DBVersion, pointer.Int32Ptr(4), pointer.Int32Ptr(3))
 			scalingSpec := &dbaapi.RedisHorizontalScalingSpec{
 				Master:   pointer.Int32Ptr(3),
 				Replicas: pointer.Int32Ptr(1),
@@ -152,7 +166,7 @@ var _ = Describe("Horizontal Scaling Redis", func() {
 
 	Context("Scale up cluster master & Scale down cluster replicas", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisClusterWithSpec(framework.DBVersion, pointer.Int32Ptr(3), pointer.Int32Ptr(3))
+			to.redis = to.RedisCluster(framework.DBVersion, pointer.Int32Ptr(3), pointer.Int32Ptr(3))
 			scalingSpec := &dbaapi.RedisHorizontalScalingSpec{
 				Master:   pointer.Int32Ptr(4),
 				Replicas: pointer.Int32Ptr(1),
@@ -166,7 +180,7 @@ var _ = Describe("Horizontal Scaling Redis", func() {
 	})
 	Context("Scale down cluster master & Scale up cluster replicas", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisClusterWithSpec(framework.DBVersion, pointer.Int32Ptr(4), pointer.Int32Ptr(2))
+			to.redis = to.RedisCluster(framework.DBVersion, pointer.Int32Ptr(4), pointer.Int32Ptr(2))
 			scalingSpec := &dbaapi.RedisHorizontalScalingSpec{
 				Master:   pointer.Int32Ptr(3),
 				Replicas: pointer.Int32Ptr(3),

@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha1"
+	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -38,7 +38,7 @@ type TestConfig struct {
 	RestConfig    *rest.Config
 	DBCatalogName string
 	KubeClient    kubernetes.Interface
-	WithTLS       bool
+	UseTLS        bool
 }
 
 // get output for "cluster nodes" command for specific node. For example : ( podName : redisName{i}-shard{j})
@@ -46,10 +46,7 @@ func (testConfig *TestConfig) GetClusterNodes(redis *api.Redis, i int, j int) (s
 	var nodeConf string
 	nodeConf = ""
 	return nodeConf, wait.PollImmediate(time.Second*5, time.Minute, func() (bool, error) {
-		command, err := testConfig.cmdClusterNodes()
-		if err != nil {
-			return false, err
-		}
+		command := testConfig.cmdClusterNodes()
 		pod, err := testConfig.GetDatabasePodForRedisCluster(redis, i, j)
 		if err != nil {
 			return false, err
@@ -80,10 +77,7 @@ func (testConfig *TestConfig) GetPingResult(redis *api.Redis) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	command, err := testConfig.cmdPing(redis.Spec.Mode)
-	if err != nil {
-		return "", err
-	}
+	command := testConfig.cmdPing(redis.Spec.Mode)
 	res, err := exec.ExecIntoPod(testConfig.RestConfig, pod, exec.Command(command...))
 	if err != nil {
 		return "", err
@@ -108,15 +102,9 @@ func (testConfig *TestConfig) SetItem(redis *api.Redis, key string, value string
 	if err != nil {
 		return "", err
 	}
-	command, err := testConfig.cmdSetItem(redis.Spec.Mode, key, value)
-	if err != nil {
-		return "", err
-	}
-	//fmt.Println(".......................    ", testConfig)
-	//
+	command := testConfig.cmdSetItem(redis.Spec.Mode, key, value)
 	res, err := exec.ExecIntoPod(testConfig.RestConfig, pod, exec.Command(command...))
 	if err != nil {
-		fmt.Println("test_helper.go:line-118    ", err)
 		return "", err
 	}
 	res, err = checkIfResultError(res)
@@ -139,10 +127,7 @@ func (testConfig *TestConfig) GetItem(redis *api.Redis, key string) (string, err
 		return "", err
 	}
 
-	command, err := testConfig.cmdGetItem(redis.Spec.Mode, key)
-	if err != nil {
-		return "", err
-	}
+	command := testConfig.cmdGetItem(redis.Spec.Mode, key)
 	res, err := exec.ExecIntoPod(testConfig.RestConfig, pod, exec.Command(command...))
 	if err != nil {
 		return "", err
@@ -169,11 +154,7 @@ func (testConfig *TestConfig) GetRedisConfig(redis *api.Redis, param string) ([]
 		return nil, err
 	}
 
-	command, err := testConfig.cmdConfigGet(param)
-	if err != nil {
-		return nil, err
-	}
-
+	command := testConfig.cmdConfigGet(param)
 	res, err := exec.ExecIntoPod(testConfig.RestConfig, pod, exec.Command(command...))
 	if err != nil {
 		return nil, err
@@ -191,10 +172,7 @@ func (testConfig *TestConfig) flushDB(podName string, nameSpace string) (string,
 	if err != nil {
 		return "", err
 	}
-	command, err := testConfig.cmdFlushDB()
-	if err != nil {
-		return "", err
-	}
+	command := testConfig.cmdFlushDB()
 	res, err := exec.ExecIntoPod(testConfig.RestConfig, pod, exec.Command(command...))
 	if err != nil {
 		return "", err
@@ -263,10 +241,7 @@ func (testConfig *TestConfig) GetDBSizeForStandalone(redis *api.Redis) (string, 
 	if err != nil {
 		return "", err
 	}
-	command, err := testConfig.cmdGetDBSize()
-	if err != nil {
-		return "", err
-	}
+	command := testConfig.cmdGetDBSize()
 	res, err := exec.ExecIntoPod(testConfig.RestConfig, pod, exec.Command(command...))
 	if err != nil {
 		return "", err
@@ -290,10 +265,7 @@ func (testConfig *TestConfig) GetDbSizeForCluster(redis *api.Redis) (int64, erro
 			if err != nil {
 				return -1, err
 			}
-			command, err := testConfig.cmdGetDBSize()
-			if err != nil {
-				return -1, err
-			}
+			command := testConfig.cmdGetDBSize()
 			res, err := exec.ExecIntoPod(testConfig.RestConfig, pod, exec.Command(command...))
 			if err != nil {
 				return -1, err
@@ -320,10 +292,7 @@ func (testConfig *TestConfig) GetDbSizeForIndividualNodeInCluster(redis *api.Red
 	if err != nil {
 		return -1, err
 	}
-	command, err := testConfig.cmdGetDBSize()
-	if err != nil {
-		return -1, err
-	}
+	command := testConfig.cmdGetDBSize()
 	res, err := exec.ExecIntoPod(testConfig.RestConfig, pod, exec.Command(command...))
 	if err != nil {
 		return -1, err
@@ -348,10 +317,7 @@ func (testConfig *TestConfig) ClusterFailOver(redis *api.Redis, i int, j int) (s
 	if err != nil {
 		return "", err
 	}
-	command, err := testConfig.cmdClusterFailOver()
-	if err != nil {
-		return "", err
-	}
+	command := testConfig.cmdClusterFailOver()
 	res, err := exec.ExecIntoPod(testConfig.RestConfig, pod, exec.Command(command...))
 	if err != nil {
 		return "", err
@@ -370,10 +336,7 @@ func (testConfig *TestConfig) GetClusterSlots(redis *api.Redis) ([]ClusterSlot, 
 	if err != nil {
 		return nil, err
 	}
-	command, err := testConfig.cmdClusterSlots()
-	if err != nil {
-		return nil, err
-	}
+	command := testConfig.cmdClusterSlots()
 	res, err := exec.ExecIntoPod(testConfig.RestConfig, pod, exec.Command(command...))
 	if err != nil {
 		return nil, err
@@ -404,10 +367,7 @@ func (testConfig *TestConfig) DeleteItem(redis *api.Redis, key string) (string, 
 		return "", err
 	}
 
-	command, err := testConfig.cmdDeleteItem(redis.Spec.Mode, key)
-	if err != nil {
-		return "", err
-	}
+	command := testConfig.cmdDeleteItem(redis.Spec.Mode, key)
 	res, err := exec.ExecIntoPod(testConfig.RestConfig, pod, exec.Command(command...))
 	if err != nil {
 		return "", err
@@ -435,10 +395,7 @@ func (testConfig *TestConfig) GetRandomKey(redis *api.Redis) (string, error) {
 		return "", err
 	}
 
-	command, err := testConfig.cmdRandomKey(redis.Spec.Mode)
-	if err != nil {
-		return "", err
-	}
+	command := testConfig.cmdRandomKey(redis.Spec.Mode)
 	res, err := exec.ExecIntoPod(testConfig.RestConfig, pod, exec.Command(command...))
 	if err != nil {
 		return "", err
@@ -525,10 +482,7 @@ func (testConfig *TestConfig) GetClusterNodesForCluster(redis *api.Redis) ([][]*
 
 func (testConfig *TestConfig) GetClusterInfoForRedis(redis *api.Redis) (string, error) {
 
-	command, err := testConfig.cmdClusterInfo()
-	if err != nil {
-		return "false", err
-	}
+	command := testConfig.cmdClusterInfo()
 	pod, err := testConfig.GetDatabasePodForRedisCluster(redis, 0, 0)
 	if err != nil {
 		return "", err
@@ -545,10 +499,7 @@ func (testConfig *TestConfig) GetClusterInfoForRedis(redis *api.Redis) (string, 
 	return res, nil
 }
 func (testConfig *TestConfig) GetClusterSaveConfig(redis *api.Redis) (string, error) {
-	command, err := testConfig.cmdClusterSaveConfig()
-	if err != nil {
-		return "", err
-	}
+	command := testConfig.cmdClusterSaveConfig()
 	pod, err := testConfig.GetDatabasePodForRedisCluster(redis, 0, 0)
 	if err != nil {
 		return "", err
@@ -566,10 +517,7 @@ func (testConfig *TestConfig) GetClusterSaveConfig(redis *api.Redis) (string, er
 }
 
 func (testConfig *TestConfig) GetClusterCountKeysInSlot(redis *api.Redis, slot int) (int64, error) {
-	command, err := testConfig.cmdClusterCountKeysInSlot(slot)
-	if err != nil {
-		return -1, err
-	}
+	command := testConfig.cmdClusterCountKeysInSlot(slot)
 	pod, err := testConfig.GetDatabasePodForRedisCluster(redis, 0, 0)
 	if err != nil {
 		return -1, err
@@ -592,10 +540,7 @@ func (testConfig *TestConfig) GetClusterCountKeysInSlot(redis *api.Redis, slot i
 }
 
 func (testConfig *TestConfig) GetClusterCountFailureReports(redis *api.Redis, nodeID string) (int64, error) {
-	command, err := testConfig.cmdClusterCountFailureReports(nodeID)
-	if err != nil {
-		return -1, err
-	}
+	command := testConfig.cmdClusterCountFailureReports(nodeID)
 	pod, err := testConfig.GetDatabasePodForRedisCluster(redis, 0, 0)
 	if err != nil {
 		return -1, err
@@ -618,10 +563,7 @@ func (testConfig *TestConfig) GetClusterCountFailureReports(redis *api.Redis, no
 }
 
 func (testConfig *TestConfig) GetClusterSlaves(redis *api.Redis, nodeID string) ([]string, error) {
-	command, err := testConfig.cmdClusterSlaves(nodeID)
-	if err != nil {
-		return nil, err
-	}
+	command := testConfig.cmdClusterSlaves(nodeID)
 	pod, err := testConfig.GetDatabasePodForRedisCluster(redis, 0, 0)
 	if err != nil {
 		return nil, err

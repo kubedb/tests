@@ -18,21 +18,27 @@ package redis
 
 import (
 	"fmt"
+	"strings"
 
+	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	kerr "k8s.io/apimachinery/pkg/api/errors"
 )
 
-var _ = FDescribe("Vertical Scaling Redis", func() {
+var _ = Describe("Upgrade Redis", func() {
 	to := testOptions{}
 	testName := framework.RedisUpgrade
 	BeforeEach(func() {
 		to.Invocation = framework.NewInvocation()
 		if !runTestEnterprise(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", testName))
+		}
+		if framework.SSLEnabled && !strings.HasPrefix(framework.DBVersion, "6.") {
+			Skip(fmt.Sprintf("TLS is not supported for version `%s` in redis", framework.DBVersion))
 		}
 	})
 	Context("Update Database Version", func() {
@@ -65,9 +71,26 @@ var _ = FDescribe("Vertical Scaling Redis", func() {
 			})
 
 			AfterEach(func() {
+				By("Check if Redis " + to.redis.Name + " exists.")
+				rd, err := to.GetRedis(to.redis.ObjectMeta)
+				if err != nil {
+					if kerr.IsNotFound(err) {
+						// Redis was not created. Hence, rest of cleanup is not necessary.
+						return
+					}
+					Expect(err).NotTo(HaveOccurred())
+				}
+
+				By("Update redis to set spec.terminationPolicy = WipeOut")
+				_, err = to.PatchRedis(rd.ObjectMeta, func(in *api.Redis) *api.Redis {
+					in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+					return in
+				})
+				Expect(err).NotTo(HaveOccurred())
+
 				//Delete Redis
 				By("Delete redis")
-				err := to.DeleteRedis(to.redis.ObjectMeta)
+				err = to.DeleteRedis(to.redis.ObjectMeta)
 				Expect(err).NotTo(HaveOccurred())
 
 				By("Delete RedisOpsRequest")
@@ -81,21 +104,29 @@ var _ = FDescribe("Vertical Scaling Redis", func() {
 
 		Context("Update Clustered DB", func() {
 			BeforeEach(func() {
-				to.redis = to.RedisCluster(framework.DBVersion)
+				to.redis = to.RedisCluster(framework.DBVersion, nil, nil)
 				to.redisOpsReq = to.RedisOpsRequestUpgrade(to.redis.Name, framework.DBUpdatedVersion, dbaapi.OpsRequestTypeUpgrade)
 			})
 
 			AfterEach(func() {
-				//err := to.client.ForEachMaster(func(master *rd.Client) error {
-				//	return master.FlushDB().Err()
-				//})
-				//Expect(err).NotTo(HaveOccurred())
-				//
-				//Expect(to.client.Close()).NotTo(HaveOccurred())
-				//
-				//to.closeExistingTunnels()
-
 				_, err := to.Invocation.TestConfig().FlushDBForCluster(to.redis)
+				Expect(err).NotTo(HaveOccurred())
+
+				By("Check if Redis " + to.redis.Name + " exists.")
+				rd, err := to.GetRedis(to.redis.ObjectMeta)
+				if err != nil {
+					if kerr.IsNotFound(err) {
+						// Redis was not created. Hence, rest of cleanup is not necessary.
+						return
+					}
+					Expect(err).NotTo(HaveOccurred())
+				}
+
+				By("Update redis to set spec.terminationPolicy = WipeOut")
+				_, err = to.PatchRedis(rd.ObjectMeta, func(in *api.Redis) *api.Redis {
+					in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+					return in
+				})
 				Expect(err).NotTo(HaveOccurred())
 
 				//Delete Redis

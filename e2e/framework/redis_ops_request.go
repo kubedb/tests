@@ -41,7 +41,7 @@ func (i *Invocation) RedisOpsRequestUpgrade(name, version string, typ api.OpsReq
 
 		Spec: api.RedisOpsRequestSpec{
 			Type: typ,
-			Upgrade: &api.UpgradeSpec{
+			Upgrade: &api.RedisUpgradeSpec{
 				TargetVersion: version,
 			},
 			DatabaseRef: v1.LocalObjectReference{
@@ -109,7 +109,7 @@ func (f *Framework) EventuallyRedisOpsRequestPhase(meta metav1.ObjectMeta) Gomeg
 			Expect(err).NotTo(HaveOccurred())
 			return db.Status.Phase
 		},
-		time.Minute*8,
+		time.Minute*20,
 		time.Second*5,
 	)
 }

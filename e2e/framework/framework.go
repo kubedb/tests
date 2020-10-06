@@ -52,8 +52,8 @@ var (
 	DockerRegistry   = "kubedbci"
 	DBType           = api.ResourceSingularMongoDB
 	TestProfiles     stringSlice
-	DBVersion        = "4.0.6-v2"
-	DBUpdatedVersion = "5.0.3-v1"
+	DBVersion        = "5.0.3-v1"
+	DBUpdatedVersion = "6.0.6"
 	PullInterval     = time.Second * 2
 	WaitTimeOut      = time.Minute * 3
 	StorageProvider  string
@@ -78,9 +78,8 @@ type Framework struct {
 	CertStore         *certstore.CertStore
 	certManagerClient cm.Interface
 
-	// for RedisOpsRequest test
-	testConfig        *test_util.TestConfig
-	//tunnel *portforward.Tunnel
+	// for Redis test
+	testConfig *test_util.TestConfig
 }
 
 func New(
@@ -113,11 +112,11 @@ func New(
 		RestConfig:    restConfig,
 		KubeClient:    kubeClient,
 		DBCatalogName: DBVersion,
-		WithTLS:       false,
+		UseTLS:        SSLEnabled,
 	}
 
 	return &Framework{
-		testConfig: 	   testConfig,
+		testConfig:        testConfig,
 		restConfig:        restConfig,
 		kubeClient:        kubeClient,
 		apiExtKubeClient:  apiExtKubeClient,
@@ -160,6 +159,11 @@ type Invocation struct {
 	app           string
 	testResources []interface{}
 }
-func (fi *Invocation) TestConfig() *test_util.TestConfig {
-	return fi.testConfig
+
+func (i *Invocation) TestConfig() *test_util.TestConfig {
+	return i.testConfig
+}
+
+func (i *Invocation) RestConfig() *rest.Config {
+	return i.restConfig
 }
