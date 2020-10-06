@@ -192,7 +192,7 @@ var _ = Describe("Vertical Scaling", func() {
 				})
 
 				It("should run successfully", func() {
-					to.runWithUserProvidedConfig(userConfig, nil)
+					to.runWithUserProvidedConfig(userConfig, nil, false)
 				})
 			})
 
@@ -207,7 +207,7 @@ var _ = Describe("Vertical Scaling", func() {
 				})
 
 				It("should run successfully", func() {
-					to.runWithUserProvidedConfig(userConfig, nil)
+					to.runWithUserProvidedConfig(userConfig, nil, false)
 				})
 			})
 
@@ -226,7 +226,7 @@ var _ = Describe("Vertical Scaling", func() {
 				})
 
 				It("should run successfully", func() {
-					to.runWithUserProvidedConfig(userConfig, nil)
+					to.runWithUserProvidedConfig(userConfig, nil, false)
 				})
 			})
 		})
@@ -269,7 +269,7 @@ var _ = Describe("Vertical Scaling", func() {
 				})
 
 				It("should run successfully", func() {
-					to.runWithUserProvidedConfig(userConfig, newUserConfig)
+					to.runWithUserProvidedConfig(userConfig, newUserConfig, false)
 				})
 			})
 
@@ -284,7 +284,7 @@ var _ = Describe("Vertical Scaling", func() {
 				})
 
 				It("should run successfully", func() {
-					to.runWithUserProvidedConfig(userConfig, newUserConfig)
+					to.runWithUserProvidedConfig(userConfig, newUserConfig, false)
 				})
 			})
 
@@ -303,7 +303,7 @@ var _ = Describe("Vertical Scaling", func() {
 				})
 
 				It("should run successfully", func() {
-					to.runWithUserProvidedConfig(userConfig, newUserConfig)
+					to.runWithUserProvidedConfig(userConfig, newUserConfig, false)
 				})
 			})
 		})
