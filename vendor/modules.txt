@@ -582,7 +582,7 @@ k8s.io/kubernetes/pkg/util/hash
 ## explicit
 k8s.io/utils/integer
 k8s.io/utils/pointer
-# kmodules.xyz/client-go v0.0.0-20200929030759-cce6a3c623c1
+# kmodules.xyz/client-go v0.0.0-20201007024140-3223988adf40
 ## explicit
 kmodules.xyz/client-go
 kmodules.xyz/client-go/api/v1
