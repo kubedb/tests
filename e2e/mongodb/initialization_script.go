@@ -19,7 +19,7 @@ package e2e_test
 import (
 	"fmt"
 
-	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha1"
+	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
 
 	"github.com/appscode/go/types"
@@ -99,7 +99,7 @@ var _ = Describe("Initialize With Script", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		to.mongodb.Spec.Init = &api.InitSpec{
-			ScriptSource: &api.ScriptSourceSpec{
+			Script: &api.ScriptSourceSpec{
 				VolumeSource: core.VolumeSource{
 					ConfigMap: &core.ConfigMapVolumeSource{
 						LocalObjectReference: core.LocalObjectReference{
@@ -129,7 +129,7 @@ var _ = Describe("Initialize With Script", func() {
 			to.mongodb = to.MongoDBRS()
 			to.mongodb.Spec.Replicas = types.Int32P(3)
 			to.mongodb.Spec.Init = &api.InitSpec{
-				ScriptSource: &api.ScriptSourceSpec{
+				Script: &api.ScriptSourceSpec{
 					VolumeSource: core.VolumeSource{
 						ConfigMap: &core.ConfigMapVolumeSource{
 							LocalObjectReference: core.LocalObjectReference{
@@ -153,7 +153,7 @@ var _ = Describe("Initialize With Script", func() {
 		BeforeEach(func() {
 			to.mongodb = to.MongoDBShard()
 			to.mongodb.Spec.Init = &api.InitSpec{
-				ScriptSource: &api.ScriptSourceSpec{
+				Script: &api.ScriptSourceSpec{
 					VolumeSource: core.VolumeSource{
 						ConfigMap: &core.ConfigMapVolumeSource{
 							LocalObjectReference: core.LocalObjectReference{

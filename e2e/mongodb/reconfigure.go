@@ -19,7 +19,7 @@ package e2e_test
 import (
 	"fmt"
 
-	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha1"
+	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
 
@@ -56,13 +56,13 @@ var _ = Describe("Reconfigure", func() {
 
 	Context("From Data", func() {
 		var userConfig *v1.ConfigMap
-		var newCustomConfig *dbaapi.MongoDBCustomConfig
+		var newCustomConfig *dbaapi.MongoDBCustomConfiguration
 		var configSource *v1.VolumeSource
 		BeforeEach(func() {
 			to.skipMessage = ""
 			configName := to.App() + "-previous-config"
 			userConfig = to.GetCustomConfig(customConfigs, configName)
-			newCustomConfig = &dbaapi.MongoDBCustomConfig{
+			newCustomConfig = &dbaapi.MongoDBCustomConfiguration{
 				Data: data,
 			}
 			configSource = &v1.VolumeSource{
@@ -129,7 +129,7 @@ var _ = Describe("Reconfigure", func() {
 	Context("From New ConfigMap", func() {
 		var userConfig *v1.ConfigMap
 		var newUserConfig *v1.ConfigMap
-		var newCustomConfig *dbaapi.MongoDBCustomConfig
+		var newCustomConfig *dbaapi.MongoDBCustomConfiguration
 		var configSource *v1.VolumeSource
 
 		BeforeEach(func() {
@@ -137,7 +137,7 @@ var _ = Describe("Reconfigure", func() {
 			newConfigName := to.App() + "-new-config"
 			userConfig = to.GetCustomConfig(customConfigs, prevConfigName)
 			newUserConfig = to.GetCustomConfig(newCustomConfigs, newConfigName)
-			newCustomConfig = &dbaapi.MongoDBCustomConfig{
+			newCustomConfig = &dbaapi.MongoDBCustomConfiguration{
 				ConfigMap: &v1.LocalObjectReference{
 					Name: newUserConfig.Name,
 				},
