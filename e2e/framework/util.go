@@ -25,7 +25,7 @@ import (
 	"strings"
 	"time"
 
-	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha1"
+	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	opsapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 
@@ -45,7 +45,7 @@ import (
 	kutil "kmodules.xyz/client-go"
 	meta_util "kmodules.xyz/client-go/meta"
 	"kmodules.xyz/client-go/tools/portforward"
-	kmon "kmodules.xyz/monitoring-agent-api/api/v1"
+	mona "kmodules.xyz/monitoring-agent-api/api/v1"
 )
 
 const (
@@ -96,20 +96,20 @@ func (f *Framework) CleanWorkloadLeftOvers() {
 }
 
 func (f *Framework) AddMonitor(obj *api.MongoDB) {
-	obj.Spec.Monitor = &kmon.AgentSpec{
-		Prometheus: &kmon.PrometheusSpec{
-			Exporter: &kmon.PrometheusExporterSpec{
-				Port:            api.PrometheusExporterPortNumber,
+	obj.Spec.Monitor = &mona.AgentSpec{
+		Prometheus: &mona.PrometheusSpec{
+			Exporter: mona.PrometheusExporterSpec{
+				Port:            mona.PrometheusExporterPortNumber,
 				Resources:       v1.ResourceRequirements{},
 				SecurityContext: nil,
 			},
 		},
-		Agent: kmon.AgentPrometheus,
+		Agent: mona.AgentPrometheus,
 	}
 }
 
 func (f *Framework) VerifyShardExporters(meta metav1.ObjectMeta) error {
-	mongoDB, err := f.dbClient.KubedbV1alpha1().MongoDBs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+	mongoDB, err := f.dbClient.KubedbV1alpha2().MongoDBs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 	if err != nil {
 		log.Infoln(err)
 		return err
@@ -145,7 +145,7 @@ func (f *Framework) VerifyShardExporters(meta metav1.ObjectMeta) error {
 }
 
 func (f *Framework) VerifyInMemory(meta metav1.ObjectMeta) error {
-	mongoDB, err := f.dbClient.KubedbV1alpha1().MongoDBs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+	mongoDB, err := f.dbClient.KubedbV1alpha2().MongoDBs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 	if err != nil {
 		log.Infoln(err)
 		return err
@@ -184,7 +184,7 @@ func (f *Framework) VerifyInMemory(meta metav1.ObjectMeta) error {
 //and check against known key and value
 //to verify the connection is functioning as intended
 func (f *Framework) VerifyExporter(meta metav1.ObjectMeta) error {
-	tunnel, err := f.ForwardToPort(meta, fmt.Sprintf("%v-0", meta.Name), aws.Int(api.PrometheusExporterPortNumber))
+	tunnel, err := f.ForwardToPort(meta, fmt.Sprintf("%v-0", meta.Name), aws.Int(mona.PrometheusExporterPortNumber))
 	if err != nil {
 		log.Infoln(err)
 		return err
@@ -226,7 +226,7 @@ func makeTransport() *http.Transport {
 }
 
 func (f *Framework) ForwardToPort(meta metav1.ObjectMeta, clientPodName string, port *int) (*portforward.Tunnel, error) {
-	var defaultPort = api.PrometheusExporterPortNumber
+	var defaultPort = mona.PrometheusExporterPortNumber
 	if port != nil {
 		defaultPort = *port
 	}

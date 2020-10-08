@@ -19,14 +19,14 @@ package e2e_test
 import (
 	"fmt"
 
-	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha1"
+	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
-	meta_util "kmodules.xyz/client-go/meta"
+	kmapi "kmodules.xyz/client-go/api/v1"
 )
 
 var _ = Describe("Resume", func() {
@@ -213,7 +213,7 @@ var _ = Describe("Resume", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			to.mongodb.Spec.Init = &api.InitSpec{
-				ScriptSource: &api.ScriptSourceSpec{
+				Script: &api.ScriptSourceSpec{
 					VolumeSource: core.VolumeSource{
 						ConfigMap: &core.ConfigMapVolumeSource{
 							LocalObjectReference: core.LocalObjectReference{
@@ -264,8 +264,7 @@ var _ = Describe("Resume", func() {
 			*to.mongodb = *mg
 			if usedInitScript {
 				Expect(to.mongodb.Spec.Init).ShouldNot(BeNil())
-				_, err := meta_util.GetString(to.mongodb.Annotations, api.AnnotationInitialized)
-				Expect(err).To(HaveOccurred())
+				Expect(kmapi.HasCondition(to.mongodb.Status.Conditions, api.DatabaseDataRestored)).To(BeFalse())
 			}
 		}
 
@@ -275,7 +274,7 @@ var _ = Describe("Resume", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBRS()
 				to.mongodb.Spec.Init = &api.InitSpec{
-					ScriptSource: &api.ScriptSourceSpec{
+					Script: &api.ScriptSourceSpec{
 						VolumeSource: core.VolumeSource{
 							ConfigMap: &core.ConfigMapVolumeSource{
 								LocalObjectReference: core.LocalObjectReference{
@@ -293,7 +292,7 @@ var _ = Describe("Resume", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBShard()
 				to.mongodb.Spec.Init = &api.InitSpec{
-					ScriptSource: &api.ScriptSourceSpec{
+					Script: &api.ScriptSourceSpec{
 						VolumeSource: core.VolumeSource{
 							ConfigMap: &core.ConfigMapVolumeSource{
 								LocalObjectReference: core.LocalObjectReference{
@@ -320,7 +319,7 @@ var _ = Describe("Resume", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			to.mongodb.Spec.Init = &api.InitSpec{
-				ScriptSource: &api.ScriptSourceSpec{
+				Script: &api.ScriptSourceSpec{
 					VolumeSource: core.VolumeSource{
 						ConfigMap: &core.ConfigMapVolumeSource{
 							LocalObjectReference: core.LocalObjectReference{
@@ -372,8 +371,7 @@ var _ = Describe("Resume", func() {
 
 				if usedInitScript {
 					Expect(to.mongodb.Spec.Init).ShouldNot(BeNil())
-					_, err := meta_util.GetString(to.mongodb.Annotations, api.AnnotationInitialized)
-					Expect(err).To(HaveOccurred())
+					Expect(kmapi.HasCondition(to.mongodb.Status.Conditions, api.DatabaseDataRestored)).To(BeFalse())
 				}
 			}
 		}
@@ -384,7 +382,7 @@ var _ = Describe("Resume", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBRS()
 				to.mongodb.Spec.Init = &api.InitSpec{
-					ScriptSource: &api.ScriptSourceSpec{
+					Script: &api.ScriptSourceSpec{
 						VolumeSource: core.VolumeSource{
 							ConfigMap: &core.ConfigMapVolumeSource{
 								LocalObjectReference: core.LocalObjectReference{
@@ -402,7 +400,7 @@ var _ = Describe("Resume", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBShard()
 				to.mongodb.Spec.Init = &api.InitSpec{
-					ScriptSource: &api.ScriptSourceSpec{
+					Script: &api.ScriptSourceSpec{
 						VolumeSource: core.VolumeSource{
 							ConfigMap: &core.ConfigMapVolumeSource{
 								LocalObjectReference: core.LocalObjectReference{

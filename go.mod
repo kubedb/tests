@@ -3,9 +3,9 @@ module kubedb.dev/tests
 go 1.14
 
 require (
-	github.com/appscode/go v0.0.0-20200928211031-cc0c23082d91
+	github.com/appscode/go v0.0.0-20201006035845-a0302ac8e3d3
 	github.com/aws/aws-sdk-go v1.31.9
-	github.com/codeskyblue/go-sh v0.0.0-20190412065543-76bd3d59ff27
+	github.com/codeskyblue/go-sh v0.0.0-20200712050446-30169cf553fe
 	github.com/jetstack/cert-manager v0.16.0
 	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.8.1
@@ -21,17 +21,15 @@ require (
 	k8s.io/apimachinery v0.18.9
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/kube-aggregator v0.18.9
-	k8s.io/kubernetes v1.18.9 // indirect
 	k8s.io/utils v0.0.0-20200414100711-2df71ebbae66
 	kmodules.xyz/client-go v0.0.0-20201007024140-3223988adf40
 	kmodules.xyz/constants v0.0.0-20200506032633-a21e58ceec72
 	kmodules.xyz/custom-resources v0.0.0-20200922210108-70f2815a43bb
-	kmodules.xyz/monitoring-agent-api v0.0.0-20200922204510-b8b5610e5385
+	kmodules.xyz/monitoring-agent-api v0.0.0-20201007104803-408a1ff2de8d
 	kmodules.xyz/objectstore-api v0.0.0-20200922210707-59bab27e5d41
 	kmodules.xyz/offshoot-api v0.0.0-20200922211229-36acc531abab
-	kmodules.xyz/prober v0.0.0-20200922212142-743a6514664e // indirect
-	kubedb.dev/apimachinery v0.14.0-beta.2
-	stash.appscode.dev/apimachinery v0.10.0
+	kubedb.dev/apimachinery v0.14.0-beta.3.0.20201007213724-ad7988a872e4
+	stash.appscode.dev/apimachinery v0.11.2
 )
 
 replace bitbucket.org/ww/goautoneg => gomodules.xyz/goautoneg v0.0.0-20120707110453-a547fc61f48d

@@ -19,7 +19,7 @@ package e2e_test
 import (
 	"fmt"
 
-	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha1"
+	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
 	"kubedb.dev/tests/e2e/matcher"
 
@@ -121,7 +121,7 @@ var _ = Describe("Initialize With Stash", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Wait for Initializing mongodb")
-		to.EventuallyMongoDBPhase(to.mongodb.ObjectMeta).Should(Equal(api.DatabasePhaseInitializing))
+		to.EventuallyMongoDBPhase(to.mongodb.ObjectMeta).Should(Equal(api.DatabasePhaseDataRestoring))
 
 		By("Wait for AppBinding to create")
 		to.EventuallyAppBinding(to.mongodb.ObjectMeta).Should(BeTrue())
@@ -186,9 +186,7 @@ var _ = Describe("Initialize With Stash", func() {
 		rs = to.RestoreSession(to.mongodb.ObjectMeta, repo)
 		to.mongodb.Spec.DatabaseSecret = oldMongoDB.Spec.DatabaseSecret
 		to.mongodb.Spec.Init = &api.InitSpec{
-			StashRestoreSession: &core.LocalObjectReference{
-				Name: rs.Name,
-			},
+			WaitForInitialRestore: true,
 		}
 		// Create and wait for running MongoDB
 		createAndWaitForInitializing()
@@ -497,9 +495,7 @@ var _ = Describe("Initialize With Stash", func() {
 				rs = to.RestoreSession(to.mongodb.ObjectMeta, repo)
 				to.mongodb.Spec.DatabaseSecret = oldMongoDB.Spec.DatabaseSecret
 				to.mongodb.Spec.Init = &api.InitSpec{
-					StashRestoreSession: &core.LocalObjectReference{
-						Name: rs.Name,
-					},
+					WaitForInitialRestore: true,
 				}
 
 				// Create and wait for running MongoDB

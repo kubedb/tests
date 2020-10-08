@@ -19,7 +19,7 @@ package e2e_test
 import (
 	"fmt"
 
-	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha1"
+	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
 
 	. "github.com/onsi/ginkgo"
@@ -366,7 +366,7 @@ var _ = Describe("General SSL", func() {
 
 					BeforeEach(func() {
 						to.mongodb.Spec.Init = &api.InitSpec{
-							ScriptSource: &api.ScriptSourceSpec{
+							Script: &api.ScriptSourceSpec{
 								VolumeSource: core.VolumeSource{
 									ConfigMap: &core.ConfigMapVolumeSource{
 										LocalObjectReference: core.LocalObjectReference{
@@ -414,7 +414,7 @@ var _ = Describe("General SSL", func() {
 
 						BeforeEach(func() {
 							to.mongodb.Spec.Init = &api.InitSpec{
-								ScriptSource: &api.ScriptSourceSpec{
+								Script: &api.ScriptSourceSpec{
 									VolumeSource: core.VolumeSource{
 										ConfigMap: &core.ConfigMapVolumeSource{
 											LocalObjectReference: core.LocalObjectReference{
@@ -459,7 +459,7 @@ var _ = Describe("General SSL", func() {
 							to.verifySharding = true
 							to.enableSharding = true
 							to.mongodb.Spec.Init = &api.InitSpec{
-								ScriptSource: &api.ScriptSourceSpec{
+								Script: &api.ScriptSourceSpec{
 									VolumeSource: core.VolumeSource{
 										ConfigMap: &core.ConfigMapVolumeSource{
 											LocalObjectReference: core.LocalObjectReference{
@@ -523,7 +523,7 @@ var _ = Describe("General SSL", func() {
 							to.verifySharding = true
 							to.enableSharding = true
 							to.mongodb.Spec.Init = &api.InitSpec{
-								ScriptSource: &api.ScriptSourceSpec{
+								Script: &api.ScriptSourceSpec{
 									VolumeSource: core.VolumeSource{
 										ConfigMap: &core.ConfigMapVolumeSource{
 											LocalObjectReference: core.LocalObjectReference{
@@ -574,7 +574,7 @@ var _ = Describe("General SSL", func() {
 
 						BeforeEach(func() {
 							to.mongodb.Spec.Init = &api.InitSpec{
-								ScriptSource: &api.ScriptSourceSpec{
+								Script: &api.ScriptSourceSpec{
 									VolumeSource: core.VolumeSource{
 										ConfigMap: &core.ConfigMapVolumeSource{
 											LocalObjectReference: core.LocalObjectReference{
@@ -619,7 +619,7 @@ var _ = Describe("General SSL", func() {
 							to.verifySharding = true
 							to.enableSharding = true
 							to.mongodb.Spec.Init = &api.InitSpec{
-								ScriptSource: &api.ScriptSourceSpec{
+								Script: &api.ScriptSourceSpec{
 									VolumeSource: core.VolumeSource{
 										ConfigMap: &core.ConfigMapVolumeSource{
 											LocalObjectReference: core.LocalObjectReference{
@@ -670,7 +670,7 @@ var _ = Describe("General SSL", func() {
 
 						BeforeEach(func() {
 							to.mongodb.Spec.Init = &api.InitSpec{
-								ScriptSource: &api.ScriptSourceSpec{
+								Script: &api.ScriptSourceSpec{
 									VolumeSource: core.VolumeSource{
 										ConfigMap: &core.ConfigMapVolumeSource{
 											LocalObjectReference: core.LocalObjectReference{
@@ -715,7 +715,7 @@ var _ = Describe("General SSL", func() {
 							to.verifySharding = true
 							to.enableSharding = true
 							to.mongodb.Spec.Init = &api.InitSpec{
-								ScriptSource: &api.ScriptSourceSpec{
+								Script: &api.ScriptSourceSpec{
 									VolumeSource: core.VolumeSource{
 										ConfigMap: &core.ConfigMapVolumeSource{
 											LocalObjectReference: core.LocalObjectReference{
@@ -765,7 +765,7 @@ var _ = Describe("General SSL", func() {
 					})
 					BeforeEach(func() {
 						to.mongodb.Spec.Init = &api.InitSpec{
-							ScriptSource: &api.ScriptSourceSpec{
+							Script: &api.ScriptSourceSpec{
 								VolumeSource: core.VolumeSource{
 									ConfigMap: &core.ConfigMapVolumeSource{
 										LocalObjectReference: core.LocalObjectReference{
@@ -813,7 +813,7 @@ var _ = Describe("General SSL", func() {
 
 						BeforeEach(func() {
 							to.mongodb.Spec.Init = &api.InitSpec{
-								ScriptSource: &api.ScriptSourceSpec{
+								Script: &api.ScriptSourceSpec{
 									VolumeSource: core.VolumeSource{
 										ConfigMap: &core.ConfigMapVolumeSource{
 											LocalObjectReference: core.LocalObjectReference{
@@ -858,7 +858,7 @@ var _ = Describe("General SSL", func() {
 							to.verifySharding = true
 							to.enableSharding = true
 							to.mongodb.Spec.Init = &api.InitSpec{
-								ScriptSource: &api.ScriptSourceSpec{
+								Script: &api.ScriptSourceSpec{
 									VolumeSource: core.VolumeSource{
 										ConfigMap: &core.ConfigMapVolumeSource{
 											LocalObjectReference: core.LocalObjectReference{
@@ -941,7 +941,7 @@ var _ = Describe("General SSL", func() {
 
 						BeforeEach(func() {
 							to.mongodb.Spec.Init = &api.InitSpec{
-								ScriptSource: &api.ScriptSourceSpec{
+								Script: &api.ScriptSourceSpec{
 									VolumeSource: core.VolumeSource{
 										ConfigMap: &core.ConfigMapVolumeSource{
 											LocalObjectReference: core.LocalObjectReference{
@@ -986,7 +986,7 @@ var _ = Describe("General SSL", func() {
 							to.verifySharding = true
 							to.enableSharding = true
 							to.mongodb.Spec.Init = &api.InitSpec{
-								ScriptSource: &api.ScriptSourceSpec{
+								Script: &api.ScriptSourceSpec{
 									VolumeSource: core.VolumeSource{
 										ConfigMap: &core.ConfigMapVolumeSource{
 											LocalObjectReference: core.LocalObjectReference{
@@ -1067,7 +1067,7 @@ var _ = Describe("General SSL", func() {
 						Expect(err).NotTo(HaveOccurred())
 
 						to.mongodb.Spec.Init = &api.InitSpec{
-							ScriptSource: &api.ScriptSourceSpec{
+							Script: &api.ScriptSourceSpec{
 								VolumeSource: core.VolumeSource{
 									ConfigMap: &core.ConfigMapVolumeSource{
 										LocalObjectReference: core.LocalObjectReference{
@@ -1115,7 +1115,7 @@ var _ = Describe("General SSL", func() {
 							Expect(err).NotTo(HaveOccurred())
 
 							to.mongodb.Spec.Init = &api.InitSpec{
-								ScriptSource: &api.ScriptSourceSpec{
+								Script: &api.ScriptSourceSpec{
 									VolumeSource: core.VolumeSource{
 										ConfigMap: &core.ConfigMapVolumeSource{
 											LocalObjectReference: core.LocalObjectReference{
@@ -1162,7 +1162,7 @@ var _ = Describe("General SSL", func() {
 							to.verifySharding = true
 							to.enableSharding = true
 							to.mongodb.Spec.Init = &api.InitSpec{
-								ScriptSource: &api.ScriptSourceSpec{
+								Script: &api.ScriptSourceSpec{
 									VolumeSource: core.VolumeSource{
 										ConfigMap: &core.ConfigMapVolumeSource{
 											LocalObjectReference: core.LocalObjectReference{

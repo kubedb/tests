@@ -42,7 +42,7 @@ func (i *Invocation) MongoDBOpsRequestUpgrade(name, namespace, version string) *
 
 		Spec: dbaapi.MongoDBOpsRequestSpec{
 			Type: dbaapi.OpsRequestTypeUpgrade,
-			Upgrade: &dbaapi.UpgradeSpec{
+			Upgrade: &dbaapi.MongoDBUpgradeSpec{
 				TargetVersion: version,
 			},
 			DatabaseRef: corev1.LocalObjectReference{
@@ -129,7 +129,7 @@ func (i *Invocation) MongoDBOpsRequestVolumeExpansion(name, namespace string, st
 	}
 }
 
-func (i *Invocation) MongoDBOpsRequestReconfigure(name, namespace string, standalone, replicaset, shard, configServer, mongos *dbaapi.MongoDBCustomConfig) *dbaapi.MongoDBOpsRequest {
+func (i *Invocation) MongoDBOpsRequestReconfigure(name, namespace string, standalone, replicaset, shard, configServer, mongos *dbaapi.MongoDBCustomConfiguration) *dbaapi.MongoDBOpsRequest {
 	return &dbaapi.MongoDBOpsRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mor"),
@@ -144,7 +144,7 @@ func (i *Invocation) MongoDBOpsRequestReconfigure(name, namespace string, standa
 			DatabaseRef: corev1.LocalObjectReference{
 				Name: name,
 			},
-			CustomConfig: &dbaapi.MongoDBCustomConfigSpec{
+			Configuration: &dbaapi.MongoDBCustomConfigurationSpec{
 				Shard:        shard,
 				ConfigServer: configServer,
 				Standalone:   standalone,

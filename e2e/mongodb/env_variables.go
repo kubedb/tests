@@ -20,8 +20,8 @@ import (
 	"context"
 	"fmt"
 
-	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha1"
-	"kubedb.dev/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1/util"
+	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
+	"kubedb.dev/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha2/util"
 	"kubedb.dev/tests/e2e/framework"
 
 	. "github.com/onsi/ginkgo"
@@ -104,7 +104,7 @@ var _ = Describe("Environment Variables", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			to.mongodb.Spec.Init = &api.InitSpec{
-				ScriptSource: &api.ScriptSourceSpec{
+				Script: &api.ScriptSourceSpec{
 					VolumeSource: core.VolumeSource{
 						ConfigMap: &core.ConfigMapVolumeSource{
 							LocalObjectReference: core.LocalObjectReference{
@@ -154,7 +154,7 @@ var _ = Describe("Environment Variables", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBRS()
 				to.mongodb.Spec.Init = &api.InitSpec{
-					ScriptSource: &api.ScriptSourceSpec{
+					Script: &api.ScriptSourceSpec{
 						VolumeSource: core.VolumeSource{
 							ConfigMap: &core.ConfigMapVolumeSource{
 								LocalObjectReference: core.LocalObjectReference{
@@ -172,7 +172,7 @@ var _ = Describe("Environment Variables", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBShard()
 				to.mongodb.Spec.Init = &api.InitSpec{
-					ScriptSource: &api.ScriptSourceSpec{
+					Script: &api.ScriptSourceSpec{
 						VolumeSource: core.VolumeSource{
 							ConfigMap: &core.ConfigMapVolumeSource{
 								LocalObjectReference: core.LocalObjectReference{
@@ -263,7 +263,7 @@ var _ = Describe("Environment Variables", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			to.mongodb.Spec.Init = &api.InitSpec{
-				ScriptSource: &api.ScriptSourceSpec{
+				Script: &api.ScriptSourceSpec{
 					VolumeSource: core.VolumeSource{
 						ConfigMap: &core.ConfigMapVolumeSource{
 							LocalObjectReference: core.LocalObjectReference{
@@ -307,7 +307,7 @@ var _ = Describe("Environment Variables", func() {
 			By("Checking Inserted Document")
 			to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 1).Should(BeTrue())
 
-			_, _, err = util.PatchMongoDB(context.TODO(), to.DBClient().KubedbV1alpha1(), to.mongodb, func(in *api.MongoDB) *api.MongoDB {
+			_, _, err = util.PatchMongoDB(context.TODO(), to.DBClient().KubedbV1alpha2(), to.mongodb, func(in *api.MongoDB) *api.MongoDB {
 				envs = []core.EnvVar{
 					{
 						Name:  MONGO_INITDB_DATABASE,
@@ -336,7 +336,7 @@ var _ = Describe("Environment Variables", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBRS()
 				to.mongodb.Spec.Init = &api.InitSpec{
-					ScriptSource: &api.ScriptSourceSpec{
+					Script: &api.ScriptSourceSpec{
 						VolumeSource: core.VolumeSource{
 							ConfigMap: &core.ConfigMapVolumeSource{
 								LocalObjectReference: core.LocalObjectReference{
@@ -355,7 +355,7 @@ var _ = Describe("Environment Variables", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBShard()
 				to.mongodb.Spec.Init = &api.InitSpec{
-					ScriptSource: &api.ScriptSourceSpec{
+					Script: &api.ScriptSourceSpec{
 						VolumeSource: core.VolumeSource{
 							ConfigMap: &core.ConfigMapVolumeSource{
 								LocalObjectReference: core.LocalObjectReference{
