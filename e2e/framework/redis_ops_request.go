@@ -18,6 +18,7 @@ package framework
 
 import (
 	"context"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"time"
 
 	api "kubedb.dev/apimachinery/apis/ops/v1alpha1"
@@ -89,6 +90,28 @@ func (i *Invocation) RedisOpsRequestVerticalScale(name, namespace string, contai
 			VerticalScaling: &api.RedisVerticalScalingSpec{
 				Redis:    containers,
 				Exporter: exporter,
+			},
+		},
+	}
+}
+
+func (i *Invocation) RedisOpsRequestVolumeExpansion(name, namespace string, redis *resource.Quantity) *api.RedisOpsRequest {
+	return &api.RedisOpsRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      rand.WithUniqSuffix("mmr"),
+			Namespace: namespace,
+			Labels: map[string]string{
+				"app": i.app,
+			},
+		},
+
+		Spec: api.RedisOpsRequestSpec{
+			Type: api.OpsRequestTypeVolumeExpansion,
+			DatabaseRef: v1.LocalObjectReference{
+				Name: name,
+			},
+			VolumeExpansion: &api.RedisVolumeExpansionSpec{
+				Redis: redis,
 			},
 		},
 	}

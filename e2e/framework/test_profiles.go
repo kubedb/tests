@@ -65,6 +65,7 @@ const (
 	RedisAll                 = "redis_all"
 	RedisEnterprise          = "redis_enterprise"
 	RedisCommunity           = "redis_community"
+	RedisVolumeExpansion     = "redis_volume_expansion"
 
 	All        = "all"
 	Community  = "community"

@@ -18,34 +18,24 @@ package redis
 
 import (
 	"fmt"
-	"strings"
-
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	kerr "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	v1 "k8s.io/api/core/v1"
-	kerr "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
+	"strings"
 )
 
-var _ = Describe("Vertical Scaling Redis", func() {
+var _ = Describe("Redis Volume Expansion", func() {
 	to := testOptions{}
-	testName := framework.RedisVerticalScaling
-	resources := &v1.ResourceRequirements{
-		Limits: map[v1.ResourceName]resource.Quantity{
-			v1.ResourceMemory: resource.MustParse("300Mi"),
-			v1.ResourceCPU:    resource.MustParse(".2"),
-		},
-		Requests: map[v1.ResourceName]resource.Quantity{
-			v1.ResourceMemory: resource.MustParse("200Mi"),
-			v1.ResourceCPU:    resource.MustParse(".1"),
-		},
-	}
+	testName := framework.RedisVolumeExpansion
 	BeforeEach(func() {
 		to.Invocation = framework.NewInvocation()
+		if !to.IsGKE() {
+			to.skipMessage = "volume expansion testing is only supported in GKE"
+		}
 		if !runTestEnterprise(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", testName))
 		}
@@ -85,13 +75,14 @@ var _ = Describe("Vertical Scaling Redis", func() {
 		to.EventuallyWipedOut(to.redis.ObjectMeta).Should(Succeed())
 	})
 
-	Context("Scaling StandAlone Redis", func() {
+	Context("Volume Expansion in StandAlone Redis", func() {
 		BeforeEach(func() {
 			to.redis = to.RedisStandalone(framework.DBVersion)
-			to.redisOpsReq = to.RedisOpsRequestVerticalScale(to.redis.Name, to.redis.Namespace, resources, nil)
+			storageReq := resource.MustParse("2Gi")
+			to.redisOpsReq = to.RedisOpsRequestVolumeExpansion(to.redis.Name, to.redis.Namespace, &storageReq)
 		})
 
-		It("Should Scale StandAlone Redis", func() {
+		It("Should Expand StandAlone Redis", func() {
 			var err error
 			// Create Redis
 			to.createRedis()
@@ -103,7 +94,7 @@ var _ = Describe("Vertical Scaling Redis", func() {
 			to.EventuallyGetItem(to.redis, "A").Should(BeEquivalentTo("VALUE"))
 
 			// Scaling Database
-			By("Scaling Redis")
+			By("Expanding Volume")
 			to.redisOpsReq, err = to.CreateRedisOpsRequest(to.redisOpsReq)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -115,11 +106,11 @@ var _ = Describe("Vertical Scaling Redis", func() {
 		})
 	})
 
-	Context("Scaling Redis Cluster", func() {
+	Context("Volume Expansion in Redis Cluster", func() {
 		BeforeEach(func() {
 			to.redis = to.RedisCluster(framework.DBVersion, nil, nil)
-
-			to.redisOpsReq = to.RedisOpsRequestVerticalScale(to.redis.Name, to.redis.Namespace, resources, nil)
+			storageReq := resource.MustParse("2Gi")
+			to.redisOpsReq = to.RedisOpsRequestVolumeExpansion(to.redis.Name, to.redis.Namespace, &storageReq)
 		})
 
 		AfterEach(func() {
