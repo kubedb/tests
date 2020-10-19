@@ -95,7 +95,7 @@ var _ = Describe("Custom config", func() {
 	}
 
 	Context("from configMap", func() {
-		var userConfig *core.ConfigMap
+		var userConfig *core.Secret
 
 		BeforeEach(func() {
 			userConfig = to.GetCustomConfig(customConfigs, to.App())
@@ -114,7 +114,7 @@ var _ = Describe("Custom config", func() {
 			}
 
 			By("Creating configMap: " + userConfig.Name)
-			err := to.CreateConfigMap(userConfig)
+			_, err := to.CreateSecret(userConfig)
 			Expect(err).NotTo(HaveOccurred())
 
 			// Create MySQL
@@ -128,12 +128,8 @@ var _ = Describe("Custom config", func() {
 
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBStandalone()
-				to.mongodb.Spec.ConfigSource = &core.VolumeSource{
-					ConfigMap: &core.ConfigMapVolumeSource{
-						LocalObjectReference: core.LocalObjectReference{
-							Name: userConfig.Name,
-						},
-					},
+				to.mongodb.Spec.ConfigSecret = &core.LocalObjectReference{
+					Name: userConfig.Name,
 				}
 			})
 
@@ -144,12 +140,8 @@ var _ = Describe("Custom config", func() {
 
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBRS()
-				to.mongodb.Spec.ConfigSource = &core.VolumeSource{
-					ConfigMap: &core.ConfigMapVolumeSource{
-						LocalObjectReference: core.LocalObjectReference{
-							Name: userConfig.Name,
-						},
-					},
+				to.mongodb.Spec.ConfigSecret = &core.LocalObjectReference{
+					Name: userConfig.Name,
 				}
 			})
 
@@ -160,30 +152,16 @@ var _ = Describe("Custom config", func() {
 
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBShard()
-				to.mongodb.Spec.ShardTopology.Shard.ConfigSource = &core.VolumeSource{
-					ConfigMap: &core.ConfigMapVolumeSource{
-						LocalObjectReference: core.LocalObjectReference{
-							Name: userConfig.Name,
-						},
-					},
+				to.mongodb.Spec.ShardTopology.Shard.ConfigSecret = &core.LocalObjectReference{
+					Name: userConfig.Name,
 				}
-				to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSource = &core.VolumeSource{
-					ConfigMap: &core.ConfigMapVolumeSource{
-						LocalObjectReference: core.LocalObjectReference{
-							Name: userConfig.Name,
-						},
-					},
+				to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSecret = &core.LocalObjectReference{
+					Name: userConfig.Name,
 				}
-				to.mongodb.Spec.ShardTopology.Mongos.ConfigSource = &core.VolumeSource{
-					ConfigMap: &core.ConfigMapVolumeSource{
-						LocalObjectReference: core.LocalObjectReference{
-							Name: userConfig.Name,
-						},
-					},
+				to.mongodb.Spec.ShardTopology.Mongos.ConfigSecret = &core.LocalObjectReference{
+					Name: userConfig.Name,
 				}
-
 				//to.mongodb = to.MongoDBWithFlexibleProbeTimeout(to.mongodb)
-
 			})
 
 			It("should run successfully", runWithUserProvidedConfig)

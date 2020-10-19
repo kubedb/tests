@@ -212,11 +212,11 @@ var _ = Describe("General MongoDB", func() {
 
 	Context("with custom SA Name", func() {
 		BeforeEach(func() {
-			customSecret := to.SecretForDatabaseAuthentication(to.mongodb.ObjectMeta, false)
-			to.mongodb.Spec.DatabaseSecret = &core.SecretVolumeSource{
-				SecretName: customSecret.Name,
+			authSecret := to.SecretForDatabaseAuthentication(to.mongodb.ObjectMeta, false)
+			to.mongodb.Spec.AuthSecret = &core.LocalObjectReference{
+				Name: authSecret.Name,
 			}
-			_, err = to.CreateSecret(customSecret)
+			_, err = to.CreateSecret(authSecret)
 			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyHalt
 		})
 

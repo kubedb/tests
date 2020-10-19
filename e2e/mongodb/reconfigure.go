@@ -55,22 +55,18 @@ var _ = Describe("Reconfigure", func() {
 	})
 
 	Context("From Data", func() {
-		var userConfig *v1.ConfigMap
+		var userConfig *v1.Secret
 		var newCustomConfig *dbaapi.MongoDBCustomConfiguration
-		var configSource *v1.VolumeSource
+		var configSecret *v1.LocalObjectReference
 		BeforeEach(func() {
 			to.skipMessage = ""
 			configName := to.App() + "-previous-config"
 			userConfig = to.GetCustomConfig(customConfigs, configName)
 			newCustomConfig = &dbaapi.MongoDBCustomConfiguration{
-				Data: data,
+				InlineConfig: inlineConfig,
 			}
-			configSource = &v1.VolumeSource{
-				ConfigMap: &v1.ConfigMapVolumeSource{
-					LocalObjectReference: v1.LocalObjectReference{
-						Name: userConfig.Name,
-					},
-				},
+			configSecret = &v1.LocalObjectReference{
+				Name: userConfig.Name,
 			}
 		})
 
@@ -85,7 +81,7 @@ var _ = Describe("Reconfigure", func() {
 				to.mongodb = to.MongoDBStandalone()
 				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-				to.mongodb.Spec.ConfigSource = configSource
+				to.mongodb.Spec.ConfigSecret = configSecret
 				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, newCustomConfig, nil, nil, nil, nil)
 			})
 
@@ -99,7 +95,7 @@ var _ = Describe("Reconfigure", func() {
 				to.mongodb = to.MongoDBRS()
 				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-				to.mongodb.Spec.ConfigSource = configSource
+				to.mongodb.Spec.ConfigSecret = configSecret
 				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, nil, newCustomConfig, nil, nil, nil)
 			})
 
@@ -113,9 +109,9 @@ var _ = Describe("Reconfigure", func() {
 				to.mongodb = to.MongoDBShard()
 				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-				to.mongodb.Spec.ShardTopology.Shard.ConfigSource = configSource
-				to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSource = configSource
-				to.mongodb.Spec.ShardTopology.Mongos.ConfigSource = configSource
+				to.mongodb.Spec.ShardTopology.Shard.ConfigSecret = configSecret
+				to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSecret = configSecret
+				to.mongodb.Spec.ShardTopology.Mongos.ConfigSecret = configSecret
 				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, nil, nil, newCustomConfig, newCustomConfig, newCustomConfig)
 
 			})
@@ -127,10 +123,10 @@ var _ = Describe("Reconfigure", func() {
 	})
 
 	Context("From New ConfigMap", func() {
-		var userConfig *v1.ConfigMap
-		var newUserConfig *v1.ConfigMap
+		var userConfig *v1.Secret
+		var newUserConfig *v1.Secret
 		var newCustomConfig *dbaapi.MongoDBCustomConfiguration
-		var configSource *v1.VolumeSource
+		var configSecret *v1.LocalObjectReference
 
 		BeforeEach(func() {
 			prevConfigName := to.App() + "-previous-config"
@@ -138,16 +134,12 @@ var _ = Describe("Reconfigure", func() {
 			userConfig = to.GetCustomConfig(customConfigs, prevConfigName)
 			newUserConfig = to.GetCustomConfig(newCustomConfigs, newConfigName)
 			newCustomConfig = &dbaapi.MongoDBCustomConfiguration{
-				ConfigMap: &v1.LocalObjectReference{
+				ConfigSecret: &v1.LocalObjectReference{
 					Name: newUserConfig.Name,
 				},
 			}
-			configSource = &v1.VolumeSource{
-				ConfigMap: &v1.ConfigMapVolumeSource{
-					LocalObjectReference: v1.LocalObjectReference{
-						Name: userConfig.Name,
-					},
-				},
+			configSecret = &v1.LocalObjectReference{
+				Name: userConfig.Name,
 			}
 		})
 
@@ -162,7 +154,7 @@ var _ = Describe("Reconfigure", func() {
 				to.mongodb = to.MongoDBStandalone()
 				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-				to.mongodb.Spec.ConfigSource = configSource
+				to.mongodb.Spec.ConfigSecret = configSecret
 				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, newCustomConfig, nil, nil, nil, nil)
 			})
 
@@ -174,7 +166,7 @@ var _ = Describe("Reconfigure", func() {
 		Context("With Replica Set", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBRS()
-				to.mongodb.Spec.ConfigSource = configSource
+				to.mongodb.Spec.ConfigSecret = configSecret
 				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, nil, newCustomConfig, nil, nil, nil)
 			})
 
@@ -188,9 +180,9 @@ var _ = Describe("Reconfigure", func() {
 				to.mongodb = to.MongoDBShard()
 				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-				to.mongodb.Spec.ShardTopology.Shard.ConfigSource = configSource
-				to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSource = configSource
-				to.mongodb.Spec.ShardTopology.Mongos.ConfigSource = configSource
+				to.mongodb.Spec.ShardTopology.Shard.ConfigSecret = configSecret
+				to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSecret = configSecret
+				to.mongodb.Spec.ShardTopology.Mongos.ConfigSecret = configSecret
 				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, nil, nil, newCustomConfig, newCustomConfig, newCustomConfig)
 			})
 

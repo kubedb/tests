@@ -41,14 +41,14 @@ db.people.insert({"firstname" : "kubernetes", "lastname" : "database" }); `,
 	}
 }
 
-func (i *Invocation) GetCustomConfig(configs []string, name string) *core.ConfigMap {
+func (i *Invocation) GetCustomConfig(configs []string, name string) *core.Secret {
 	configs = append([]string{"net:"}, configs...)
-	return &core.ConfigMap{
+	return &core.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: i.namespace,
 		},
-		Data: map[string]string{
+		StringData: map[string]string{
 			"mongod.conf": strings.Join(configs, "\n"),
 		},
 	}

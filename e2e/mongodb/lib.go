@@ -49,10 +49,8 @@ var (
 	newCustomConfigs = []string{
 		fmt.Sprintf(`   maxIncomingConnections: %v`, newMaxIncomingConnections),
 	}
-	data = map[string]string{
-		"mongod.conf": fmt.Sprintf(`net:
-   maxIncomingConnections: %v`, newMaxIncomingConnections),
-	}
+	inlineConfig = fmt.Sprintf(`net:
+   maxIncomingConnections: %v`, newMaxIncomingConnections)
 )
 
 type testOptions struct {
@@ -184,18 +182,18 @@ func (to *testOptions) deleteTestResource() {
 	to.EventuallyWipedOut(to.mongodb.ObjectMeta).Should(Succeed())
 }
 
-func (to *testOptions) runWithUserProvidedConfig(userConfig, newUserConfig *core.ConfigMap) {
+func (to *testOptions) runWithUserProvidedConfig(userConfig, newUserConfig *core.Secret) {
 	if to.skipMessage != "" {
 		Skip(to.skipMessage)
 	}
 
-	By("Creating configMap: " + userConfig.Name)
-	err := to.CreateConfigMap(userConfig)
+	By("Creating secret: " + userConfig.Name)
+	_, err := to.CreateSecret(userConfig)
 	Expect(err).NotTo(HaveOccurred())
 
 	if newUserConfig != nil {
-		By("Creating configMap: " + newUserConfig.Name)
-		err = to.CreateConfigMap(newUserConfig)
+		By("Creating secret: " + newUserConfig.Name)
+		_, err = to.CreateSecret(newUserConfig)
 		Expect(err).NotTo(HaveOccurred())
 	}
 

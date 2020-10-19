@@ -184,7 +184,7 @@ var _ = Describe("Initialize With Stash", func() {
 		By("Create mongodb from stash")
 		to.mongodb = to.anotherMongoDB // without value?
 		rs = to.RestoreSession(to.mongodb.ObjectMeta, repo)
-		to.mongodb.Spec.DatabaseSecret = oldMongoDB.Spec.DatabaseSecret
+		to.mongodb.Spec.AuthSecret = oldMongoDB.Spec.AuthSecret
 		to.mongodb.Spec.Init = &api.InitSpec{
 			WaitForInitialRestore: true,
 		}
@@ -493,7 +493,7 @@ var _ = Describe("Initialize With Stash", func() {
 				By("Create mongodb from stash")
 				to.mongodb = to.anotherMongoDB // without value?
 				rs = to.RestoreSession(to.mongodb.ObjectMeta, repo)
-				to.mongodb.Spec.DatabaseSecret = oldMongoDB.Spec.DatabaseSecret
+				to.mongodb.Spec.AuthSecret = oldMongoDB.Spec.AuthSecret
 				to.mongodb.Spec.Init = &api.InitSpec{
 					WaitForInitialRestore: true,
 				}
