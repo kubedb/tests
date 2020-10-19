@@ -171,7 +171,7 @@ func (f *Framework) UpdateSecret(meta metav1.ObjectMeta, transformer func(core.S
 }
 
 func (f *Framework) GetMongoDBRootPassword(mongodb *api.MongoDB) (string, error) {
-	secret, err := f.kubeClient.CoreV1().Secrets(mongodb.Namespace).Get(context.TODO(), mongodb.Spec.DatabaseSecret.SecretName, metav1.GetOptions{})
+	secret, err := f.kubeClient.CoreV1().Secrets(mongodb.Namespace).Get(context.TODO(), mongodb.Spec.AuthSecret.Name, metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
