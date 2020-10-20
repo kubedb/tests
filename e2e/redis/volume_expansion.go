@@ -18,14 +18,16 @@ package redis
 
 import (
 	"fmt"
+	"strings"
+
+	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
+	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
+	"kubedb.dev/tests/e2e/framework"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
-	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
-	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
-	"kubedb.dev/tests/e2e/framework"
-	"strings"
 )
 
 var _ = Describe("Redis Volume Expansion", func() {

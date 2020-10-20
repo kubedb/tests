@@ -18,7 +18,6 @@ package framework
 
 import (
 	"context"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"time"
 
 	api "kubedb.dev/apimachinery/apis/ops/v1alpha1"
@@ -26,6 +25,7 @@ import (
 	"github.com/appscode/go/crypto/rand"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	meta_util "kmodules.xyz/client-go/meta"
 )

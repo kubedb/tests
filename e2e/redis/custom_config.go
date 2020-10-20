@@ -95,34 +95,30 @@ var _ = Describe("Custom config Redis", func() {
 		"maxclients 500",
 	}
 
-	Context("from configMap", func() {
-		var userConfig *core.ConfigMap
+	Context("from secret", func() {
+		var userConfig *core.Secret
 
 		BeforeEach(func() {
 			userConfig = to.GetCustomConfigRedis(customConfigs)
 		})
 
 		AfterEach(func() {
-			By("Deleting configMap: " + userConfig.Name)
-			err := to.DeleteConfigMap(userConfig.ObjectMeta)
+			By("Deleting secret: " + userConfig.Name)
+			err := to.DeleteSecret(userConfig.ObjectMeta)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("should set configuration provided in configMap", func() {
+		It("should set configuration provided in secret", func() {
 			if to.skipMessage != "" {
 				Skip(to.skipMessage)
 			}
 
-			By("Creating configMap: " + userConfig.Name)
-			err := to.CreateConfigMap(userConfig)
+			By("Creating secret: " + userConfig.Name)
+			_, err := to.CreateSecret(userConfig)
 			Expect(err).NotTo(HaveOccurred())
 
-			to.redis.Spec.ConfigSource = &core.VolumeSource{
-				ConfigMap: &core.ConfigMapVolumeSource{
-					LocalObjectReference: core.LocalObjectReference{
-						Name: userConfig.Name,
-					},
-				},
+			to.redis.Spec.ConfigSecret = &core.LocalObjectReference{
+				Name: userConfig.Name,
 			}
 
 			to.createRedis()
