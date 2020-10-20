@@ -169,7 +169,7 @@ var _ = Describe("MySQL", func() {
 				})
 
 				By("Checking MySQL resource updated")
-				my, err = fi.DBClient().KubedbV1alpha1().MySQLs(my.Namespace).Get(context.TODO(), my.Name, metav1.GetOptions{}) // get updated MySQL object
+				my, err = fi.DBClient().KubedbV1alpha2().MySQLs(my.Namespace).Get(context.TODO(), my.Name, metav1.GetOptions{}) // get updated MySQL object
 				Expect(err).NotTo(HaveOccurred())
 				Expect(*myOR.Spec.VerticalScaling.MySQL).Should(matcher.BeSameAs(my.Spec.PodTemplate.Spec.Resources))
 
@@ -230,7 +230,7 @@ var _ = Describe("MySQL", func() {
 				})
 
 				By("Checking MySQL resource updated")
-				my, err = fi.DBClient().KubedbV1alpha1().MySQLs(my.Namespace).Get(context.TODO(), my.Name, metav1.GetOptions{}) // get updated MySQL object
+				my, err = fi.DBClient().KubedbV1alpha2().MySQLs(my.Namespace).Get(context.TODO(), my.Name, metav1.GetOptions{}) // get updated MySQL object
 				Expect(err).NotTo(HaveOccurred())
 				Expect(*myOR.Spec.VerticalScaling.MySQL).Should(matcher.BeSameAs(my.Spec.PodTemplate.Spec.Resources))
 

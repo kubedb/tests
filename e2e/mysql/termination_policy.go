@@ -97,7 +97,7 @@ var _ = Describe("MySQL", func() {
 					Expect(err).Should(HaveOccurred())
 
 					By("Check for Running mysql")
-					fi.EventuallyMySQLRunning(myMeta).Should(BeTrue())
+					fi.EventuallyMySQLReady(myMeta).Should(BeTrue())
 
 					By("Update mysql to set spec.terminationPolicy = WipeOut")
 					_, err = fi.PatchMySQL(myMeta, func(in *api.MySQL) *api.MySQL {
@@ -162,7 +162,7 @@ var _ = Describe("MySQL", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					By("Wait for Running mysql")
-					fi.EventuallyMySQLRunning(myMeta).Should(BeTrue())
+					fi.EventuallyMySQLReady(myMeta).Should(BeTrue())
 
 					By("Deleting MySQL crd")
 					err = fi.DeleteMySQL(myMeta)

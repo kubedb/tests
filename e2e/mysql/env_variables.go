@@ -184,7 +184,7 @@ var _ = Describe("MySQL", func() {
 					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 
 					By("Patching EnvVar")
-					_, _, err = util.PatchMySQL(context.TODO(), fi.DBClient().KubedbV1alpha1(), my, func(in *api.MySQL) *api.MySQL {
+					_, _, err = util.PatchMySQL(context.TODO(), fi.DBClient().KubedbV1alpha2(), my, func(in *api.MySQL) *api.MySQL {
 						in.Spec.PodTemplate.Spec.Env = []core.EnvVar{
 							{
 								Name:  MYSQL_DATABASE,

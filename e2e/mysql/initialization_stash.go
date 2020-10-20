@@ -24,7 +24,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	core "k8s.io/api/core/v1"
 	stashV1beta1 "stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 )
 
@@ -101,13 +100,12 @@ var _ = Describe("MySQL", func() {
 					By("Initialize mysql from stash backup")
 					rs := fi.RestoreSession(my.ObjectMeta, repository)
 					my, err = fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Spec.DatabaseSecret = my.Spec.DatabaseSecret
+						in.Spec.AuthSecret = my.Spec.AuthSecret
 						in.Spec.Init = &api.InitSpec{
-							StashRestoreSession: &core.LocalObjectReference{
-								Name: rs.Name,
-							},
+							WaitForInitialRestore: true,
 						}
 					})
+					Expect(err).NotTo(HaveOccurred())
 
 					By("Create RestoreSession")
 					rs, err = fi.CreateRestoreSession(rs)
@@ -119,7 +117,7 @@ var _ = Describe("MySQL", func() {
 					fi.EventuallyRestoreSessionPhase(rs.ObjectMeta).Should(Equal(stashV1beta1.RestoreSucceeded))
 
 					By("Wait for Running mysql")
-					fi.EventuallyMySQLRunning(my.ObjectMeta).Should(BeTrue())
+					fi.EventuallyMySQLReady(my.ObjectMeta).Should(BeTrue())
 
 					fi.EventuallyDBReady(my, dbInfo)
 

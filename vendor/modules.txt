@@ -246,9 +246,6 @@ github.com/prometheus/prom2json
 github.com/robfig/cron/v3
 # github.com/sergi/go-diff v1.0.0
 github.com/sergi/go-diff/diffmatchpatch
-# github.com/spf13/afero v1.2.2
-github.com/spf13/afero
-github.com/spf13/afero/mem
 # github.com/spf13/cobra v1.0.0
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
@@ -392,7 +389,7 @@ golang.org/x/xerrors/internal
 # gomodules.xyz/blobfs v0.1.4
 ## explicit
 gomodules.xyz/blobfs
-# gomodules.xyz/cert v1.0.3
+# gomodules.xyz/cert v1.1.2
 ## explicit
 gomodules.xyz/cert
 gomodules.xyz/cert/certstore

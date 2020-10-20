@@ -261,7 +261,7 @@ func (f *Framework) SelfSignedCASecret(meta metav1.ObjectMeta, kind string) *cor
 }
 
 func (f *Framework) GetMySQLRootPassword(my *api.MySQL) (string, error) {
-	secret, err := f.kubeClient.CoreV1().Secrets(my.Namespace).Get(context.TODO(), my.Spec.DatabaseSecret.SecretName, metav1.GetOptions{})
+	secret, err := f.kubeClient.CoreV1().Secrets(my.Namespace).Get(context.TODO(), my.Spec.AuthSecret.Name, metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}

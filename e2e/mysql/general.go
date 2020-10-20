@@ -139,13 +139,14 @@ var _ = Describe("MySQL", func() {
 				_, err = fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
 					in.Name = myMeta.Name
 					in.Namespace = myMeta.Namespace
-					in.Spec.DatabaseSecret = &core.SecretVolumeSource{
-						SecretName: customSecret.Name,
+					in.Spec.AuthSecret = &core.LocalObjectReference{
+						Name: customSecret.Name,
 					}
 					in.Spec.PodTemplate.Spec.ServiceAccountName = "my-custom-sa"
 					// Set termination policy Halt to leave the PVCs and secrets intact for reuse
 					in.Spec.TerminationPolicy = api.TerminationPolicyHalt
 				})
+				Expect(err).NotTo(HaveOccurred())
 
 				By("Check if MySQL " + myMeta.Namespace + "/" + myMeta.Name + " exists.")
 				_, err = fi.GetMySQL(myMeta)
@@ -178,6 +179,7 @@ var _ = Describe("MySQL", func() {
 					// Set termination policy WipeOut to delete all mysql resources permanently
 					in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				})
+				Expect(err).NotTo(HaveOccurred())
 			})
 		})
 
@@ -189,6 +191,7 @@ var _ = Describe("MySQL", func() {
 					// Set termination policy WipeOut to delete all mysql resources permanently
 					in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				})
+				Expect(err).NotTo(HaveOccurred())
 
 				//Evict MySQL pods
 				By("Try to evict pods")

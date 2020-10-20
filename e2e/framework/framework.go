@@ -93,7 +93,7 @@ func New(
 	if err != nil {
 		return nil, err
 	}
-	store, err := certstore.New(blobfs.NewInMemory(), filepath.Join("", "pki"))
+	store, err := certstore.New(blobfs.NewInMemoryFS(), filepath.Join("", "pki"))
 	if err != nil {
 		return nil, err
 	}

@@ -31,7 +31,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	kutil "kmodules.xyz/client-go"
-	kmon "kmodules.xyz/monitoring-agent-api/api/v1"
+	mona "kmodules.xyz/monitoring-agent-api/api/v1"
 )
 
 const (
@@ -41,15 +41,15 @@ const (
 )
 
 func (f *Framework) AddMySQLMonitor(obj *api.MySQL) {
-	obj.Spec.Monitor = &kmon.AgentSpec{
-		Prometheus: &kmon.PrometheusSpec{
-			Exporter: &kmon.PrometheusExporterSpec{
-				Port:            api.PrometheusExporterPortNumber,
+	obj.Spec.Monitor = &mona.AgentSpec{
+		Prometheus: &mona.PrometheusSpec{
+			Exporter: mona.PrometheusExporterSpec{
+				Port:            mona.PrometheusExporterPortNumber,
 				Resources:       core.ResourceRequirements{},
 				SecurityContext: nil,
 			},
 		},
-		Agent: kmon.AgentPrometheus,
+		Agent: mona.AgentPrometheus,
 	}
 }
 
@@ -57,7 +57,7 @@ func (f *Framework) AddMySQLMonitor(obj *api.MySQL) {
 //and check against known key and value
 //to verify the connection is functioning as intended
 func (f *Framework) VerifyMySQLExporter(meta metav1.ObjectMeta, version string) error {
-	tunnel, err := f.ForwardToPort(meta, fmt.Sprintf("%v-0", meta.Name), aws.Int(api.PrometheusExporterPortNumber))
+	tunnel, err := f.ForwardToPort(meta, fmt.Sprintf("%v-0", meta.Name), aws.Int(mona.PrometheusExporterPortNumber))
 	if err != nil {
 		log.Infoln(err)
 		return err

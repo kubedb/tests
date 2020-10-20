@@ -59,26 +59,26 @@ func (fi *Invocation) MySQLDefinition(version string) *api.MySQL {
 }
 
 func (fi *Invocation) CreateMySQL(obj *api.MySQL) (*api.MySQL, error) {
-	return fi.dbClient.KubedbV1alpha1().MySQLs(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
+	return fi.dbClient.KubedbV1alpha2().MySQLs(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
 }
 
 func (f *Framework) GetMySQL(meta metav1.ObjectMeta) (*api.MySQL, error) {
-	return f.dbClient.KubedbV1alpha1().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+	return f.dbClient.KubedbV1alpha2().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 }
 
 func (f *Framework) PatchMySQL(meta metav1.ObjectMeta, transform func(*api.MySQL) *api.MySQL) (*api.MySQL, error) {
-	mysql, err := f.dbClient.KubedbV1alpha1().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+	mysql, err := f.dbClient.KubedbV1alpha2().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	mysql, _, err = util.PatchMySQL(context.TODO(), f.dbClient.KubedbV1alpha1(), mysql, transform, metav1.PatchOptions{})
+	mysql, _, err = util.PatchMySQL(context.TODO(), f.dbClient.KubedbV1alpha2(), mysql, transform, metav1.PatchOptions{})
 	return mysql, err
 }
 
 func (f *Framework) EventuallyMySQLPhase(meta metav1.ObjectMeta) GomegaAsyncAssertion {
 	return Eventually(
 		func() api.DatabasePhase {
-			db, err := f.dbClient.KubedbV1alpha1().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+			db, err := f.dbClient.KubedbV1alpha2().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			return db.Status.Phase
 		},
@@ -87,12 +87,12 @@ func (f *Framework) EventuallyMySQLPhase(meta metav1.ObjectMeta) GomegaAsyncAsse
 	)
 }
 
-func (f *Framework) EventuallyMySQLRunning(meta metav1.ObjectMeta) GomegaAsyncAssertion {
+func (f *Framework) EventuallyMySQLReady(meta metav1.ObjectMeta) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			my, err := f.dbClient.KubedbV1alpha1().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+			my, err := f.dbClient.KubedbV1alpha2().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
-			return my.Status.Phase == api.DatabasePhaseRunning
+			return my.Status.Phase == api.DatabasePhaseReady
 		},
 		Timeout,
 		RetryInterval,
@@ -102,7 +102,7 @@ func (f *Framework) EventuallyMySQLRunning(meta metav1.ObjectMeta) GomegaAsyncAs
 func (f *Framework) EventuallyMySQL(meta metav1.ObjectMeta) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			_, err := f.dbClient.KubedbV1alpha1().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+			_, err := f.dbClient.KubedbV1alpha2().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 			if err != nil {
 				if kerr.IsNotFound(err) {
 					return false
@@ -117,7 +117,7 @@ func (f *Framework) EventuallyMySQL(meta metav1.ObjectMeta) GomegaAsyncAssertion
 }
 
 func (f *Framework) DeleteMySQL(meta metav1.ObjectMeta) error {
-	return f.dbClient.KubedbV1alpha1().MySQLs(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInForeground())
+	return f.dbClient.KubedbV1alpha2().MySQLs(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInForeground())
 }
 
 func (fi *Invocation) CreateMySQLAndWaitForRunning(version string, transformFuncs ...func(in *api.MySQL)) (*api.MySQL, error) {
@@ -137,7 +137,7 @@ func (fi *Invocation) CreateMySQLAndWaitForRunning(version string, transformFunc
 	fi.AppendToCleanupList(my)
 
 	By("Wait for Running mysql")
-	fi.EventuallyMySQLRunning(my.ObjectMeta).Should(BeTrue())
+	fi.EventuallyMySQLReady(my.ObjectMeta).Should(BeTrue())
 
 	By("Wait for AppBinding to create")
 	fi.EventuallyAppBinding(my.ObjectMeta).Should(BeTrue())

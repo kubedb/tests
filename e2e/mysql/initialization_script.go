@@ -60,7 +60,7 @@ var _ = Describe("MySQL", func() {
 				// Create MySQL standalone and wait for running
 				my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
 					in.Spec.Init = &api.InitSpec{
-						ScriptSource: &api.ScriptSourceSpec{
+						Script: &api.ScriptSourceSpec{
 							VolumeSource: core.VolumeSource{
 								ConfigMap: &core.ConfigMapVolumeSource{
 									LocalObjectReference: core.LocalObjectReference{

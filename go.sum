@@ -1433,10 +1433,11 @@ golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8T
 golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 h1:E7g+9GITq07hpfrRu66IVDexMakfv52eLZ2CXBWiKr4=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
+gomodules.xyz/blobfs v0.1.2/go.mod h1:BorUG/XXbImFG51pMb7mFDnS/mCjrqshFLvfBEMteOQ=
 gomodules.xyz/blobfs v0.1.4 h1:5gc18kr+ZBAMcEmQmU9ochvPOsyRIymbdnK3reBy+fc=
 gomodules.xyz/blobfs v0.1.4/go.mod h1:BorUG/XXbImFG51pMb7mFDnS/mCjrqshFLvfBEMteOQ=
-gomodules.xyz/cert v1.0.3 h1:i2bVvUZtgUS6NkUlw5rHuU4szvqvRa8jX2T4sbkTeD0=
-gomodules.xyz/cert v1.0.3/go.mod h1:Sg8RWgr+w5FV7IhfQcGQnIApNiGdryamxQqiwkRFQl8=
+gomodules.xyz/cert v1.1.2 h1:5EUdFaBmgFJWDhqe4gOLz2+V9M6zXQ/YzMQC7buoMAY=
+gomodules.xyz/cert v1.1.2/go.mod h1:wAXwKiUtLpyfrdKOIfJuiqxycR4FDWdMdbjasvTw+NU=
 gomodules.xyz/jsonpatch/v2 v2.0.1/go.mod h1:IhYNNY4jnS53ZnfE4PAmpKtDpTCj1JFXc+3mwe7XcUU=
 gomodules.xyz/jsonpatch/v2 v2.1.0 h1:Phva6wqu+xR//Njw6iorylFFgn/z547tw5Ne3HZPQ+k=
 gomodules.xyz/jsonpatch/v2 v2.1.0/go.mod h1:IhYNNY4jnS53ZnfE4PAmpKtDpTCj1JFXc+3mwe7XcUU=

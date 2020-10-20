@@ -85,14 +85,14 @@ func (i *Invocation) GetCustomConfig(configs []string, name string) *core.Secret
 	}
 }
 
-func (f *Invocation) GetCustomConfigForMySQL(configs []string) *core.ConfigMap {
+func (f *Invocation) GetCustomConfigForMySQL(configs []string) *core.Secret {
 	configs = append([]string{"[mysqld]"}, configs...)
-	return &core.ConfigMap{
+	return &core.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      f.app,
 			Namespace: f.namespace,
 		},
-		Data: map[string]string{
+		StringData: map[string]string{
 			"my-custom.cnf": strings.Join(configs, "\n"),
 		},
 	}

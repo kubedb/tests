@@ -61,31 +61,26 @@ var _ = Describe("MySQL", func() {
 				"max_connections=200",
 				"read_buffer_size=1048576", // 1MB
 			}
-			var customConfigForMySQL = func() (*core.ConfigMap, error) {
+			var customConfigForMySQL = func() (*core.Secret, error) {
 				cm := fi.GetCustomConfigForMySQL(customConfigs)
 				By("Creating custom Config for MySQL " + cm.Namespace + "/" + cm.Name)
-				err := fi.CreateConfigMap(cm)
+				cm, err := fi.CreateSecret(cm)
 				if err != nil {
 					return nil, err
 				}
-				cm, err = fi.GetConfigMap(cm.ObjectMeta)
 				fi.AppendToCleanupList(cm)
 				return cm, err
 			}
 
-			Context("from configMap", func() {
-				It("should set configuration provided in configMap", func() {
+			Context("from secret", func() {
+				It("should set configuration provided in secret", func() {
 					cm, err := customConfigForMySQL()
 					Expect(err).NotTo(HaveOccurred())
 
 					// Create MySQL standalone and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Spec.ConfigSource = &core.VolumeSource{
-							ConfigMap: &core.ConfigMapVolumeSource{
-								LocalObjectReference: core.LocalObjectReference{
-									Name: cm.Name,
-								},
-							},
+						in.Spec.ConfigSecret = &core.LocalObjectReference{
+							Name: cm.Name,
 						}
 						// Set termination policy WipeOut to delete all mysql resources permanently
 						in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut

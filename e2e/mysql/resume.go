@@ -27,7 +27,7 @@ import (
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	meta_util "kmodules.xyz/client-go/meta"
+	kmapi "kmodules.xyz/client-go/api/v1"
 )
 
 var _ = Describe("MySQL", func() {
@@ -202,7 +202,7 @@ var _ = Describe("MySQL", func() {
 						in.Name = myMeta.Name
 						in.Namespace = myMeta.Namespace
 						in.Spec.Init = &api.InitSpec{
-							ScriptSource: &api.ScriptSourceSpec{
+							Script: &api.ScriptSourceSpec{
 								VolumeSource: core.VolumeSource{
 									ConfigMap: &core.ConfigMapVolumeSource{
 										LocalObjectReference: core.LocalObjectReference{
@@ -241,7 +241,7 @@ var _ = Describe("MySQL", func() {
 						in.Name = myMeta.Name
 						in.Namespace = myMeta.Namespace
 						in.Spec.Init = &api.InitSpec{
-							ScriptSource: &api.ScriptSourceSpec{
+							Script: &api.ScriptSourceSpec{
 								VolumeSource: core.VolumeSource{
 									ConfigMap: &core.ConfigMapVolumeSource{
 										LocalObjectReference: core.LocalObjectReference{
@@ -264,9 +264,8 @@ var _ = Describe("MySQL", func() {
 					Expect(err).NotTo(HaveOccurred())
 					Expect(my.Spec.Init).NotTo(BeNil())
 
-					By("Checking MySQL crd does not have kubedb.com/initialized annotation")
-					_, err = meta_util.GetString(my.Annotations, api.AnnotationInitialized)
-					Expect(err).To(HaveOccurred())
+					By("Checking MySQL crd does not have status.conditions[DataRestored]")
+					Expect(kmapi.HasCondition(my.Status.Conditions, api.DatabaseDataRestored)).To(BeFalse())
 				})
 			})
 
@@ -285,7 +284,7 @@ var _ = Describe("MySQL", func() {
 						in.Name = myMeta.Name
 						in.Namespace = myMeta.Namespace
 						in.Spec.Init = &api.InitSpec{
-							ScriptSource: &api.ScriptSourceSpec{
+							Script: &api.ScriptSourceSpec{
 								VolumeSource: core.VolumeSource{
 									ConfigMap: &core.ConfigMapVolumeSource{
 										LocalObjectReference: core.LocalObjectReference{
@@ -327,7 +326,7 @@ var _ = Describe("MySQL", func() {
 							in.Name = myMeta.Name
 							in.Namespace = myMeta.Namespace
 							in.Spec.Init = &api.InitSpec{
-								ScriptSource: &api.ScriptSourceSpec{
+								Script: &api.ScriptSourceSpec{
 									VolumeSource: core.VolumeSource{
 										ConfigMap: &core.ConfigMapVolumeSource{
 											LocalObjectReference: core.LocalObjectReference{
@@ -350,9 +349,8 @@ var _ = Describe("MySQL", func() {
 						Expect(err).NotTo(HaveOccurred())
 						Expect(my.Spec.Init).ShouldNot(BeNil())
 
-						By("Checking MySQL crd does not have kubedb.com/initialized annotation")
-						_, err = meta_util.GetString(my.Annotations, api.AnnotationInitialized)
-						Expect(err).To(HaveOccurred())
+						By("Checking MySQL crd does not have status.conditions[DataRestored]")
+						Expect(kmapi.HasCondition(my.Status.Conditions, api.DatabaseDataRestored)).To(BeFalse())
 					}
 					By("Update mysql to set spec.terminationPolicy = WipeOut")
 					_, err = fi.PatchMySQL(myMeta, func(in *api.MySQL) *api.MySQL {

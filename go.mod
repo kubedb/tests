@@ -17,7 +17,7 @@ require (
 	go.mongodb.org/mongo-driver v1.3.2
 	gocloud.dev v0.20.0
 	gomodules.xyz/blobfs v0.1.4
-	gomodules.xyz/cert v1.0.3
+	gomodules.xyz/cert v1.1.2
 	k8s.io/api v0.19.0
 	k8s.io/apiextensions-apiserver v0.19.0
 	k8s.io/apimachinery v0.19.0

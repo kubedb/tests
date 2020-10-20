@@ -126,7 +126,7 @@ var _ = Describe("MySQL", func() {
 				// Upgrade MySQL Version and waiting for success
 				myOR := fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
 					in.Spec.Type = opsapi.OpsRequestTypeUpgrade
-					in.Spec.Upgrade = &opsapi.UpgradeSpec{
+					in.Spec.Upgrade = &opsapi.MySQLUpgradeSpec{
 						TargetVersion: framework.DBUpdatedVersion,
 					}
 				})
@@ -217,7 +217,7 @@ var _ = Describe("MySQL", func() {
 					// Upgrade MySQL Version and waiting for success
 					myOR := fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
 						in.Spec.Type = opsapi.OpsRequestTypeUpgrade
-						in.Spec.Upgrade = &opsapi.UpgradeSpec{
+						in.Spec.Upgrade = &opsapi.MySQLUpgradeSpec{
 							TargetVersion: framework.DBUpdatedVersion,
 						}
 					})
