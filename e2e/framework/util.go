@@ -17,6 +17,7 @@ limitations under the License.
 package framework
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -245,6 +246,19 @@ func (f *Framework) ForwardToPort(meta metav1.ObjectMeta, clientPodName string, 
 	}
 
 	return tunnel, nil
+}
+
+func (fi *Framework) GetPod(meta metav1.ObjectMeta) (*core.Pod, error) {
+	podList, err := fi.kubeClient.CoreV1().Pods(meta.Namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	for _, pod := range podList.Items {
+		if bytes.HasPrefix([]byte(pod.Name), []byte(meta.Name)) {
+			return &pod, nil
+		}
+	}
+	return nil, fmt.Errorf("no pod found for workload %v", meta.Name)
 }
 
 func (fi *Invocation) PrintDebugInfoOnFailure() {

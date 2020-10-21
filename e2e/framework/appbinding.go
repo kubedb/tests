@@ -111,6 +111,23 @@ func (f *Framework) EnsureCustomAppBinding(db *api.MongoDB, customAppBindingName
 	return nil
 }
 
+func (f *Framework) CheckRedisAppBindingSpec(meta metav1.ObjectMeta) error {
+	redis, err := f.GetRedis(meta)
+	Expect(err).NotTo(HaveOccurred())
+
+	appBinding, err := f.appCatalogClient.AppBindings(redis.Namespace).Get(context.TODO(), redis.Name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	if appBinding.Spec.ClientConfig.Service == nil ||
+		appBinding.Spec.ClientConfig.Service.Name != redis.ServiceName() ||
+		appBinding.Spec.ClientConfig.Service.Port != 6379 {
+		return fmt.Errorf("appbinding %v/%v contains invalid data", appBinding.Namespace, appBinding.Name)
+	}
+	return nil
+}
+
 // DeleteAppBinding deletes the custom appBinding that is created in test
 func (f *Framework) DeleteAppBinding(meta metav1.ObjectMeta) error {
 	return f.appCatalogClient.AppBindings(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInForeground())
