@@ -24,7 +24,7 @@ require (
 	k8s.io/client-go v0.19.0
 	k8s.io/kube-aggregator v0.19.0
 	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
-	kmodules.xyz/client-go v0.0.0-20201013083546-b17c1e15f1a3
+	kmodules.xyz/client-go v0.0.0-20201021051118-03dac1aea508
 	kmodules.xyz/constants v0.0.0-20200506032633-a21e58ceec72
 	kmodules.xyz/custom-resources v0.0.0-20201008012351-6d8090f759d4
 	kmodules.xyz/monitoring-agent-api v0.0.0-20201007104803-408a1ff2de8d
