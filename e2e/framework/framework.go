@@ -19,7 +19,6 @@ package framework
 import (
 	"context"
 	"fmt"
-	"kmodules.xyz/client-go/tools/portforward"
 	"path/filepath"
 	"time"
 

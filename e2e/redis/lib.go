@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package redis
 
 import (
@@ -26,12 +27,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"kmodules.xyz/client-go/tools/portforward"
-	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
-	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
-	"kubedb.dev/tests/e2e/framework"
-	"strings"
-	"time"
 )
 
 type testOptions struct {
