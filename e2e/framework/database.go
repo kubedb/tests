@@ -38,6 +38,9 @@ import (
 type KubedbTable struct {
 	FirstName string
 	LastName  string
+	// for MySQL
+	Id   int64
+	Name string `xorm:"varchar(25) not null unique 'usr_name' comment('NickName')"`
 }
 
 func (f *Framework) ForwardPort(meta metav1.ObjectMeta, clientPodName string) (*portforward.Tunnel, error) {

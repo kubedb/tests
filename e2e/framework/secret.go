@@ -47,6 +47,7 @@ const (
 	StorageProviderS3    = "s3"
 	StorageProviderMinio = "minio"
 	StorageProviderSwift = "swift"
+	KeyMySQLPassword     = "password"
 )
 
 func (i *Invocation) SecretForBackend() *core.Secret {
@@ -183,9 +184,9 @@ func (f *Framework) DeleteSecret(meta metav1.ObjectMeta) error {
 	return f.kubeClient.CoreV1().Secrets(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInForeground())
 }
 
-func (f *Framework) EventuallyDBSecretCount(meta metav1.ObjectMeta) GomegaAsyncAssertion {
+func (f *Framework) EventuallyDBSecretCount(meta metav1.ObjectMeta, kind string) GomegaAsyncAssertion {
 	labelMap := map[string]string{
-		api.LabelDatabaseKind: api.ResourceKindMongoDB,
+		api.LabelDatabaseKind: kind,
 		api.LabelDatabaseName: meta.Name,
 	}
 	labelSelector := labels.SelectorFromSet(labelMap)
@@ -213,7 +214,7 @@ func (f *Framework) CheckSecret(secret *core.Secret) error {
 }
 
 func (i *Invocation) SecretForDatabaseAuthentication(meta metav1.ObjectMeta, mangedByKubeDB bool) *core.Secret {
-	//mangedByKubeDB mimics a secret created and manged by kubedb and not user.
+	//mangedByKubeDB mimics a secret created and manged by kubedb and not User.
 	// It should get deleted during wipeout
 	randPassword := ""
 
@@ -257,4 +258,13 @@ func (f *Framework) SelfSignedCASecret(meta metav1.ObjectMeta, kind string) *cor
 			tlsKeyFileKey:  f.CertStore.CAKeyBytes(),
 		},
 	}
+}
+
+func (f *Framework) GetMySQLRootPassword(my *api.MySQL) (string, error) {
+	secret, err := f.kubeClient.CoreV1().Secrets(my.Namespace).Get(context.TODO(), my.Spec.AuthSecret.Name, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+	password := string(secret.Data[KeyMySQLPassword])
+	return password, nil
 }

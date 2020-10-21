@@ -30,9 +30,9 @@ import (
 	meta_util "kmodules.xyz/client-go/meta"
 )
 
-func (f *Framework) EventuallyPVCCount(meta metav1.ObjectMeta) GomegaAsyncAssertion {
+func (f *Framework) EventuallyPVCCount(meta metav1.ObjectMeta, kind string) GomegaAsyncAssertion {
 	labelMap := map[string]string{
-		api.LabelDatabaseKind: api.ResourceKindMongoDB,
+		api.LabelDatabaseKind: kind,
 		api.LabelDatabaseName: meta.Name,
 	}
 	labelSelector := labels.SelectorFromSet(labelMap)

@@ -18,6 +18,7 @@ package framework
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"time"
 
@@ -26,7 +27,8 @@ import (
 
 	"github.com/appscode/go/crypto/rand"
 	cm "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
-	"github.com/spf13/afero"
+	_ "gocloud.dev/blob/memblob"
+	"gomodules.xyz/blobfs"
 	"gomodules.xyz/cert/certstore"
 	crd_cs "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	"k8s.io/client-go/dynamic"
@@ -37,6 +39,11 @@ import (
 	core_util "kmodules.xyz/client-go/core/v1"
 	appcat_cs "kmodules.xyz/custom-resources/client/clientset/versioned/typed/appcatalog/v1alpha1"
 	scs "stash.appscode.dev/apimachinery/client/clientset/versioned"
+)
+
+const (
+	Timeout       = 20 * time.Minute
+	RetryInterval = 5 * time.Second
 )
 
 var (
@@ -50,6 +57,7 @@ var (
 	StorageProvider  string
 	RootFramework    *Framework
 	SSLEnabled       bool
+	TestFailed       = false
 )
 
 type Framework struct {
@@ -85,7 +93,7 @@ func New(
 	if err != nil {
 		return nil, err
 	}
-	store, err := certstore.NewCertStore(afero.NewMemMapFs(), filepath.Join("", "pki"))
+	store, err := certstore.New(blobfs.NewInMemoryFS(), filepath.Join("", "pki"))
 	if err != nil {
 		return nil, err
 	}
@@ -104,8 +112,8 @@ func New(
 		dmClient:          dmClient,
 		appCatalogClient:  appCatalogClient,
 		stashClient:       stashClient,
-		name:              "mongodb-operator",
-		namespace:         rand.WithUniqSuffix(api.ResourceSingularMongoDB),
+		name:              fmt.Sprintf("%s-operator", DBType),
+		namespace:         rand.WithUniqSuffix(DBType),
 		StorageClass:      storageClass,
 		topology:          topology,
 		CertStore:         store,
@@ -120,7 +128,7 @@ func NewInvocation() *Invocation {
 func (f *Framework) Invoke() *Invocation {
 	return &Invocation{
 		Framework:     f,
-		app:           rand.WithUniqSuffix("mongodb-e2e"),
+		app:           rand.WithUniqSuffix(fmt.Sprintf("%s-e2e", DBType)),
 		testResources: make([]interface{}, 0),
 	}
 }

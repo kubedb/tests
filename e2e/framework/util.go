@@ -33,6 +33,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	shell "github.com/codeskyblue/go-sh"
 	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1beta1"
+	. "github.com/onsi/ginkgo"
 	promClient "github.com/prometheus/client_model/go"
 	"github.com/prometheus/prom2json"
 	core "k8s.io/api/core/v1"
@@ -46,6 +47,7 @@ import (
 	meta_util "kmodules.xyz/client-go/meta"
 	"kmodules.xyz/client-go/tools/portforward"
 	mona "kmodules.xyz/monitoring-agent-api/api/v1"
+	"stash.appscode.dev/apimachinery/apis"
 )
 
 const (
@@ -245,6 +247,13 @@ func (f *Framework) ForwardToPort(meta metav1.ObjectMeta, clientPodName string, 
 	return tunnel, nil
 }
 
+func (fi *Invocation) PrintDebugInfoOnFailure() {
+	if CurrentGinkgoTestDescription().Failed {
+		fi.PrintDebugHelpers()
+		TestFailed = true
+	}
+}
+
 func (f *Framework) PrintDebugHelpers() {
 	sh := shell.NewSession()
 	fmt.Println("\n======================================[ Describe Nodes ]===================================================")
@@ -264,6 +273,16 @@ func (f *Framework) PrintDebugHelpers() {
 
 	fmt.Println("\n======================================[ Describe Mongo ]===================================================")
 	if err := sh.Command("/usr/bin/kubectl", "describe", "mg", "-n", f.Namespace()).Run(); err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println("\n======================================[ Describe MySQL ]===================================================")
+	if err := sh.Command("/usr/bin/kubectl", "describe", "my", "-n", f.Namespace()).Run(); err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println("\n======================================[ Describe OpsRequest ]===================================================")
+	if err := sh.Command("/usr/bin/kubectl", "describe", "myops", "-n", f.Namespace()).Run(); err != nil {
 		fmt.Println(err)
 	}
 
@@ -301,14 +320,30 @@ func getGVRAndObjectMeta(obj interface{}) (schema.GroupVersionResource, metav1.O
 		w.GetObjectKind().SetGroupVersionKind(api.SchemeGroupVersion.WithKind(api.ResourceKindMongoDB))
 		gvk := w.GroupVersionKind()
 		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: api.ResourcePluralMongoDB}, w.ObjectMeta, nil
-	case *v1alpha1.MySQLOpsRequest:
+	case *v1alpha1.MongoDBOpsRequest:
 		w.GetObjectKind().SetGroupVersionKind(opsapi.SchemeGroupVersion.WithKind(opsapi.ResourceKindMongoDBOpsRequest))
 		gvk := w.GroupVersionKind()
 		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: opsapi.ResourcePluralMongoDBOpsRequest}, w.ObjectMeta, nil
+	case *api.MySQL:
+		w.GetObjectKind().SetGroupVersionKind(api.SchemeGroupVersion.WithKind(api.ResourceKindMySQL))
+		gvk := w.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: api.ResourcePluralMySQL}, w.ObjectMeta, nil
+	case *v1alpha1.MySQLOpsRequest:
+		w.GetObjectKind().SetGroupVersionKind(opsapi.SchemeGroupVersion.WithKind(opsapi.ResourceKindMySQLOpsRequest))
+		gvk := w.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: opsapi.ResourcePluralMySQLOpsRequest}, w.ObjectMeta, nil
 	case *core.Secret:
 		w.GetObjectKind().SetGroupVersionKind(core.SchemeGroupVersion.WithKind("Secret"))
 		gvk := w.GroupVersionKind()
 		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: "secrets"}, w.ObjectMeta, nil
+	case *core.Service:
+		w.GetObjectKind().SetGroupVersionKind(core.SchemeGroupVersion.WithKind(apis.KindService))
+		gvk := w.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: apis.ResourcePluralService}, w.ObjectMeta, nil
+	case *core.ConfigMap:
+		w.GetObjectKind().SetGroupVersionKind(core.SchemeGroupVersion.WithKind("ConfigMap"))
+		gvk := w.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: "configmaps"}, w.ObjectMeta, nil
 	case *cm_api.Issuer:
 		w.GetObjectKind().SetGroupVersionKind(cm_api.SchemeGroupVersion.WithKind(cm_api.IssuerKind))
 		gvk := w.GroupVersionKind()
