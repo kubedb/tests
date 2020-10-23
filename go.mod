@@ -30,8 +30,8 @@ require (
 	kmodules.xyz/monitoring-agent-api v0.0.0-20201007104803-408a1ff2de8d
 	kmodules.xyz/objectstore-api v0.0.0-20200922210707-59bab27e5d41
 	kmodules.xyz/offshoot-api v0.0.0-20200922211229-36acc531abab
-	kubedb.dev/apimachinery v0.14.0-beta.3.0.20201021175036-5f17e1b4bd32
-	stash.appscode.dev/apimachinery v0.11.2
+	kubedb.dev/apimachinery v0.14.0-beta.3.0.20201023043049-a57a7df5b78a
+	stash.appscode.dev/apimachinery v0.11.3
 	xorm.io/xorm v1.0.5
 )
 
