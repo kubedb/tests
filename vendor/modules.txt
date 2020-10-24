@@ -265,8 +265,7 @@ github.com/syndtr/goleveldb/leveldb/table
 github.com/syndtr/goleveldb/leveldb/util
 # github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c
 github.com/xdg/scram
-# github.com/xdg/stringprep v1.0.0
-## explicit
+# github.com/xdg/stringprep v0.0.0-20180714160509-73f8eece6fdc
 github.com/xdg/stringprep
 # github.com/yudai/gojsondiff v1.0.0
 github.com/yudai/gojsondiff
