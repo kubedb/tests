@@ -148,4 +148,10 @@ var _ = AfterSuite(func() {
 	By("Delete Namespace")
 	err := framework.RootFramework.DeleteNamespace()
 	Expect(err).NotTo(HaveOccurred())
+
+	//sh := shell.NewSession()
+	//fmt.Println("\n\n\n======================================[ Logs ]===================================================")
+	//if err := sh.Command("/usr/bin/kubectl", "logs", "-n", "kube-system", "deployment/kubedb").Run(); err != nil {
+	//	fmt.Println(err)
+	//}
 })

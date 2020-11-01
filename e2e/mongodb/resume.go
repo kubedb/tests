@@ -88,7 +88,7 @@ var _ = Describe("Resume", func() {
 
 	JustAfterEach(func() {
 		if CurrentGinkgoTestDescription().Failed {
-			to.PrintDebugHelpers()
+			to.PrintDebugHelper()
 		}
 	})
 

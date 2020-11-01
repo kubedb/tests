@@ -87,7 +87,7 @@ var _ = Describe("Termination Policy", func() {
 
 	JustAfterEach(func() {
 		if CurrentGinkgoTestDescription().Failed {
-			to.PrintDebugHelpers()
+			to.PrintDebugHelper()
 		}
 	})
 	Context("with TerminationDoNotTerminate", func() {

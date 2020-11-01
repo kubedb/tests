@@ -90,7 +90,7 @@ var _ = Describe("General MongoDB", func() {
 
 	JustAfterEach(func() {
 		if CurrentGinkgoTestDescription().Failed {
-			to.PrintDebugHelpers()
+			to.PrintDebugHelper()
 		}
 	})
 

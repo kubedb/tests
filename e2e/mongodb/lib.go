@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"strings"
 
+	shell "github.com/codeskyblue/go-sh"
+
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
@@ -229,13 +231,45 @@ func (to *testOptions) runWithUserProvidedConfig(userConfig, newUserConfig *core
 }
 
 func runTestCommunity(testProfile string) bool {
-	return strings.Contains(framework.TestProfiles.String(), testProfile) ||
+	return runTestDatabaseType() && (strings.Contains(framework.TestProfiles.String(), testProfile) ||
 		framework.TestProfiles.String() == framework.All ||
-		framework.TestProfiles.String() == framework.Community
+		framework.TestProfiles.String() == framework.Community)
 }
 
 func runTestEnterprise(testProfile string) bool {
-	return strings.Contains(framework.TestProfiles.String(), testProfile) ||
+	return runTestDatabaseType() && (strings.Contains(framework.TestProfiles.String(), testProfile) ||
 		framework.TestProfiles.String() == framework.All ||
-		framework.TestProfiles.String() == framework.Enterprise
+		framework.TestProfiles.String() == framework.Enterprise)
+}
+
+func runTestDatabaseType() bool {
+	return strings.Compare(framework.DBType, api.ResourceSingularMongoDB) == 0
+}
+
+func (to *testOptions) PrintDebugHelper() {
+	if to.mongodb.Spec.ReplicaSet != nil {
+		sh := shell.NewSession()
+
+		podName := fmt.Sprintf("%v-%v", to.mongodb.OffshootName(), 0)
+		out, err := sh.Command("/usr/bin/kubectl", "exec", "-n", to.Namespace(), podName, "--", "cat", "/work-dir/log.txt").Output()
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		fmt.Printf("===============================RepSet-%d===============================\n%v", 0, string(out))
+
+	}
+
+	if to.mongodb.Spec.ShardTopology != nil {
+		sh := shell.NewSession()
+
+		podName := fmt.Sprintf("%v-%v", to.mongodb.MongosNodeName(), 0)
+		out, err := sh.Command("/usr/bin/kubectl", "logs", "-n", to.Namespace(), podName, "-c", "bootstrap").Output()
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		fmt.Printf("===============================Mongos-%d===============================\n%v", 0, string(out))
+	}
+	//to.PrintDebugHelpers()
 }

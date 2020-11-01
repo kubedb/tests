@@ -19,6 +19,8 @@ package e2e_test
 import (
 	"fmt"
 
+	shell "github.com/codeskyblue/go-sh"
+
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
 
@@ -87,7 +89,7 @@ var _ = Describe("Initialize With Script", func() {
 
 	JustAfterEach(func() {
 		if CurrentGinkgoTestDescription().Failed {
-			to.PrintDebugHelpers()
+			to.PrintDebugHelper()
 		}
 	})
 
@@ -144,6 +146,21 @@ var _ = Describe("Initialize With Script", func() {
 			// Create MongoDB
 			to.createAndWaitForRunning()
 
+			sh := shell.NewSession()
+			podName := fmt.Sprintf("%v-%v", to.mongodb.OffshootName(), 0)
+			script := `db = db.getSiblingDB("kubedb");
+  db.people.find().forEach(function(doc) {
+      printjson(doc);
+  });`
+			mongodb, err := to.GetMongoDB(to.mongodb.ObjectMeta)
+			Expect(err).NotTo(HaveOccurred())
+			pass, err := to.GetMongoDBRootPassword(mongodb)
+			Expect(err).NotTo(HaveOccurred())
+
+			out, err := sh.Command("/usr/bin/kubectl", "exec", "-n", to.Namespace(), podName, "--", "mongo", "admin", "-u", "root", "-p", pass, "--eval", script).Output()
+			Expect(err).NotTo(HaveOccurred())
+			fmt.Printf("===============================RepSet-%d===============================\n%v", 0, string(out))
+
 			By("Checking Inserted Document")
 			to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 1).Should(BeTrue())
 		})
@@ -167,7 +184,20 @@ var _ = Describe("Initialize With Script", func() {
 		It("should Initialize successfully", func() {
 			// Create MongoDB
 			to.createAndWaitForRunning()
+			sh := shell.NewSession()
+			podName := fmt.Sprintf("%v-%v", to.mongodb.MongosNodeName(), 0)
+			script := `db = db.getSiblingDB("kubedb");
+  db.people.find().forEach(function(doc) {
+      printjson(doc);
+  });`
+			mongodb, err := to.GetMongoDB(to.mongodb.ObjectMeta)
+			Expect(err).NotTo(HaveOccurred())
+			pass, err := to.GetMongoDBRootPassword(mongodb)
+			Expect(err).NotTo(HaveOccurred())
 
+			out, err := sh.Command("/usr/bin/kubectl", "exec", "-n", to.Namespace(), podName, "--", "mongo", "admin", "-u", "root", "-p", pass, "--eval", script).Output()
+			Expect(err).NotTo(HaveOccurred())
+			fmt.Printf("===============================Mongos-%d===============================\n%v", 0, string(out))
 			By("Checking Inserted Document")
 			to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 1).Should(BeTrue())
 		})

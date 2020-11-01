@@ -19,7 +19,6 @@ package e2e_test
 import (
 	"fmt"
 
-	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
 
@@ -69,7 +68,6 @@ var _ = Describe("Vertical Scaling", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBStandalone()
 				to.mongodb.Spec.Version = framework.DBVersion
-				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, resource, nil, nil, nil, nil, nil)
 			})
 
@@ -82,7 +80,6 @@ var _ = Describe("Vertical Scaling", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBRS()
 				to.mongodb.Spec.Version = framework.DBVersion
-				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, resource, nil, nil, nil, nil)
 			})
 
@@ -96,7 +93,6 @@ var _ = Describe("Vertical Scaling", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBShard()
 				to.mongodb.Spec.Version = framework.DBVersion
-				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, resource, nil, nil, nil)
 			})
 
@@ -109,7 +105,6 @@ var _ = Describe("Vertical Scaling", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBShard()
 				to.mongodb.Spec.Version = framework.DBVersion
-				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, nil, resource, nil, nil)
 			})
 
@@ -122,7 +117,6 @@ var _ = Describe("Vertical Scaling", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBShard()
 				to.mongodb.Spec.Version = framework.DBVersion
-				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, nil, nil, resource, nil)
 			})
 
@@ -135,7 +129,6 @@ var _ = Describe("Vertical Scaling", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBShard()
 				to.mongodb.Spec.Version = framework.DBVersion
-				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, resource, resource, resource, nil)
 			})
 

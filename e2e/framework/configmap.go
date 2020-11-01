@@ -66,8 +66,14 @@ func (i *Invocation) ConfigMapForInitialization() *core.ConfigMap {
 		},
 		Data: map[string]string{
 			"init.js": `db = db.getSiblingDB('kubedb');
-db.people.insert({"firstname" : "kubernetes", "lastname" : "database" }); `,
-			"init-in-existing-db.js": `db.people.insert({"firstname" : "kubernetes", "lastname" : "database" });`,
+printjson(db.people.insert({"firstname" : "kubernetes", "lastname" : "database" })); 
+db.people.find().forEach(function(doc) {
+    printjson(doc);
+});`,
+			"init-in-existing-db.js": `printjson(db.people.insert({"firstname" : "kubernetes", "lastname" : "database" }));
+db.people.find().forEach(function(doc) {
+    printjson(doc);
+});`,
 		},
 	}
 }

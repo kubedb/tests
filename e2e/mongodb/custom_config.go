@@ -85,7 +85,7 @@ var _ = Describe("Custom config", func() {
 
 	JustAfterEach(func() {
 		if CurrentGinkgoTestDescription().Failed {
-			to.PrintDebugHelpers()
+			to.PrintDebugHelper()
 		}
 	})
 
