@@ -87,7 +87,7 @@ var _ = Describe("Exporter", func() {
 
 	JustAfterEach(func() {
 		if CurrentGinkgoTestDescription().Failed {
-			to.PrintDebugHelpers()
+			to.PrintDebugHelper()
 		}
 	})
 	Context("Standalone", func() {

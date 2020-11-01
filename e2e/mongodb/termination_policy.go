@@ -18,6 +18,7 @@ package e2e_test
 
 import (
 	"fmt"
+	"time"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
@@ -87,7 +88,7 @@ var _ = Describe("Termination Policy", func() {
 
 	JustAfterEach(func() {
 		if CurrentGinkgoTestDescription().Failed {
-			to.PrintDebugHelpers()
+			to.PrintDebugHelper()
 		}
 	})
 	Context("with TerminationDoNotTerminate", func() {
@@ -174,6 +175,7 @@ var _ = Describe("Termination Policy", func() {
 
 			By("wait until mongodb is deleted")
 			to.EventuallyMongoDB(to.mongodb.ObjectMeta).Should(BeFalse())
+			time.Sleep(10 * time.Second)
 
 			// create mongodb object again to resume it
 			By("Create (pause) MongoDB: " + to.mongodb.Name)

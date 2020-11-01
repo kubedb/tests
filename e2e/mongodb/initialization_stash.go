@@ -45,6 +45,7 @@ var _ = Describe("Initialize With Stash", func() {
 	testName := framework.Initialize
 
 	BeforeEach(func() {
+		Skip("Temporary skip.")
 		f := framework.NewInvocation()
 		to = testOptions{
 			Invocation:       f,
@@ -111,7 +112,7 @@ var _ = Describe("Initialize With Stash", func() {
 
 	JustAfterEach(func() {
 		if CurrentGinkgoTestDescription().Failed {
-			to.PrintDebugHelpers()
+			to.PrintDebugHelper()
 		}
 	})
 
