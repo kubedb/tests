@@ -41,6 +41,38 @@ var _ = Describe("Upgrade Redis", func() {
 			Skip(fmt.Sprintf("TLS is not supported for version `%s` in redis", framework.DBVersion))
 		}
 	})
+
+	AfterEach(func() {
+		By("Check if Redis " + to.redis.Name + " exists.")
+		rd, err := to.GetRedis(to.redis.ObjectMeta)
+		if err != nil {
+			if kerr.IsNotFound(err) {
+				// Redis was not created. Hence, rest of cleanup is not necessary.
+				return
+			}
+			Expect(err).NotTo(HaveOccurred())
+		}
+
+		By("Update redis to set spec.terminationPolicy = WipeOut")
+		_, err = to.PatchRedis(rd.ObjectMeta, func(in *api.Redis) *api.Redis {
+			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+			return in
+		})
+		Expect(err).NotTo(HaveOccurred())
+
+		//Delete Redis
+		By("Delete redis")
+		err = to.DeleteRedis(to.redis.ObjectMeta)
+		Expect(err).NotTo(HaveOccurred())
+
+		By("Delete RedisOpsRequest")
+		err = to.DeleteRedisOpsRequest(to.redisOpsReq.ObjectMeta)
+		Expect(err).NotTo(HaveOccurred())
+
+		By("Wait for redis resources to be wipedOut")
+		to.EventuallyWipedOut(to.redis.ObjectMeta, api.Redis{}.ResourceFQN()).Should(Succeed())
+	})
+
 	Context("Update Database Version", func() {
 		Context("Update Standalone DB", func() {
 			BeforeEach(func() {
@@ -49,56 +81,7 @@ var _ = Describe("Upgrade Redis", func() {
 			})
 
 			It("Should Update Redis version", func() {
-				// Create Redis
-				to.createRedis()
-
-				By("Inserting item into database")
-				to.EventuallySetItem(to.redis, "A", "VALUE").Should(BeTrue())
-
-				By("Retrieving item from database")
-				to.EventuallyGetItem(to.redis, "A").Should(BeEquivalentTo("VALUE"))
-
-				// Update Database
-				By("Updating Redis")
-				_, err := to.CreateRedisOpsRequest(to.redisOpsReq)
-				Expect(err).NotTo(HaveOccurred())
-
-				to.EventuallyRedisOpsRequestPhase(to.redisOpsReq.ObjectMeta).Should(Equal(dbaapi.OpsRequestPhaseSuccessful))
-
-				// Retrieve Inserted Data
-				By("Checking key value after update")
-				to.EventuallyGetItem(to.redis, "A").Should(BeEquivalentTo("VALUE"))
-			})
-
-			AfterEach(func() {
-				By("Check if Redis " + to.redis.Name + " exists.")
-				rd, err := to.GetRedis(to.redis.ObjectMeta)
-				if err != nil {
-					if kerr.IsNotFound(err) {
-						// Redis was not created. Hence, rest of cleanup is not necessary.
-						return
-					}
-					Expect(err).NotTo(HaveOccurred())
-				}
-
-				By("Update redis to set spec.terminationPolicy = WipeOut")
-				_, err = to.PatchRedis(rd.ObjectMeta, func(in *api.Redis) *api.Redis {
-					in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-					return in
-				})
-				Expect(err).NotTo(HaveOccurred())
-
-				//Delete Redis
-				By("Delete redis")
-				err = to.DeleteRedis(to.redis.ObjectMeta)
-				Expect(err).NotTo(HaveOccurred())
-
-				By("Delete RedisOpsRequest")
-				err = to.DeleteRedisOpsRequest(to.redisOpsReq.ObjectMeta)
-				Expect(err).NotTo(HaveOccurred())
-
-				By("Wait for redis resources to be wipedOut")
-				to.EventuallyWipedOut(to.redis.ObjectMeta, api.Redis{}.ResourceFQN()).Should(Succeed())
+				to.shouldTestOpsReq()
 			})
 		})
 
@@ -111,39 +94,10 @@ var _ = Describe("Upgrade Redis", func() {
 			AfterEach(func() {
 				_, err := to.Invocation.TestConfig().FlushDBForCluster(to.redis)
 				Expect(err).NotTo(HaveOccurred())
-
-				By("Check if Redis " + to.redis.Name + " exists.")
-				rd, err := to.GetRedis(to.redis.ObjectMeta)
-				if err != nil {
-					if kerr.IsNotFound(err) {
-						// Redis was not created. Hence, rest of cleanup is not necessary.
-						return
-					}
-					Expect(err).NotTo(HaveOccurred())
-				}
-
-				By("Update redis to set spec.terminationPolicy = WipeOut")
-				_, err = to.PatchRedis(rd.ObjectMeta, func(in *api.Redis) *api.Redis {
-					in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-					return in
-				})
-				Expect(err).NotTo(HaveOccurred())
-
-				//Delete Redis
-				By("Delete redis")
-				err = to.DeleteRedis(to.redis.ObjectMeta)
-				Expect(err).NotTo(HaveOccurred())
-
-				By("Delete RedisOpsRequest")
-				err = to.DeleteRedisOpsRequest(to.redisOpsReq.ObjectMeta)
-				Expect(err).NotTo(HaveOccurred())
-
-				By("Wait for redis resources to be wipedOut")
-				to.EventuallyWipedOut(to.redis.ObjectMeta, api.Redis{}.ResourceFQN()).Should(Succeed())
 			})
 
 			It("Should Update Redis version", func() {
-				to.shouldTestClusterOpsReq()
+				to.shouldTestOpsReq()
 			})
 		})
 	})

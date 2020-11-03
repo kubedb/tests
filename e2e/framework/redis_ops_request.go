@@ -117,6 +117,26 @@ func (fi *Invocation) RedisOpsRequestVolumeExpansion(name, namespace string, red
 	}
 }
 
+func (fi *Invocation) RedisOpsRequestReconfiguration(name, namespace string, configSpec *api.RedisCustomConfigurationSpec) *api.RedisOpsRequest {
+	return &api.RedisOpsRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      rand.WithUniqSuffix("mmr"),
+			Namespace: namespace,
+			Labels: map[string]string{
+				"app": fi.app,
+			},
+		},
+
+		Spec: api.RedisOpsRequestSpec{
+			Type: api.OpsRequestTypeReconfigure,
+			DatabaseRef: v1.LocalObjectReference{
+				Name: name,
+			},
+			Configuration: configSpec,
+		},
+	}
+}
+
 func (fi *Invocation) CreateRedisOpsRequest(obj *api.RedisOpsRequest) (*api.RedisOpsRequest, error) {
 	return fi.dbClient.OpsV1alpha1().RedisOpsRequests(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
 }

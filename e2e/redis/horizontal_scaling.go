@@ -88,7 +88,7 @@ var _ = Describe("Horizontal Scaling Redis", func() {
 		})
 
 		It("Should Scale up the master of Redis Cluster", func() {
-			to.shouldTestClusterOpsReq()
+			to.shouldTestOpsReq()
 		})
 	})
 	Context("Scale down cluster master", func() {
@@ -102,7 +102,7 @@ var _ = Describe("Horizontal Scaling Redis", func() {
 		})
 
 		It("Should Scale down the master of Redis Cluster", func() {
-			to.shouldTestClusterOpsReq()
+			to.shouldTestOpsReq()
 		})
 	})
 
@@ -117,7 +117,7 @@ var _ = Describe("Horizontal Scaling Redis", func() {
 		})
 
 		It("Should Scale up the replicas of Redis Cluster", func() {
-			to.shouldTestClusterOpsReq()
+			to.shouldTestOpsReq()
 		})
 	})
 	Context("Scale down cluster replicas", func() {
@@ -131,7 +131,7 @@ var _ = Describe("Horizontal Scaling Redis", func() {
 		})
 
 		It("Should Scale down the replicas of Redis Cluster", func() {
-			to.shouldTestClusterOpsReq()
+			to.shouldTestOpsReq()
 		})
 	})
 
@@ -146,7 +146,7 @@ var _ = Describe("Horizontal Scaling Redis", func() {
 		})
 
 		It("Should Scale up the master & replicas of Redis Cluster", func() {
-			to.shouldTestClusterOpsReq()
+			to.shouldTestOpsReq()
 		})
 	})
 	Context("Scale down both cluster master & replicas", func() {
@@ -160,7 +160,7 @@ var _ = Describe("Horizontal Scaling Redis", func() {
 		})
 
 		It("Should Scale down the master & replicas of Redis Cluster", func() {
-			to.shouldTestClusterOpsReq()
+			to.shouldTestOpsReq()
 		})
 	})
 
@@ -175,7 +175,7 @@ var _ = Describe("Horizontal Scaling Redis", func() {
 		})
 
 		It("Should Scale up cluster master & Scale down cluster replicas", func() {
-			to.shouldTestClusterOpsReq()
+			to.shouldTestOpsReq()
 		})
 	})
 	Context("Scale down cluster master & Scale up cluster replicas", func() {
@@ -189,7 +189,7 @@ var _ = Describe("Horizontal Scaling Redis", func() {
 		})
 
 		It("Should Scale down cluster master & Scale up cluster replicas", func() {
-			to.shouldTestClusterOpsReq()
+			to.shouldTestOpsReq()
 		})
 	})
 })

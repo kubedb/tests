@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
-	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
 
 	. "github.com/onsi/ginkgo"
@@ -92,26 +91,7 @@ var _ = Describe("Vertical Scaling Redis", func() {
 		})
 
 		It("Should Scale StandAlone Redis", func() {
-			var err error
-			// Create Redis
-			to.createRedis()
-
-			By("Inserting item into database")
-			to.EventuallySetItem(to.redis, "A", "VALUE").Should(BeTrue())
-
-			By("Retrieving item from database")
-			to.EventuallyGetItem(to.redis, "A").Should(BeEquivalentTo("VALUE"))
-
-			// Scaling Database
-			By("Scaling Redis")
-			to.redisOpsReq, err = to.CreateRedisOpsRequest(to.redisOpsReq)
-			Expect(err).NotTo(HaveOccurred())
-
-			to.EventuallyRedisOpsRequestPhase(to.redisOpsReq.ObjectMeta).Should(Equal(dbaapi.OpsRequestPhaseSuccessful))
-
-			// Retrieve Inserted Data
-			By("Checking key value after update")
-			to.EventuallyGetItem(to.redis, "A").Should(BeEquivalentTo("VALUE"))
+			to.shouldTestOpsReq()
 		})
 	})
 
@@ -128,7 +108,7 @@ var _ = Describe("Vertical Scaling Redis", func() {
 		})
 
 		It("Should Scale Resources of Redis Cluster", func() {
-			to.shouldTestClusterOpsReq()
+			to.shouldTestOpsReq()
 		})
 	})
 })

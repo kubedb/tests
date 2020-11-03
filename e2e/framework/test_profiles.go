@@ -63,6 +63,7 @@ const (
 	RedisHorizontalScaling   = "redis_horizontal"
 	RedisVerticalScaling     = "redis_vertical"
 	RedisUpgrade             = "redis_upgrading"
+	RedisReconfigure         = "redis_reconfigure"
 	RedisGeneral             = "redis_general"
 	RedisResume              = "redis_resume"
 	RedisStorageType         = "redis_storage_type"

@@ -99,7 +99,7 @@ var _ = Describe("Custom config Redis", func() {
 		var userConfig *core.Secret
 
 		BeforeEach(func() {
-			userConfig = to.GetCustomConfigRedis(customConfigs)
+			userConfig = to.GetCustomConfigRedis(customConfigs, to.App())
 		})
 
 		AfterEach(func() {
