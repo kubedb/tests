@@ -21,7 +21,6 @@ import (
 	"fmt"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
-	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
 
 	. "github.com/onsi/ginkgo"
@@ -33,12 +32,9 @@ import (
 
 type testOptions struct {
 	*framework.Invocation
-	db                   *api.Elasticsearch
-	dbOpsReq             *dbaapi.ElasticsearchOpsRequest
-	skipMessage          string
-	configSecret         *core.Secret
-	garbageElasticsearch *api.ElasticsearchList
-	garbageCertsecrets   []*core.Secret
+	db           *api.Elasticsearch
+	skipMessage  string
+	configSecret *core.Secret
 }
 
 func (to *testOptions) createAndHaltElasticsearchAndWaitForBeingReady() {
