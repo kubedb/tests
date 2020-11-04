@@ -85,7 +85,7 @@ func (f *Framework) GetMongoDBClient(meta metav1.ObjectMeta, tunnel *portforward
 }
 
 func (f *Framework) ConnectAndPing(meta metav1.ObjectMeta, clientPodName string, isReplSet ...bool) (*mongo.Client, *portforward.Tunnel, error) {
-	tunnel, err := f.ForwardPort(meta, clientPodName, api.MongoDBConfigdbPort)
+	tunnel, err := f.ForwardPort(meta, clientPodName, api.MongoDBDatabasePort)
 	if err != nil {
 		return nil, nil, err
 	}
