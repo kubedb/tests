@@ -51,7 +51,7 @@ var _ = Describe("General SSL", func() {
 		if !framework.SSLEnabled {
 			Skip("Enable SSL to test this")
 		}
-		if !runTestCommunity(testName) {
+		if !framework.RunTestCommunity(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` to test this.", testName))
 		}
 	})
@@ -62,7 +62,7 @@ var _ = Describe("General SSL", func() {
 		By("Delete left over MongoDB objects")
 		to.CleanMongoDB()
 		By("Delete left over workloads if exists any")
-		to.CleanWorkloadLeftOvers()
+		to.CleanWorkloadLeftOvers(api.ResourceKindMongoDB)
 
 		if to.snapshotPVC != nil {
 			err := to.DeletePersistentVolumeClaim(to.snapshotPVC.ObjectMeta)

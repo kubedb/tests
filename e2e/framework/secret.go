@@ -203,8 +203,8 @@ func (f *Framework) EventuallyDBSecretCount(meta metav1.ObjectMeta, kind string)
 
 			return len(secretList.Items)
 		},
-		time.Minute*5,
-		time.Second*5,
+		WaitTimeOut,
+		PullInterval,
 	)
 }
 

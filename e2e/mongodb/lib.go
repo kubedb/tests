@@ -179,7 +179,7 @@ func (to *testOptions) deleteTestResource() {
 	to.EventuallyMongoDB(to.mongodb.ObjectMeta).Should(BeFalse())
 
 	By("Wait for mongodb resources to be wipedOut")
-	to.EventuallyWipedOut(to.mongodb.ObjectMeta).Should(Succeed())
+	to.EventuallyWipedOut(to.mongodb.ObjectMeta, api.ResourceKindMongoDB).Should(Succeed())
 }
 
 func (to *testOptions) runWithUserProvidedConfig(userConfig, newUserConfig *core.Secret) {

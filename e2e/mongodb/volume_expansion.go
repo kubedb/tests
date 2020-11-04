@@ -53,7 +53,7 @@ var _ = Describe("Volume Expansion", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Wait for mongodb resources to be wipedOut")
-		to.EventuallyWipedOut(to.mongodb.ObjectMeta).Should(Succeed())
+		to.EventuallyWipedOut(to.mongodb.ObjectMeta, api.ResourceKindMongoDB).Should(Succeed())
 	})
 
 	Context("Standalone Instance", func() {

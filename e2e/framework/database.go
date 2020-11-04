@@ -43,13 +43,13 @@ type KubedbTable struct {
 	Name string `xorm:"varchar(25) not null unique 'usr_name' comment('NickName')"`
 }
 
-func (f *Framework) ForwardPort(meta metav1.ObjectMeta, clientPodName string) (*portforward.Tunnel, error) {
+func (f *Framework) ForwardPort(meta metav1.ObjectMeta, clientPodName string, remotePort int) (*portforward.Tunnel, error) {
 	tunnel := portforward.NewTunnel(
 		f.kubeClient.CoreV1().RESTClient(),
 		f.restConfig,
 		meta.Namespace,
 		clientPodName,
-		27017,
+		remotePort,
 	)
 
 	if err := tunnel.ForwardPort(); err != nil {
@@ -85,7 +85,7 @@ func (f *Framework) GetMongoDBClient(meta metav1.ObjectMeta, tunnel *portforward
 }
 
 func (f *Framework) ConnectAndPing(meta metav1.ObjectMeta, clientPodName string, isReplSet ...bool) (*mongo.Client, *portforward.Tunnel, error) {
-	tunnel, err := f.ForwardPort(meta, clientPodName)
+	tunnel, err := f.ForwardPort(meta, clientPodName, api.MongoDBConfigdbPort)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -195,7 +195,7 @@ var _ = Describe("MySQL", func() {
 
 				//Evict MySQL pods
 				By("Try to evict pods")
-				err = fi.EvictPodsFromStatefulSet(my.ObjectMeta)
+				err = fi.EvictPodsFromStatefulSet(my.ObjectMeta, api.ResourceKindMySQL)
 				Expect(err).NotTo(HaveOccurred())
 			})
 		})

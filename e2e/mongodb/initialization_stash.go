@@ -65,7 +65,7 @@ var _ = Describe("Initialize With Stash", func() {
 		if !to.FoundStashCRDs() {
 			Skip("Skipping tests for stash integration. reason: stash operator is not running.")
 		}
-		if !runTestCommunity(testName) {
+		if !framework.RunTestCommunity(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` to test this.", testName))
 		}
 	})
@@ -76,7 +76,7 @@ var _ = Describe("Initialize With Stash", func() {
 		By("Delete left over MongoDB objects")
 		to.CleanMongoDB()
 		By("Delete left over workloads if exists any")
-		to.CleanWorkloadLeftOvers()
+		to.CleanWorkloadLeftOvers(api.ResourceKindMongoDB)
 		if to.snapshotPVC != nil {
 			err := to.DeletePersistentVolumeClaim(to.snapshotPVC.ObjectMeta)
 			if err != nil && !kerr.IsNotFound(err) {

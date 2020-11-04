@@ -211,11 +211,11 @@ func (f *Framework) GetMongoDBVersion(name string) (*v1alpha1.MongoDBVersion, er
 	return f.dbClient.CatalogV1alpha1().MongoDBVersions().Get(context.TODO(), name, metav1.GetOptions{})
 }
 
-func (f *Framework) EvictPodsFromStatefulSet(meta metav1.ObjectMeta) error {
+func (f *Framework) EvictPodsFromStatefulSet(meta metav1.ObjectMeta, kind string) error {
 	var err error
 	labelSelector := labels.Set{
 		meta_util.ManagedByLabelKey: kubedb.GroupName,
-		api.LabelDatabaseKind:       api.ResourceKindMongoDB,
+		api.LabelDatabaseKind:       kind,
 		api.LabelDatabaseName:       meta.GetName(),
 	}
 	// get sts in the namespace
@@ -383,12 +383,12 @@ func (f *Framework) CleanMongoDB() {
 	}
 }
 
-func (f *Framework) EventuallyWipedOut(meta metav1.ObjectMeta) GomegaAsyncAssertion {
+func (f *Framework) EventuallyWipedOut(meta metav1.ObjectMeta, kind string) GomegaAsyncAssertion {
 	return Eventually(
 		func() error {
 			labelMap := map[string]string{
 				api.LabelDatabaseName: meta.Name,
-				api.LabelDatabaseKind: api.ResourceKindMongoDB,
+				api.LabelDatabaseKind: kind,
 			}
 			labelSelector := labels.SelectorFromSet(labelMap)
 
@@ -439,7 +439,7 @@ func (f *Framework) EventuallyWipedOut(meta metav1.ObjectMeta) GomegaAsyncAssert
 
 			return nil
 		},
-		time.Minute*5,
-		time.Second*5,
+		WaitTimeOut,
+		PullInterval,
 	)
 }

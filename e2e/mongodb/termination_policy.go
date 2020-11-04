@@ -60,7 +60,7 @@ var _ = Describe("Termination Policy", func() {
 		By("Delete left over MongoDB objects")
 		to.CleanMongoDB()
 		By("Delete left over workloads if exists any")
-		to.CleanWorkloadLeftOvers()
+		to.CleanWorkloadLeftOvers(api.ResourceKindMongoDB)
 		if to.snapshotPVC != nil {
 			err := to.DeletePersistentVolumeClaim(to.snapshotPVC.ObjectMeta)
 			if err != nil && !kerr.IsNotFound(err) {
