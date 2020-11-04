@@ -395,7 +395,7 @@ func (f *Framework) getMaxIncomingConnections(meta metav1.ObjectMeta, podName st
 		return val, nil
 	}
 
-	return 0, fmt.Errorf("unable to get maxIncomingConnections")
+	return 0, nil
 }
 
 func (f *Framework) EventuallyMaxIncomingConnections(meta metav1.ObjectMeta) GomegaAsyncAssertion {

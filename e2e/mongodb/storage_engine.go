@@ -88,7 +88,7 @@ var _ = Describe("Storage Engine inMemory", func() {
 
 	JustAfterEach(func() {
 		if CurrentGinkgoTestDescription().Failed {
-			to.PrintDebugHelpers()
+			to.PrintDebugHelper()
 		}
 	})
 	Context("With ReplicaSet", func() {

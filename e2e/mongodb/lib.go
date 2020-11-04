@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"strings"
 
+	shell "github.com/codeskyblue/go-sh"
+
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
@@ -182,7 +184,7 @@ func (to *testOptions) deleteTestResource() {
 	to.EventuallyWipedOut(to.mongodb.ObjectMeta).Should(Succeed())
 }
 
-func (to *testOptions) runWithUserProvidedConfig(userConfig, newUserConfig *core.Secret) {
+func (to *testOptions) runWithUserProvidedConfig(userConfig, newUserConfig *core.Secret, remove bool) {
 	if to.skipMessage != "" {
 		Skip(to.skipMessage)
 	}
@@ -219,18 +221,83 @@ func (to *testOptions) runWithUserProvidedConfig(userConfig, newUserConfig *core
 	By("Checking Inserted Document after update")
 	to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
 
-	By("Checking updated maxIncomingConnections from mongodb config")
-	to.EventuallyMaxIncomingConnections(to.mongodb.ObjectMeta).Should(Equal(newMaxIncomingConnections))
+	if remove {
+		By("Checking updated maxIncomingConnections from mongodb config")
+		to.EventuallyMaxIncomingConnections(to.mongodb.ObjectMeta).Should(Not(Equal(prevMaxIncomingConnections)))
+	} else {
+		By("Checking updated maxIncomingConnections from mongodb config")
+		to.EventuallyMaxIncomingConnections(to.mongodb.ObjectMeta).Should(Equal(newMaxIncomingConnections))
+	}
 }
 
 func runTestCommunity(testProfile string) bool {
-	return strings.Contains(framework.TestProfiles.String(), testProfile) ||
+	return runTestDatabaseType() && (strings.Contains(framework.TestProfiles.String(), testProfile) ||
 		framework.TestProfiles.String() == framework.All ||
-		framework.TestProfiles.String() == framework.Community
+		framework.TestProfiles.String() == framework.Community)
 }
 
 func runTestEnterprise(testProfile string) bool {
-	return strings.Contains(framework.TestProfiles.String(), testProfile) ||
+	return runTestDatabaseType() && (strings.Contains(framework.TestProfiles.String(), testProfile) ||
 		framework.TestProfiles.String() == framework.All ||
-		framework.TestProfiles.String() == framework.Enterprise
+		framework.TestProfiles.String() == framework.Enterprise)
+}
+
+func runTestDatabaseType() bool {
+	return strings.Compare(framework.DBType, api.ResourceSingularMongoDB) == 0
+}
+
+func (to *testOptions) PrintDebugHelper() {
+	if to.mongodb.Spec.ReplicaSet != nil {
+		for i := int32(0); i < *to.mongodb.Spec.Replicas; i++ {
+			sh := shell.NewSession()
+
+			podName := fmt.Sprintf("%v-%v", to.mongodb.OffshootName(), i)
+			out, err := sh.Command("/usr/bin/kubectl", "exec", "-n", to.Namespace(), podName, "--", "cat", "/work-dir/log.txt").Output()
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			fmt.Printf("===============================RepSet-%d===============================\n%v", i, string(out))
+		}
+	}
+
+	if to.mongodb.Spec.ShardTopology != nil {
+		for i := int32(0); i < to.mongodb.Spec.ShardTopology.ConfigServer.Replicas; i++ {
+			sh := shell.NewSession()
+
+			podName := fmt.Sprintf("%v-%v", to.mongodb.ConfigSvrNodeName(), i)
+			out, err := sh.Command("/usr/bin/kubectl", "exec", "-n", to.Namespace(), podName, "--", "cat", "/work-dir/log.txt").Output()
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			fmt.Printf("===============================ConfigSvr-%d===============================\n%v", i, string(out))
+		}
+
+		for i := int32(0); i < to.mongodb.Spec.ShardTopology.Shard.Shards; i++ {
+			for j := int32(0); j < to.mongodb.Spec.ShardTopology.Shard.Replicas; j++ {
+				sh := shell.NewSession()
+
+				podName := fmt.Sprintf("%v-%v", to.mongodb.ShardNodeName(i), j)
+				out, err := sh.Command("/usr/bin/kubectl", "exec", "-n", to.Namespace(), podName, "--", "cat", "/work-dir/log.txt").Output()
+				if err != nil {
+					fmt.Println(err)
+				}
+				fmt.Printf("===============================Shard-%d===============================\n%v", i, string(out))
+			}
+		}
+
+		for i := int32(0); i < to.mongodb.Spec.ShardTopology.Mongos.Replicas; i++ {
+			sh := shell.NewSession()
+
+			podName := fmt.Sprintf("%v-%v", to.mongodb.MongosNodeName(), i)
+			out, err := sh.Command("/usr/bin/kubectl", "exec", "-n", to.Namespace(), podName, "--", "cat", "/work-dir/log.txt").Output()
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			fmt.Printf("===============================Mongos-%d===============================\n%v", i, string(out))
+		}
+	}
+	//to.PrintDebugHelpers()
 }

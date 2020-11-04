@@ -1429,6 +1429,8 @@ gomodules.xyz/jsonpatch/v2 v2.1.0/go.mod h1:IhYNNY4jnS53ZnfE4PAmpKtDpTCj1JFXc+3m
 gomodules.xyz/password-generator v0.2.3/go.mod h1:TvwYYTx9+P1pPwKQKfZgB/wr2Id9MqAQ3B5auY7reNg=
 gomodules.xyz/password-generator v0.2.4 h1:wtCrCgF3ovoXyzcaRDVhx2D2We+6yfaRf/IQsSBsOSY=
 gomodules.xyz/password-generator v0.2.4/go.mod h1:TvwYYTx9+P1pPwKQKfZgB/wr2Id9MqAQ3B5auY7reNg=
+gomodules.xyz/password-generator v0.2.6 h1:+If/SrycIBvZYBnUZU2F9v1vKt8KlitMctJiAeqjybA=
+gomodules.xyz/password-generator v0.2.6/go.mod h1:TvwYYTx9+P1pPwKQKfZgB/wr2Id9MqAQ3B5auY7reNg=
 gomodules.xyz/stow v0.2.3/go.mod h1:S9/zV1kNAWAvqmdum0oByA4+aNdTdoK9hKb1bObf1BI=
 gomodules.xyz/stow v0.2.4/go.mod h1:aAgUEHyZ+4nKznyVupMMkP0JX9MXW1ZRrbRGaclp3E0=
 gomodules.xyz/version v0.1.0 h1:inGItCg/egI0jPMeIE0SQkiDIJaodOMoCrxYqasQLR0=

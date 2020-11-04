@@ -18,6 +18,7 @@ package e2e_test
 
 import (
 	"fmt"
+	"time"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
@@ -90,7 +91,7 @@ var _ = Describe("General MongoDB", func() {
 
 	JustAfterEach(func() {
 		if CurrentGinkgoTestDescription().Failed {
-			to.PrintDebugHelpers()
+			to.PrintDebugHelper()
 		}
 	})
 
@@ -256,6 +257,7 @@ var _ = Describe("General MongoDB", func() {
 
 			By("Wait for mongodb to be deleted")
 			to.EventuallyMongoDB(to.mongodb.ObjectMeta).Should(BeFalse())
+			time.Sleep(10 * time.Second)
 
 			By("Resume DB")
 			to.createAndWaitForRunning()
@@ -313,6 +315,7 @@ var _ = Describe("General MongoDB", func() {
 
 			By("Wait for mongodb to be deleted")
 			to.EventuallyMongoDB(to.mongodb.ObjectMeta).Should(BeFalse())
+			time.Sleep(10 * time.Second)
 
 			By("Resume DB")
 			to.createAndWaitForRunning()

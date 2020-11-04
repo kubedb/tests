@@ -17,6 +17,7 @@ require (
 	gocloud.dev v0.20.0
 	gomodules.xyz/blobfs v0.1.4
 	gomodules.xyz/cert v1.1.2
+	gomodules.xyz/password-generator v0.2.6 // indirect
 	k8s.io/api v0.19.0
 	k8s.io/apiextensions-apiserver v0.19.0
 	k8s.io/apimachinery v0.19.0

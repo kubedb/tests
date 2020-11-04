@@ -19,7 +19,6 @@ package e2e_test
 import (
 	"fmt"
 
-	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
 
@@ -80,13 +79,12 @@ var _ = Describe("Reconfigure", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBStandalone()
 				to.mongodb.Spec.Version = framework.DBVersion
-				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				to.mongodb.Spec.ConfigSecret = configSecret
 				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, newCustomConfig, nil, nil, nil, nil)
 			})
 
 			It("should run successfully", func() {
-				to.runWithUserProvidedConfig(userConfig, nil)
+				to.runWithUserProvidedConfig(userConfig, nil, false)
 			})
 		})
 
@@ -94,13 +92,12 @@ var _ = Describe("Reconfigure", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBRS()
 				to.mongodb.Spec.Version = framework.DBVersion
-				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				to.mongodb.Spec.ConfigSecret = configSecret
 				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, nil, newCustomConfig, nil, nil, nil)
 			})
 
 			It("should run successfully", func() {
-				to.runWithUserProvidedConfig(userConfig, nil)
+				to.runWithUserProvidedConfig(userConfig, nil, false)
 			})
 		})
 
@@ -108,7 +105,6 @@ var _ = Describe("Reconfigure", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBShard()
 				to.mongodb.Spec.Version = framework.DBVersion
-				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				to.mongodb.Spec.ShardTopology.Shard.ConfigSecret = configSecret
 				to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSecret = configSecret
 				to.mongodb.Spec.ShardTopology.Mongos.ConfigSecret = configSecret
@@ -117,7 +113,7 @@ var _ = Describe("Reconfigure", func() {
 			})
 
 			It("should run successfully", func() {
-				to.runWithUserProvidedConfig(userConfig, nil)
+				to.runWithUserProvidedConfig(userConfig, nil, false)
 			})
 		})
 	})
@@ -153,25 +149,25 @@ var _ = Describe("Reconfigure", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBStandalone()
 				to.mongodb.Spec.Version = framework.DBVersion
-				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				to.mongodb.Spec.ConfigSecret = configSecret
 				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, newCustomConfig, nil, nil, nil, nil)
 			})
 
 			It("should run successfully", func() {
-				to.runWithUserProvidedConfig(userConfig, newUserConfig)
+				to.runWithUserProvidedConfig(userConfig, newUserConfig, false)
 			})
 		})
 
 		Context("With Replica Set", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBRS()
+				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.ConfigSecret = configSecret
 				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, nil, newCustomConfig, nil, nil, nil)
 			})
 
 			It("should run successfully", func() {
-				to.runWithUserProvidedConfig(userConfig, newUserConfig)
+				to.runWithUserProvidedConfig(userConfig, newUserConfig, false)
 			})
 		})
 
@@ -179,7 +175,6 @@ var _ = Describe("Reconfigure", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBShard()
 				to.mongodb.Spec.Version = framework.DBVersion
-				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				to.mongodb.Spec.ShardTopology.Shard.ConfigSecret = configSecret
 				to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSecret = configSecret
 				to.mongodb.Spec.ShardTopology.Mongos.ConfigSecret = configSecret
@@ -187,7 +182,72 @@ var _ = Describe("Reconfigure", func() {
 			})
 
 			It("should run successfully", func() {
-				to.runWithUserProvidedConfig(userConfig, newUserConfig)
+				to.runWithUserProvidedConfig(userConfig, newUserConfig, false)
+			})
+		})
+	})
+
+	Context("Remove Config", func() {
+		var userConfig *v1.Secret
+		var newCustomConfig *dbaapi.MongoDBCustomConfiguration
+		var configSecret *v1.LocalObjectReference
+		BeforeEach(func() {
+			to.skipMessage = ""
+			configName := to.App() + "-previous-config"
+			userConfig = to.GetCustomConfig(customConfigs, configName)
+			newCustomConfig = &dbaapi.MongoDBCustomConfiguration{
+				RemoveCustomConfig: true,
+			}
+			configSecret = &v1.LocalObjectReference{
+				Name: userConfig.Name,
+			}
+		})
+
+		AfterEach(func() {
+			By("Deleting configMap: " + userConfig.Name)
+			err := to.DeleteConfigMap(userConfig.ObjectMeta)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		Context("Standalone MongoDB", func() {
+			BeforeEach(func() {
+				to.mongodb = to.MongoDBStandalone()
+				to.mongodb.Spec.Version = framework.DBVersion
+				to.mongodb.Spec.ConfigSecret = configSecret
+				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, newCustomConfig, nil, nil, nil, nil)
+			})
+
+			It("should run successfully", func() {
+				to.runWithUserProvidedConfig(userConfig, nil, true)
+			})
+		})
+
+		Context("With Replica Set", func() {
+			BeforeEach(func() {
+				to.mongodb = to.MongoDBRS()
+				to.mongodb.Spec.Version = framework.DBVersion
+				to.mongodb.Spec.ConfigSecret = configSecret
+				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, nil, newCustomConfig, nil, nil, nil)
+			})
+
+			It("should run successfully", func() {
+				to.runWithUserProvidedConfig(userConfig, nil, true)
+			})
+		})
+
+		Context("With Sharding", func() {
+			BeforeEach(func() {
+				to.mongodb = to.MongoDBShard()
+				to.mongodb.Spec.Version = framework.DBVersion
+				to.mongodb.Spec.ShardTopology.Shard.ConfigSecret = configSecret
+				to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSecret = configSecret
+				to.mongodb.Spec.ShardTopology.Mongos.ConfigSecret = configSecret
+				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, nil, nil, newCustomConfig, newCustomConfig, newCustomConfig)
+
+			})
+
+			It("should run successfully", func() {
+				to.runWithUserProvidedConfig(userConfig, nil, true)
 			})
 		})
 	})
