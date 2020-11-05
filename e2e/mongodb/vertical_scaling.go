@@ -45,7 +45,7 @@ var _ = Describe("Vertical Scaling", func() {
 
 	BeforeEach(func() {
 		to.Invocation = framework.NewInvocation()
-		if !runTestEnterprise(testName) {
+		if !framework.RunTestEnterprise(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", testName))
 		}
 	})

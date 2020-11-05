@@ -18,7 +18,6 @@ package e2e_test
 
 import (
 	"fmt"
-	"strings"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
@@ -221,16 +220,4 @@ func (to *testOptions) runWithUserProvidedConfig(userConfig, newUserConfig *core
 
 	By("Checking updated maxIncomingConnections from mongodb config")
 	to.EventuallyMaxIncomingConnections(to.mongodb.ObjectMeta).Should(Equal(newMaxIncomingConnections))
-}
-
-func runTestCommunity(testProfile string) bool {
-	return strings.Contains(framework.TestProfiles.String(), testProfile) ||
-		framework.TestProfiles.String() == framework.All ||
-		framework.TestProfiles.String() == framework.Community
-}
-
-func runTestEnterprise(testProfile string) bool {
-	return strings.Contains(framework.TestProfiles.String(), testProfile) ||
-		framework.TestProfiles.String() == framework.All ||
-		framework.TestProfiles.String() == framework.Enterprise
 }

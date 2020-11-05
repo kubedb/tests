@@ -35,7 +35,7 @@ var _ = Describe("Volume Expansion", func() {
 		if !to.IsGKE() {
 			to.skipMessage = "volume expansion testing is only supported in GKE"
 		}
-		if !runTestEnterprise(testName) {
+		if !framework.RunTestEnterprise(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", testName))
 		}
 	})
