@@ -98,7 +98,7 @@ var _ = Describe("Upgrade Redis", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				By("Wait for redis resources to be wipedOut")
-				to.EventuallyWipedOut(to.redis.ObjectMeta).Should(Succeed())
+				to.EventuallyWipedOut(to.redis.ObjectMeta, api.ResourceKindRedis).Should(Succeed())
 			})
 		})
 
@@ -139,7 +139,7 @@ var _ = Describe("Upgrade Redis", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				By("Wait for redis resources to be wipedOut")
-				to.EventuallyWipedOut(to.redis.ObjectMeta).Should(Succeed())
+				to.EventuallyWipedOut(to.redis.ObjectMeta, api.ResourceKindRedis).Should(Succeed())
 			})
 
 			It("Should Update Redis version", func() {

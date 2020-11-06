@@ -19,7 +19,8 @@ package framework
 import (
 	"context"
 	"errors"
-	"time"
+
+	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
@@ -30,13 +31,19 @@ func (f *Framework) EventuallyCRD() GomegaAsyncAssertion {
 	return Eventually(
 		func() error {
 			// Check MongoDB TPR
-			if _, err := f.dbClient.KubedbV1alpha2().MongoDBs(core.NamespaceAll).List(context.TODO(), metav1.ListOptions{}); err != nil {
-				return errors.New("CRD MongoDB is not ready")
+			switch DBType {
+			case string(api.ResourceKindElasticsearch):
+				if _, err := f.dbClient.KubedbV1alpha2().Elasticsearches(core.NamespaceAll).List(context.TODO(), metav1.ListOptions{}); err != nil {
+					return errors.New("CRD Elasticsearch is not ready")
+				}
+			case string(api.ResourceKindMongoDB):
+				if _, err := f.dbClient.KubedbV1alpha2().MongoDBs(core.NamespaceAll).List(context.TODO(), metav1.ListOptions{}); err != nil {
+					return errors.New("CRD MongoDB is not ready")
+				}
 			}
-
 			return nil
 		},
-		time.Minute*2,
-		time.Second*10,
+		WaitTimeOut,
+		PullInterval,
 	)
 }

@@ -83,3 +83,15 @@ func (stringSlice *stringSlice) Set(value string) error {
 	*stringSlice = append(*stringSlice, s...)
 	return nil
 }
+
+func RunTestCommunity(testProfile string) bool {
+	return strings.Contains(TestProfiles.String(), testProfile) ||
+		TestProfiles.String() == All ||
+		TestProfiles.String() == Community
+}
+
+func RunTestEnterprise(testProfile string) bool {
+	return strings.Contains(TestProfiles.String(), testProfile) ||
+		TestProfiles.String() == All ||
+		TestProfiles.String() == Enterprise
+}

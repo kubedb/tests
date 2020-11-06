@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
@@ -54,7 +55,7 @@ var (
 	DBVersion        = "5.0.3-v1"
 	DBUpdatedVersion = "6.0.6"
 	PullInterval     = time.Second * 2
-	WaitTimeOut      = time.Minute * 3
+	WaitTimeOut      = time.Minute * 5
 	StorageProvider  string
 	RootFramework    *Framework
 	SSLEnabled       bool
@@ -125,7 +126,7 @@ func New(
 		appCatalogClient:  appCatalogClient,
 		stashClient:       stashClient,
 		name:              fmt.Sprintf("%s-operator", DBType),
-		namespace:         rand.WithUniqSuffix(DBType),
+		namespace:         rand.WithUniqSuffix(strings.ToLower(DBType)),
 		StorageClass:      storageClass,
 		topology:          topology,
 		CertStore:         store,
@@ -140,13 +141,17 @@ func NewInvocation() *Invocation {
 func (f *Framework) Invoke() *Invocation {
 	return &Invocation{
 		Framework:     f,
-		app:           rand.WithUniqSuffix(fmt.Sprintf("%s-e2e", DBType)),
+		app:           rand.WithUniqSuffix(strings.ToLower(fmt.Sprintf("%s-e2e", DBType))),
 		testResources: make([]interface{}, 0),
 	}
 }
 
 func (i *Invocation) DBClient() cs.Interface {
 	return i.dbClient
+}
+
+func (i *Invocation) KubeClient() kubernetes.Interface {
+	return i.kubeClient
 }
 
 func (i *Invocation) App() string {

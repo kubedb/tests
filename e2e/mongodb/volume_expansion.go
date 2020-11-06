@@ -35,7 +35,7 @@ var _ = Describe("Volume Expansion", func() {
 		if !to.IsGKE() {
 			to.skipMessage = "volume expansion testing is only supported in GKE"
 		}
-		if !runTestEnterprise(testName) {
+		if !framework.RunTestEnterprise(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", testName))
 		}
 	})
@@ -53,7 +53,7 @@ var _ = Describe("Volume Expansion", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Wait for mongodb resources to be wipedOut")
-		to.EventuallyWipedOut(to.mongodb.ObjectMeta).Should(Succeed())
+		to.EventuallyWipedOut(to.mongodb.ObjectMeta, api.ResourceKindMongoDB).Should(Succeed())
 	})
 
 	Context("Standalone Instance", func() {

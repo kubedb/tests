@@ -87,7 +87,7 @@ var _ = Describe("Redis Cluster", func() {
 		to.EventuallyRedis(to.redis.ObjectMeta).Should(BeFalse())
 
 		By("Wait for redis resources to be wipedOut cluster")
-		to.EventuallyWipedOut(to.redis.ObjectMeta).Should(Succeed())
+		to.EventuallyWipedOut(to.redis.ObjectMeta, api.ResourceKindRedis).Should(Succeed())
 	})
 
 	var assertSimple = func() {

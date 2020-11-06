@@ -53,7 +53,7 @@ var _ = Describe("Exporter With SSL", func() {
 		if !framework.SSLEnabled {
 			Skip("Enable SSL to test this")
 		}
-		if !runTestCommunity(testName) {
+		if !framework.RunTestCommunity(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` to test this.", testName))
 		}
 	})

@@ -27,6 +27,7 @@ import (
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	cs "kubedb.dev/apimachinery/client/clientset/versioned"
 	"kubedb.dev/apimachinery/client/clientset/versioned/scheme"
+	_ "kubedb.dev/tests/e2e/elasticsearch"
 	"kubedb.dev/tests/e2e/framework"
 	_ "kubedb.dev/tests/e2e/mongodb"
 	_ "kubedb.dev/tests/e2e/mysql"
@@ -137,7 +138,7 @@ var _ = AfterSuite(func() {
 	By("Delete left over MongoDB objects")
 	framework.RootFramework.CleanMongoDB()
 	By("Delete left over workloads if exists any")
-	framework.RootFramework.CleanWorkloadLeftOvers()
+	framework.RootFramework.CleanWorkloadLeftOvers(api.ResourceKindMongoDB)
 
 	if framework.StorageProvider == framework.StorageProviderMinio {
 		By("Deleting Minio server")

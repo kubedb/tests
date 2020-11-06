@@ -31,7 +31,7 @@ var _ = Describe("Upgrade Database Version", func() {
 	testName := framework.Upgrade
 	BeforeEach(func() {
 		to.Invocation = framework.NewInvocation()
-		if !runTestEnterprise(testName) {
+		if !framework.RunTestEnterprise(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", testName))
 		}
 	})
@@ -49,7 +49,7 @@ var _ = Describe("Upgrade Database Version", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Wait for mongodb resources to be wipedOut")
-		to.EventuallyWipedOut(to.mongodb.ObjectMeta).Should(Succeed())
+		to.EventuallyWipedOut(to.mongodb.ObjectMeta, api.ResourceKindMongoDB).Should(Succeed())
 	})
 
 	Context("Update Standalone DB", func() {

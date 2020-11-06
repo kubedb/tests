@@ -4,10 +4,15 @@ go 1.14
 
 require (
 	github.com/appscode/go v0.0.0-20201006035845-a0302ac8e3d3
-	github.com/aws/aws-sdk-go v1.31.13
+	github.com/aws/aws-sdk-go v1.34.13
 	github.com/codeskyblue/go-sh v0.0.0-20200712050446-30169cf553fe
+	github.com/elastic/go-elasticsearch/v6 v6.8.10
+	github.com/elastic/go-elasticsearch/v7 v7.9.0
 	github.com/go-sql-driver/mysql v1.5.0
+	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/jetstack/cert-manager v1.0.3
+	github.com/olivere/elastic v6.2.35+incompatible // indirect
+	github.com/olivere/elastic/v7 v7.0.21
 	github.com/onsi/ginkgo v1.12.1
 	github.com/onsi/gomega v1.10.1
 	github.com/pkg/errors v0.9.1
@@ -17,6 +22,9 @@ require (
 	gocloud.dev v0.20.0
 	gomodules.xyz/blobfs v0.1.4
 	gomodules.xyz/cert v1.1.2
+	gopkg.in/olivere/elastic.v5 v5.0.86
+	gopkg.in/olivere/elastic.v6 v6.2.35
+	gopkg.in/yaml.v2 v2.3.0
 	k8s.io/api v0.19.0
 	k8s.io/apiextensions-apiserver v0.19.0
 	k8s.io/apimachinery v0.19.0
@@ -30,6 +38,7 @@ require (
 	kmodules.xyz/objectstore-api v0.0.0-20201105133858-cbb2af88d50a
 	kmodules.xyz/offshoot-api v0.0.0-20201105074700-8675f5f686f2
 	kubedb.dev/apimachinery v0.14.1-0.20201105213239-f74effb9db37
+	sigs.k8s.io/yaml v1.2.0
 	stash.appscode.dev/apimachinery v0.11.6-0.20201105125158-b51d7c6a387c
 	xorm.io/xorm v1.0.5
 )

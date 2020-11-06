@@ -82,7 +82,7 @@ var _ = Describe("Vertical Scaling Redis", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Wait for redis resources to be wipedOut")
-		to.EventuallyWipedOut(to.redis.ObjectMeta).Should(Succeed())
+		to.EventuallyWipedOut(to.redis.ObjectMeta, api.ResourceKindRedis).Should(Succeed())
 	})
 
 	Context("Scaling StandAlone Redis", func() {
