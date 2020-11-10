@@ -48,7 +48,7 @@ var _ = Describe("Custom Configuration", func() {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` to test this.", testName))
 		}
 		if framework.SSLEnabled {
-			Skip("Skipping test...")
+			Skip("Skipping test with SSL enabled...")
 		}
 	})
 
