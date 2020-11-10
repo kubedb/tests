@@ -20,6 +20,7 @@ require (
 	github.com/prometheus/prom2json v1.3.0
 	go.mongodb.org/mongo-driver v1.3.2
 	gocloud.dev v0.20.0
+	golang.org/x/tools v0.0.0-20201110124207-079ba7bd75cd // indirect
 	gomodules.xyz/blobfs v0.1.4
 	gomodules.xyz/cert v1.1.2
 	gopkg.in/olivere/elastic.v5 v5.0.86
