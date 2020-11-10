@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
+	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
 
 	. "github.com/onsi/ginkgo"
@@ -32,9 +33,10 @@ import (
 
 type testOptions struct {
 	*framework.Invocation
-	db           *api.Elasticsearch
-	skipMessage  string
-	configSecret *core.Secret
+	db                  *api.Elasticsearch
+	skipMessage         string
+	configSecret        *core.Secret
+	elasticsearchOpsReq *dbaapi.ElasticsearchOpsRequest
 }
 
 func (to *testOptions) createAndHaltElasticsearchAndWaitForBeingReady() {
@@ -140,6 +142,17 @@ func (to *testOptions) createElasticsearchWithCustomConfigAndWaitForBeingReady()
 
 }
 
+func (to *testOptions) createElasticsearchOpsRequestAndWaitForBeingSuccessful() {
+	_, err := to.DBClient().OpsV1alpha1().ElasticsearchOpsRequests(to.Namespace()).Create(context.TODO(), to.elasticsearchOpsReq, metav1.CreateOptions{})
+	Expect(err).NotTo(HaveOccurred())
+
+	switch to.elasticsearchOpsReq.Spec.Type {
+	case dbaapi.OpsRequestTypeUpgrade:
+		to.EventuallyElasticsearchOpsRequestSuccessful(to.elasticsearchOpsReq.ObjectMeta, 4*framework.WaitTimeOut).Should(BeTrue())
+
+	}
+}
+
 func (to *testOptions) wipeOutElasticsearch() {
 	if to.db == nil {
 		Skip("Skipping...")
@@ -198,6 +211,16 @@ func (to *testOptions) insertData() int {
 	to.EventuallyElasticsearchIndicesCount(esClient).Should(Equal(indicesCount))
 
 	return indicesCount
+}
+
+func (to *testOptions) verifyData(indicesCount int) {
+	esClient, tunnel, err := to.GetElasticClient(to.db.ObjectMeta)
+	Expect(err).NotTo(HaveOccurred())
+	defer esClient.Stop()
+	defer tunnel.Close()
+
+	By("Checking indices...")
+	to.EventuallyElasticsearchIndicesCount(esClient).Should(Equal(indicesCount))
 }
 
 func (to *testOptions) transformElasticsearch(db *api.Elasticsearch, transform func(in *api.Elasticsearch) *api.Elasticsearch) *api.Elasticsearch {
