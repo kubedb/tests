@@ -26,6 +26,7 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kmmeta "kmodules.xyz/client-go/meta"
 )
 
 func (i *Invocation) GetElasticsearchOpsRequestUpgrade(esMeta metav1.ObjectMeta, targetVersion string) *dbaapi.ElasticsearchOpsRequest {
@@ -60,4 +61,8 @@ func (i *Invocation) EventuallyElasticsearchOpsRequestSuccessful(meta metav1.Obj
 		timeOut,
 		PullInterval,
 	)
+}
+
+func (f *Framework) DeleteElasticsearchOpsRequest(meta metav1.ObjectMeta) error {
+	return f.dbClient.OpsV1alpha1().ElasticsearchOpsRequests(meta.Namespace).Delete(context.TODO(), meta.Name, kmmeta.DeleteInForeground())
 }
