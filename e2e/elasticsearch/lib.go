@@ -146,6 +146,7 @@ func (to *testOptions) createElasticsearchOpsRequestAndWaitForBeingSuccessful() 
 	_, err := to.DBClient().OpsV1alpha1().ElasticsearchOpsRequests(to.Namespace()).Create(context.TODO(), to.elasticsearchOpsReq, metav1.CreateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
+	By("Waiting for Ops Request to be successful or failed...")
 	switch to.elasticsearchOpsReq.Spec.Type {
 	case dbaapi.OpsRequestTypeUpgrade:
 		to.EventuallyElasticsearchOpsRequestSuccessful(to.elasticsearchOpsReq.ObjectMeta, 4*framework.WaitTimeOut).Should(BeTrue())
