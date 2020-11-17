@@ -47,9 +47,7 @@ var _ = Describe("Version Upgrade", func() {
 		if !framework.RunTestEnterprise(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` to test this.", testName))
 		}
-		if framework.SSLEnabled {
-			Skip("Skipping test with SSL enabled...")
-		}
+
 	})
 
 	AfterEach(func() {
@@ -70,6 +68,7 @@ var _ = Describe("Version Upgrade", func() {
 	Context("Standalone Cluster", func() {
 		BeforeEach(func() {
 			to.db = to.StandaloneElasticsearch()
+			to.db.Spec.EnableSSL = framework.SSLEnabled
 			to.elasticsearchOpsReq = to.GetElasticsearchOpsRequestUpgrade(to.db.ObjectMeta, framework.DBUpdatedVersion)
 		})
 
@@ -90,6 +89,7 @@ var _ = Describe("Version Upgrade", func() {
 	Context("Dedicated Cluster", func() {
 		BeforeEach(func() {
 			to.db = to.ClusterElasticsearch()
+			to.db.Spec.EnableSSL = framework.SSLEnabled
 			to.elasticsearchOpsReq = to.GetElasticsearchOpsRequestUpgrade(to.db.ObjectMeta, framework.DBUpdatedVersion)
 		})
 
