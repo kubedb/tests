@@ -32,7 +32,7 @@ import (
 
 var _ = Describe("Reconfigure Redis", func() {
 	to := testOptions{}
-	testName := framework.RedisReconfigure
+	testName := framework.Reconfigure
 	BeforeEach(func() {
 		to.Invocation = framework.NewInvocation()
 		if !runTestEnterprise(testName) {
@@ -71,7 +71,7 @@ var _ = Describe("Reconfigure Redis", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Wait for redis resources to be wipedOut")
-		to.EventuallyWipedOut(to.redis.ObjectMeta).Should(Succeed())
+		to.EventuallyWipedOut(to.redis.ObjectMeta, api.ResourceKindRedis).Should(Succeed())
 	})
 
 	Context("Reconfigure From Data", func() {
@@ -97,7 +97,7 @@ var _ = Describe("Reconfigure Redis", func() {
 
 		Context("Standalone Redis", func() {
 			BeforeEach(func() {
-				to.redis = to.RedisStandalone(framework.DBVersion)
+				to.redis = to.RedisStandalone()
 				to.redis.Spec.ConfigSecret = configSecret
 				to.redisOpsReq = to.RedisOpsRequestReconfiguration(to.redis.Name, to.redis.Namespace, newConfigSpec)
 			})
@@ -109,7 +109,7 @@ var _ = Describe("Reconfigure Redis", func() {
 
 		Context("Cluster Redis", func() {
 			BeforeEach(func() {
-				to.redis = to.RedisCluster(framework.DBVersion, nil, nil)
+				to.redis = to.RedisCluster(nil, nil)
 				to.redis.Spec.ConfigSecret = configSecret
 				to.redisOpsReq = to.RedisOpsRequestReconfiguration(to.redis.Name, to.redis.Namespace, newConfigSpec)
 			})
@@ -155,7 +155,7 @@ var _ = Describe("Reconfigure Redis", func() {
 
 		Context("Standalone Redis", func() {
 			BeforeEach(func() {
-				to.redis = to.RedisStandalone(framework.DBVersion)
+				to.redis = to.RedisStandalone()
 				to.redis.Spec.ConfigSecret = configSecret
 				to.redisOpsReq = to.RedisOpsRequestReconfiguration(to.redis.Name, to.redis.Namespace, newConfigSpec)
 			})
@@ -167,7 +167,7 @@ var _ = Describe("Reconfigure Redis", func() {
 
 		Context("Cluster Redis", func() {
 			BeforeEach(func() {
-				to.redis = to.RedisCluster(framework.DBVersion, nil, nil)
+				to.redis = to.RedisCluster(nil, nil)
 				to.redis.Spec.ConfigSecret = configSecret
 				to.redisOpsReq = to.RedisOpsRequestReconfiguration(to.redis.Name, to.redis.Namespace, newConfigSpec)
 			})
@@ -208,7 +208,7 @@ var _ = Describe("Reconfigure Redis", func() {
 
 		Context("Standalone Redis", func() {
 			BeforeEach(func() {
-				to.redis = to.RedisStandalone(framework.DBVersion)
+				to.redis = to.RedisStandalone()
 				to.redis.Spec.ConfigSecret = configSecret
 				to.redisOpsReq = to.RedisOpsRequestReconfiguration(to.redis.Name, to.redis.Namespace, newConfigSpec)
 			})
@@ -220,7 +220,7 @@ var _ = Describe("Reconfigure Redis", func() {
 
 		Context("Cluster Redis", func() {
 			BeforeEach(func() {
-				to.redis = to.RedisCluster(framework.DBVersion, nil, nil)
+				to.redis = to.RedisCluster(nil, nil)
 				to.redis.Spec.ConfigSecret = configSecret
 				to.redisOpsReq = to.RedisOpsRequestReconfiguration(to.redis.Name, to.redis.Namespace, newConfigSpec)
 			})

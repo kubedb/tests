@@ -55,8 +55,13 @@ type testOptions struct {
 }
 
 func (to *testOptions) getConfiguredClusterInfo() {
-	var err error
+	if to.redis.Spec.TLS == nil {
+		to.TestConfig().UseTLS = false
+	} else {
+		to.TestConfig().UseTLS = true
+	}
 
+	var err error
 	By("Wait until redis cluster be configured")
 	Expect(to.WaitUntilRedisClusterConfigured(to.redis)).NotTo(HaveOccurred())
 
@@ -69,6 +74,11 @@ func (to *testOptions) getConfiguredClusterInfo() {
 }
 
 func (to *testOptions) setValue() {
+	if to.redis.Spec.TLS == nil {
+		to.TestConfig().UseTLS = false
+	} else {
+		to.TestConfig().UseTLS = true
+	}
 	if to.redis.Spec.Mode == api.RedisModeStandalone {
 		to.EventuallySetItem(to.redis, "A", "VALUE").Should(BeTrue())
 	} else {
@@ -81,6 +91,11 @@ func (to *testOptions) setValue() {
 }
 
 func (to *testOptions) getValue() {
+	if to.redis.Spec.TLS == nil {
+		to.TestConfig().UseTLS = false
+	} else {
+		to.TestConfig().UseTLS = true
+	}
 	if to.redis.Spec.Mode == api.RedisModeStandalone {
 		to.EventuallyGetItem(to.redis, "A").Should(BeEquivalentTo("VALUE"))
 	} else {
@@ -111,8 +126,7 @@ func (to *testOptions) shouldTestOpsReq() {
 	to.createRedis()
 	if to.redis.Spec.Mode == api.RedisModeCluster {
 		time.Sleep(30 * time.Second)
-		By("Wait until redis cluster be configured")
-		Expect(to.WaitUntilRedisClusterConfigured(to.redis)).NotTo(HaveOccurred())
+		to.getConfiguredClusterInfo()
 	}
 
 	By("Inserting item into database")
@@ -131,8 +145,7 @@ func (to *testOptions) shouldTestOpsReq() {
 	Expect(err).NotTo(HaveOccurred())
 
 	if to.redis.Spec.Mode == api.RedisModeCluster {
-		By("Wait until redis cluster be configured")
-		Expect(to.WaitUntilRedisClusterConfigured(to.redis)).NotTo(HaveOccurred())
+		to.getConfiguredClusterInfo()
 	}
 
 	By("Checking key value after update")
@@ -196,16 +209,16 @@ func (to *testOptions) shouldTestConfigurationOpsReq(userConfig, newUserConfig *
 
 func runTestCommunity(testProfile string) bool {
 	return runTestDatabaseType() && (strings.Contains(framework.TestProfiles.String(), testProfile) ||
-		framework.TestProfiles.String() == framework.RedisAll ||
-		framework.TestProfiles.String() == framework.RedisCommunity)
+		framework.TestProfiles.String() == framework.All ||
+		framework.TestProfiles.String() == framework.Community)
 }
 
 func runTestEnterprise(testProfile string) bool {
 	return runTestDatabaseType() && (strings.Contains(framework.TestProfiles.String(), testProfile) ||
-		framework.TestProfiles.String() == framework.RedisAll ||
-		framework.TestProfiles.String() == framework.RedisEnterprise)
+		framework.TestProfiles.String() == framework.All ||
+		framework.TestProfiles.String() == framework.Enterprise)
 }
 
 func runTestDatabaseType() bool {
-	return strings.Compare(framework.DBType, api.ResourceKindRedis) == 0
+	return strings.Compare(framework.DBType, api.ResourceSingularRedis) == 0
 }

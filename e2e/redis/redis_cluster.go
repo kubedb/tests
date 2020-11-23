@@ -51,7 +51,7 @@ var _ = Describe("Redis Cluster", func() {
 			Skip(fmt.Sprintf("TLS is not supported for version `%s` in redis", framework.DBVersion))
 		}
 
-		to.redis = to.RedisCluster(framework.DBVersion, nil, nil)
+		to.redis = to.RedisCluster(nil, nil)
 		to.skipMessage = ""
 	})
 

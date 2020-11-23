@@ -40,7 +40,7 @@ import (
 	meta_util "kmodules.xyz/client-go/meta"
 )
 
-func (fi *Invocation) RedisStandalone(version string) *api.Redis {
+func (fi *Invocation) RedisStandalone() *api.Redis {
 	redis := &api.Redis{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("redis"),
@@ -50,7 +50,7 @@ func (fi *Invocation) RedisStandalone(version string) *api.Redis {
 			},
 		},
 		Spec: api.RedisSpec{
-			Version:           version,
+			Version:           DBVersion,
 			Mode:              api.RedisModeStandalone,
 			TerminationPolicy: api.TerminationPolicyHalt,
 			StorageType:       api.StorageTypeDurable,
@@ -72,8 +72,8 @@ func (fi *Invocation) RedisStandalone(version string) *api.Redis {
 	return redis
 }
 
-func (fi *Invocation) RedisCluster(version string, master, replicas *int32) *api.Redis {
-	redis := fi.RedisStandalone(version)
+func (fi *Invocation) RedisCluster(master, replicas *int32) *api.Redis {
+	redis := fi.RedisStandalone()
 	redis.Spec.Mode = api.RedisModeCluster
 	if master == nil {
 		master = types.Int32P(3)

@@ -31,7 +31,7 @@ import (
 
 var _ = Describe("Upgrade Redis", func() {
 	to := testOptions{}
-	testName := framework.RedisUpgrade
+	testName := framework.Upgrade
 	BeforeEach(func() {
 		to.Invocation = framework.NewInvocation()
 		if !runTestEnterprise(testName) {
@@ -76,7 +76,7 @@ var _ = Describe("Upgrade Redis", func() {
 	Context("Update Database Version", func() {
 		Context("Update Standalone DB", func() {
 			BeforeEach(func() {
-				to.redis = to.RedisStandalone(framework.DBVersion)
+				to.redis = to.RedisStandalone()
 				to.redisOpsReq = to.RedisOpsRequestUpgrade(to.redis.Name, framework.DBUpdatedVersion, dbaapi.OpsRequestTypeUpgrade)
 			})
 
@@ -87,7 +87,7 @@ var _ = Describe("Upgrade Redis", func() {
 
 		Context("Update Clustered DB", func() {
 			BeforeEach(func() {
-				to.redis = to.RedisCluster(framework.DBVersion, nil, nil)
+				to.redis = to.RedisCluster(nil, nil)
 				to.redisOpsReq = to.RedisOpsRequestUpgrade(to.redis.Name, framework.DBUpdatedVersion, dbaapi.OpsRequestTypeUpgrade)
 			})
 

@@ -31,7 +31,7 @@ import (
 
 var _ = Describe("Redis Volume Expansion", func() {
 	to := testOptions{}
-	testName := framework.RedisVolumeExpansion
+	testName := framework.VolumeExpansion
 	BeforeEach(func() {
 		to.Invocation = framework.NewInvocation()
 		if !to.IsGKE() {
@@ -78,7 +78,7 @@ var _ = Describe("Redis Volume Expansion", func() {
 
 	Context("Volume Expansion in StandAlone Redis", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisStandalone(framework.DBVersion)
+			to.redis = to.RedisStandalone()
 			storageReq := resource.MustParse("2Gi")
 			to.redisOpsReq = to.RedisOpsRequestVolumeExpansion(to.redis.Name, to.redis.Namespace, &storageReq)
 		})
@@ -90,7 +90,7 @@ var _ = Describe("Redis Volume Expansion", func() {
 
 	Context("Volume Expansion in Redis Cluster", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisCluster(framework.DBVersion, nil, nil)
+			to.redis = to.RedisCluster(nil, nil)
 			storageReq := resource.MustParse("2Gi")
 			to.redisOpsReq = to.RedisOpsRequestVolumeExpansion(to.redis.Name, to.redis.Namespace, &storageReq)
 		})

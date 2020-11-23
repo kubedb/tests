@@ -32,7 +32,7 @@ import (
 
 var _ = Describe("Vertical Scaling Redis", func() {
 	to := testOptions{}
-	testName := framework.RedisVerticalScaling
+	testName := framework.VerticalScaling
 	resources := &v1.ResourceRequirements{
 		Limits: map[v1.ResourceName]resource.Quantity{
 			v1.ResourceMemory: resource.MustParse("300Mi"),
@@ -86,7 +86,7 @@ var _ = Describe("Vertical Scaling Redis", func() {
 
 	Context("Scaling StandAlone Redis", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisStandalone(framework.DBVersion)
+			to.redis = to.RedisStandalone()
 			to.redisOpsReq = to.RedisOpsRequestVerticalScale(to.redis.Name, to.redis.Namespace, resources, nil)
 		})
 
@@ -97,8 +97,7 @@ var _ = Describe("Vertical Scaling Redis", func() {
 
 	Context("Scaling Redis Cluster", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisCluster(framework.DBVersion, nil, nil)
-
+			to.redis = to.RedisCluster(nil, nil)
 			to.redisOpsReq = to.RedisOpsRequestVerticalScale(to.redis.Name, to.redis.Namespace, resources, nil)
 		})
 

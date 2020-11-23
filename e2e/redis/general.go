@@ -41,7 +41,7 @@ var _ = Describe("General Redis", func() {
 		value string
 	)
 	to := testOptions{}
-	testName := framework.RedisGeneral
+	testName := framework.General
 
 	BeforeEach(func() {
 		to.Invocation = framework.NewInvocation()
@@ -52,7 +52,7 @@ var _ = Describe("General Redis", func() {
 			Skip(fmt.Sprintf("TLS is not supported for version `%s` in redis", framework.DBVersion))
 		}
 
-		to.redis = to.RedisStandalone(framework.DBVersion)
+		to.redis = to.RedisStandalone()
 		to.skipMessage = ""
 		key = rand.WithUniqSuffix("kubed-e2e")
 		value = rand.GenerateTokenWithLength(10)
@@ -153,7 +153,7 @@ var _ = Describe("General Redis", func() {
 		})
 
 		It("should run eviction with shard successfully", func() {
-			to.redis = to.RedisCluster(framework.DBVersion, types.Int32P(3), types.Int32P(3))
+			to.redis = to.RedisCluster(types.Int32P(3), types.Int32P(3))
 
 			// Create Redis
 			By("Create DB")
