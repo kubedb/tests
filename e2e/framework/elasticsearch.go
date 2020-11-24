@@ -405,6 +405,12 @@ func (f *Framework) CleanElasticsearch() {
 	}
 }
 
+func (f *Framework) CleanElasticsearchOpsRequests() {
+	if err := f.dbClient.OpsV1alpha1().ElasticsearchOpsRequests(f.namespace).DeleteCollection(context.TODO(), meta_util.DeleteInForeground(), metav1.ListOptions{}); err != nil {
+		fmt.Printf("error in deletion of Elasticsearch. Error: %v", err)
+	}
+}
+
 func (f *Framework) GetElasticsearchIngestPodName(elasticsearch *api.Elasticsearch) string {
 	clientName := elasticsearch.Name
 

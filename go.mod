@@ -23,6 +23,7 @@ require (
 	golang.org/x/tools v0.0.0-20201110124207-079ba7bd75cd // indirect
 	gomodules.xyz/blobfs v0.1.4
 	gomodules.xyz/cert v1.1.2
+	gomodules.xyz/pointer v0.0.0-20201105071923-daf60fa55209
 	gopkg.in/olivere/elastic.v5 v5.0.86
 	gopkg.in/olivere/elastic.v6 v6.2.35
 	gopkg.in/yaml.v2 v2.3.0
@@ -38,7 +39,7 @@ require (
 	kmodules.xyz/monitoring-agent-api v0.0.0-20201105074044-be7a1044891a
 	kmodules.xyz/objectstore-api v0.0.0-20201105133858-cbb2af88d50a
 	kmodules.xyz/offshoot-api v0.0.0-20201105074700-8675f5f686f2
-	kubedb.dev/apimachinery v0.15.2-0.20201122170734-a022a50249dc
+	kubedb.dev/apimachinery v0.15.2-0.20201120125711-d3aa37f9086a
 	sigs.k8s.io/yaml v1.2.0
 	stash.appscode.dev/apimachinery v0.11.7
 	xorm.io/xorm v1.0.5

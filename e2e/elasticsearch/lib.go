@@ -147,11 +147,7 @@ func (to *testOptions) createElasticsearchOpsRequestAndWaitForBeingSuccessful() 
 	Expect(err).NotTo(HaveOccurred())
 
 	By("Waiting for Ops Request to be successful or failed...")
-	switch to.elasticsearchOpsReq.Spec.Type {
-	case dbaapi.OpsRequestTypeUpgrade:
-		to.EventuallyElasticsearchOpsRequestSuccessful(to.elasticsearchOpsReq.ObjectMeta, 4*framework.WaitTimeOut).Should(BeTrue())
-
-	}
+	to.EventuallyElasticsearchOpsRequestSuccessful(to.elasticsearchOpsReq.ObjectMeta, 4*framework.WaitTimeOut).Should(BeTrue())
 }
 
 func (to *testOptions) wipeOutElasticsearch() {
@@ -204,9 +200,9 @@ func (to *testOptions) insertData() int {
 	Expect(err).NotTo(HaveOccurred())
 
 	By("Creating indices in Elasticsearch")
-	err = esClient.CreateIndex(2)
+	err = esClient.CreateIndex(5)
 	Expect(err).NotTo(HaveOccurred())
-	indicesCount += 2
+	indicesCount += 5
 
 	By("Checking created indices")
 	to.EventuallyElasticsearchIndicesCount(esClient).Should(Equal(indicesCount))

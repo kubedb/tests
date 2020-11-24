@@ -424,6 +424,7 @@ gomodules.xyz/jsonpatch/v2
 # gomodules.xyz/password-generator v0.2.6
 gomodules.xyz/password-generator
 # gomodules.xyz/pointer v0.0.0-20201105071923-daf60fa55209
+## explicit
 gomodules.xyz/pointer
 # gomodules.xyz/version v0.1.0
 gomodules.xyz/version
@@ -762,7 +763,7 @@ kmodules.xyz/objectstore-api/api/v1
 kmodules.xyz/offshoot-api/api/v1
 # kmodules.xyz/prober v0.0.0-20201105074402-a243b3a27fd8
 kmodules.xyz/prober/api/v1
-# kubedb.dev/apimachinery v0.15.2-0.20201122170734-a022a50249dc
+# kubedb.dev/apimachinery v0.15.2-0.20201120125711-d3aa37f9086a
 ## explicit
 kubedb.dev/apimachinery/apis
 kubedb.dev/apimachinery/apis/autoscaling

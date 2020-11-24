@@ -51,6 +51,26 @@ func (i *Invocation) GetElasticsearchOpsRequestUpgrade(esMeta metav1.ObjectMeta,
 	}
 }
 
+func (i *Invocation) GetElasticsearchOpsRequestHorizontalScale(esMeta metav1.ObjectMeta, scaleSpec *dbaapi.ElasticsearchHorizontalScalingSpec) *dbaapi.ElasticsearchOpsRequest {
+	return &dbaapi.ElasticsearchOpsRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      rand.WithUniqSuffix("es-scale-up"),
+			Namespace: i.namespace,
+			Labels: map[string]string{
+				"app": i.app,
+			},
+		},
+
+		Spec: dbaapi.ElasticsearchOpsRequestSpec{
+			Type: dbaapi.OpsRequestTypeHorizontalScaling,
+			DatabaseRef: corev1.LocalObjectReference{
+				Name: esMeta.Name,
+			},
+			HorizontalScaling: scaleSpec,
+		},
+	}
+}
+
 func (i *Invocation) EventuallyElasticsearchOpsRequestSuccessful(meta metav1.ObjectMeta, timeOut time.Duration) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
