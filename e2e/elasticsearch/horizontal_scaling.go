@@ -71,6 +71,7 @@ var _ = Describe("Horizontal Scaling", func() {
 
 	Context("Combined Cluster", func() {
 		AfterEach(func() {
+			to.wipeOutElasticsearch()
 			err := to.DeleteElasticsearchOpsRequest(to.elasticsearchOpsReq.ObjectMeta)
 			Expect(err).ShouldNot(HaveOccurred())
 		})
@@ -87,7 +88,6 @@ var _ = Describe("Horizontal Scaling", func() {
 			indicesCount := to.insertData()
 			to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
 			to.verifyData(indicesCount)
-			to.wipeOutElasticsearch()
 		})
 
 		It("Scale Down", func() {
@@ -103,14 +103,13 @@ var _ = Describe("Horizontal Scaling", func() {
 			indicesCount := to.insertData()
 			to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
 			to.verifyData(indicesCount)
-			to.wipeOutElasticsearch()
 		})
 
 	})
 
 	Context("Dedicated Cluster", func() {
-
 		AfterEach(func() {
+			to.wipeOutElasticsearch()
 			err := to.DeleteElasticsearchOpsRequest(to.elasticsearchOpsReq.ObjectMeta)
 			Expect(err).ShouldNot(HaveOccurred())
 		})
@@ -135,10 +134,9 @@ var _ = Describe("Horizontal Scaling", func() {
 			indicesCount := to.insertData()
 			to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
 			to.verifyData(indicesCount)
-			to.wipeOutElasticsearch()
 		})
 
-		FIt("Scale Down", func() {
+		It("Scale Down", func() {
 			to.db = to.transformElasticsearch(to.ClusterElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
 				in.Spec.Topology.Data.Replicas = pointer.Int32P(3)
 				in.Spec.EnableSSL = framework.SSLEnabled
@@ -156,7 +154,124 @@ var _ = Describe("Horizontal Scaling", func() {
 			indicesCount := to.insertData()
 			to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
 			to.verifyData(indicesCount)
+		})
+
+		It("Scale Up and Down", func() {
+			to.db = to.transformElasticsearch(to.ClusterElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
+				in.Spec.Topology.Master.Replicas = pointer.Int32P(1)
+				in.Spec.Topology.Data.Replicas = pointer.Int32P(1)
+				in.Spec.Topology.Ingest.Replicas = pointer.Int32P(5)
+				in.Spec.EnableSSL = framework.SSLEnabled
+				return in
+			})
+			to.elasticsearchOpsReq = to.GetElasticsearchOpsRequestHorizontalScale(to.db.ObjectMeta, &dbaapi.ElasticsearchHorizontalScalingSpec{
+				Topology: &dbaapi.ElasticsearchHorizontalScalingTopologySpec{
+					Master: pointer.Int32P(2), // scale up
+					Data:   pointer.Int32P(3), // scale up
+					Ingest: pointer.Int32P(2), // scale down
+				},
+			})
+
+			to.createElasticsearchAndWaitForBeingReady()
+			indicesCount := to.insertData()
+			to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
+			to.verifyData(indicesCount)
+		})
+	})
+
+	Context("Multiple HorizontalScaling Ops Requests", func() {
+		AfterEach(func() {
 			to.wipeOutElasticsearch()
+			err := to.DeleteElasticsearchOpsRequest(to.elasticsearchOpsReq.ObjectMeta)
+			Expect(err).ShouldNot(HaveOccurred())
+		})
+
+		It("Combined Cluster: Scale Up -> Scale Down -> Scale Up", func() {
+			to.db = to.transformElasticsearch(to.StandaloneElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
+				in.Spec.Replicas = pointer.Int32P(1)
+				in.Spec.EnableSSL = framework.SSLEnabled
+				return in
+			})
+			to.createElasticsearchAndWaitForBeingReady()
+
+			// Scale Up
+			to.elasticsearchOpsReq = to.GetElasticsearchOpsRequestHorizontalScale(to.db.ObjectMeta, &dbaapi.ElasticsearchHorizontalScalingSpec{
+				Node: pointer.Int32P(4),
+			})
+			indicesCount := to.insertData()
+			to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
+			to.verifyData(indicesCount)
+			err := to.DeleteElasticsearchOpsRequest(to.elasticsearchOpsReq.ObjectMeta)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			// Scale Down
+			to.elasticsearchOpsReq = to.GetElasticsearchOpsRequestHorizontalScale(to.db.ObjectMeta, &dbaapi.ElasticsearchHorizontalScalingSpec{
+				Node: pointer.Int32P(2),
+			})
+			indicesCount = to.insertData()
+			to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
+			to.verifyData(indicesCount)
+			err = to.DeleteElasticsearchOpsRequest(to.elasticsearchOpsReq.ObjectMeta)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			// Scale Up
+			to.elasticsearchOpsReq = to.GetElasticsearchOpsRequestHorizontalScale(to.db.ObjectMeta, &dbaapi.ElasticsearchHorizontalScalingSpec{
+				Node: pointer.Int32P(4),
+			})
+			indicesCount = to.insertData()
+			to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
+			to.verifyData(indicesCount)
+		})
+
+		It("Dedicated Cluster: Scale Up -> Scale Down -> Scale Up", func() {
+			to.db = to.transformElasticsearch(to.ClusterElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
+				in.Spec.Topology.Master.Replicas = pointer.Int32P(1)
+				in.Spec.Topology.Data.Replicas = pointer.Int32P(1)
+				in.Spec.Topology.Ingest.Replicas = pointer.Int32P(1)
+				in.Spec.EnableSSL = framework.SSLEnabled
+				return in
+			})
+			to.createElasticsearchAndWaitForBeingReady()
+
+			// Scale Up
+			to.elasticsearchOpsReq = to.GetElasticsearchOpsRequestHorizontalScale(to.db.ObjectMeta, &dbaapi.ElasticsearchHorizontalScalingSpec{
+				Topology: &dbaapi.ElasticsearchHorizontalScalingTopologySpec{
+					Master: pointer.Int32P(2),
+					Data:   pointer.Int32P(3),
+					Ingest: pointer.Int32P(2),
+				},
+			})
+			indicesCount := to.insertData()
+			to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
+			to.verifyData(indicesCount)
+			err := to.DeleteElasticsearchOpsRequest(to.elasticsearchOpsReq.ObjectMeta)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			// Scale Down
+			to.elasticsearchOpsReq = to.GetElasticsearchOpsRequestHorizontalScale(to.db.ObjectMeta, &dbaapi.ElasticsearchHorizontalScalingSpec{
+				Topology: &dbaapi.ElasticsearchHorizontalScalingTopologySpec{
+					Master: pointer.Int32P(1),
+					Data:   pointer.Int32P(2),
+					Ingest: pointer.Int32P(1),
+				},
+			})
+			indicesCount = to.insertData()
+			to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
+			to.verifyData(indicesCount)
+			err = to.DeleteElasticsearchOpsRequest(to.elasticsearchOpsReq.ObjectMeta)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			// Scale Up
+			to.elasticsearchOpsReq = to.GetElasticsearchOpsRequestHorizontalScale(to.db.ObjectMeta, &dbaapi.ElasticsearchHorizontalScalingSpec{
+				Topology: &dbaapi.ElasticsearchHorizontalScalingTopologySpec{
+					Master: pointer.Int32P(2),
+					Data:   pointer.Int32P(3),
+					Ingest: pointer.Int32P(2),
+				},
+			})
+			indicesCount = to.insertData()
+			to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
+			to.verifyData(indicesCount)
 		})
 	})
 })

@@ -55,6 +55,8 @@ var _ = Describe("Version Upgrade", func() {
 		By("Cleanup Left Overs")
 		By("Delete left over Elasticsearch objects")
 		to.CleanElasticsearch()
+		By("Delete left over Elasticsearch Ops Request objects")
+		to.CleanElasticsearchOpsRequests()
 		By("Delete left over workloads if exists any")
 		to.CleanWorkloadLeftOvers(api.ResourceKindElasticsearch)
 	})
