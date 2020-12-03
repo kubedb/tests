@@ -24,6 +24,8 @@ import (
 	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
 
+	"github.com/appscode/go/log"
+	"github.com/google/go-cmp/cmp"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
@@ -218,6 +220,45 @@ func (to *testOptions) verifyData(indicesCount int) {
 
 	By("Checking indices...")
 	to.EventuallyElasticsearchIndicesCount(esClient).Should(Equal(indicesCount))
+}
+
+func (to *testOptions) verifyResources() bool {
+	reqSpec := to.elasticsearchOpsReq.Spec.VerticalScaling
+	if reqSpec == nil {
+		return false
+	}
+	db, err := to.DBClient().KubedbV1alpha2().Elasticsearches(to.db.Namespace).Get(context.TODO(), to.db.Name, metav1.GetOptions{})
+	Expect(err).NotTo(HaveOccurred())
+	dbSpec := db.Spec
+
+	if reqSpec.Node != nil && dbSpec.Topology == nil {
+		if !cmp.Equal(dbSpec.PodTemplate.Spec.Resources, *reqSpec.Node) {
+			log.Error("dbSpec.PodTemplate.Spec.Resources and reqSpec.Node are not equal!")
+			return false
+		}
+	}
+
+	if reqSpec.Topology != nil && dbSpec.Topology != nil {
+		if reqSpec.Topology.Master != nil && !cmp.Equal(*reqSpec.Topology.Master, dbSpec.Topology.Master.Resources) {
+			log.Error("reqSpec.Topology.Master and dbSpec.Topology.Master.Resources are not equal!")
+			return false
+		}
+		if reqSpec.Topology.Data != nil && !cmp.Equal(*reqSpec.Topology.Data, dbSpec.Topology.Data.Resources) {
+			log.Error("reqSpec.Topology.Data and dbSpec.Topology.Data.Resources are not equal!")
+			return false
+		}
+		if reqSpec.Topology.Ingest != nil && !cmp.Equal(*reqSpec.Topology.Ingest, dbSpec.Topology.Ingest.Resources) {
+			log.Error("reqSpec.Topology.Ingest and dbSpec.Topology.Ingest.Resources are not equal!")
+			return false
+		}
+	}
+	if reqSpec.Exporter != nil && dbSpec.Monitor != nil && dbSpec.Monitor.Prometheus != nil {
+		if !cmp.Equal(*reqSpec.Exporter, dbSpec.Monitor.Prometheus.Exporter.Resources) {
+			log.Error("reqSpec.Exporter and dbSpec.Monitor.Prometheus.Exporter.Resources are not equal!")
+			return false
+		}
+	}
+	return true
 }
 
 func (to *testOptions) transformElasticsearch(db *api.Elasticsearch, transform func(in *api.Elasticsearch) *api.Elasticsearch) *api.Elasticsearch {

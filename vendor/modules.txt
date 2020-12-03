@@ -110,7 +110,8 @@ github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/snappy
 # github.com/google/btree v1.0.0
 github.com/google/btree
-# github.com/google/go-cmp v0.5.2
+# github.com/google/go-cmp v0.5.4
+## explicit
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
@@ -763,7 +764,7 @@ kmodules.xyz/objectstore-api/api/v1
 kmodules.xyz/offshoot-api/api/v1
 # kmodules.xyz/prober v0.0.0-20201105074402-a243b3a27fd8
 kmodules.xyz/prober/api/v1
-# kubedb.dev/apimachinery v0.15.2-0.20201120125711-d3aa37f9086a
+# kubedb.dev/apimachinery v0.15.2-0.20201127092216-52119e7c423d
 ## explicit
 kubedb.dev/apimachinery/apis
 kubedb.dev/apimachinery/apis/autoscaling
