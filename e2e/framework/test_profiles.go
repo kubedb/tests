@@ -60,6 +60,8 @@ const (
 	VolumeExpansion   = "volume_expansion"
 	Autoscaling       = "autoscaling"
 
+	ReconfigureTLS = "reconfigure_tls"
+
 	RedisHorizontalScaling   = "redis_horizontal"
 	RedisVerticalScaling     = "redis_vertical"
 	RedisUpgrade             = "redis_upgrading"

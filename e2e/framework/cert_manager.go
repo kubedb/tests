@@ -18,6 +18,7 @@ package framework
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -28,8 +29,10 @@ import (
 	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	kmapi "kmodules.xyz/client-go/api/v1"
 	meta_util "kmodules.xyz/client-go/meta"
+	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 )
 
 const (
@@ -122,4 +125,30 @@ func NewTLSConfiguration(issuer *cm_api.Issuer, transformFuncs ...func(tls *kmap
 		fn(tlsConfig)
 	}
 	return tlsConfig
+}
+
+func (f *Framework) GetAllCertsRevision(db *api.MySQL) (map[string]int, error) {
+	revisionMap := make(map[string]int)
+	certList, err := f.certManagerClient.CertmanagerV1().Certificates(f.Namespace()).List(context.TODO(), metav1.ListOptions{
+		LabelSelector: labels.Set(db.OffshootSelectors()).String(),
+	})
+	if err != nil {
+		return revisionMap, err
+	}
+
+	for _, cert := range certList.Items {
+		revisionMap[cert.Name] = *cert.Status.Revision
+	}
+	return revisionMap, nil
+}
+
+func (f *Framework) CheckAllCertsRevisionUpdated(revisions, updatedRevisions map[string]int) (bool, error) {
+	for certName, revision := range revisions {
+		for UpdatedCertName, updatedRevision := range updatedRevisions {
+			if certName == UpdatedCertName && revision >= updatedRevision {
+				return false, errors.New("certs revision not updated")
+			}
+		}
+	}
+	return true, nil
 }

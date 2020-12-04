@@ -50,6 +50,9 @@ const (
 	DBTLSVolume         = "tls-volume"
 	DBExporterTLSVolume = "exporter-tls-volume"
 
+	DBTLSVolume         = "tls-volume"
+	DBExporterTLSVolume = "exporter-tls-volume"
+
 	// =========================== Database key Constants ============================
 	PostgresKey      = ResourceSingularPostgres + "." + kubedb.GroupName
 	ElasticsearchKey = ResourceSingularElasticsearch + "." + kubedb.GroupName

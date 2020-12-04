@@ -35,6 +35,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kmapi "kmodules.xyz/client-go/api/v1"
 	meta_util "kmodules.xyz/client-go/meta"
+	ofst "kmodules.xyz/offshoot-api/api/v1"
+)
+
+var (
+	DBDefaultCPUSize    = "500m"
+	DBDefaultMemorySize = "1024Mi"
 )
 
 func (fi *Invocation) MySQLDefinition(version string) *api.MySQL {
@@ -59,6 +65,18 @@ func (fi *Invocation) MySQLDefinition(version string) *api.MySQL {
 					core.ReadWriteOnce,
 				},
 				StorageClassName: types.StringP(fi.StorageClass),
+			},
+			PodTemplate: ofst.PodTemplateSpec{
+				Spec: ofst.PodSpec{
+					Resources: core.ResourceRequirements{
+						Limits: core.ResourceList{
+							core.ResourceCPU: resource.MustParse(DBDefaultCPUSize),
+						},
+						Requests: core.ResourceList{
+							core.ResourceMemory: resource.MustParse(DBDefaultMemorySize),
+						},
+					},
+				},
 			},
 		},
 	}
