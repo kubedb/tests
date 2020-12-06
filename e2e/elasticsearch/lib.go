@@ -28,6 +28,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -232,6 +233,15 @@ func (to *testOptions) verifyResources() bool {
 	dbSpec := db.Spec
 
 	if reqSpec.Node != nil && dbSpec.Topology == nil {
+		// Get StatefulSet
+		sts, err := to.KubeClient().AppsV1().StatefulSets(db.Namespace).Get(context.TODO(), db.OffshootName(), metav1.GetOptions{})
+		Expect(err).NotTo(HaveOccurred())
+		container := GetElasticsearchContainer(sts, api.ElasticsearchContainerName)
+		if !cmp.Equal(container.Resources, *reqSpec.Node) {
+			log.Error("statefulSet....container.Resources and reqSpec.Node are not equal!")
+			return false
+		}
+
 		if !cmp.Equal(dbSpec.PodTemplate.Spec.Resources, *reqSpec.Node) {
 			log.Error("dbSpec.PodTemplate.Spec.Resources and reqSpec.Node are not equal!")
 			return false
@@ -239,17 +249,60 @@ func (to *testOptions) verifyResources() bool {
 	}
 
 	if reqSpec.Topology != nil && dbSpec.Topology != nil {
-		if reqSpec.Topology.Master != nil && !cmp.Equal(*reqSpec.Topology.Master, dbSpec.Topology.Master.Resources) {
-			log.Error("reqSpec.Topology.Master and dbSpec.Topology.Master.Resources are not equal!")
-			return false
+		if reqSpec.Topology.Master != nil {
+			// Get StatefulSet
+			sts, err := to.KubeClient().AppsV1().StatefulSets(db.Namespace).Get(context.TODO(), db.MasterStatefulSetName(), metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			container := GetElasticsearchContainer(sts, api.ElasticsearchContainerName)
+			if !cmp.Equal(container.Resources, *reqSpec.Topology.Master) {
+				log.Error("statefulSet....container.Resources and reqSpec.topology.master are not equal!")
+				return false
+			}
+
+			if !cmp.Equal(*reqSpec.Topology.Master, dbSpec.Topology.Master.Resources) {
+				log.Error("reqSpec.Topology.Master and dbSpec.Topology.Master.Resources are not equal!")
+				return false
+			}
 		}
-		if reqSpec.Topology.Data != nil && !cmp.Equal(*reqSpec.Topology.Data, dbSpec.Topology.Data.Resources) {
-			log.Error("reqSpec.Topology.Data and dbSpec.Topology.Data.Resources are not equal!")
-			return false
+
+		if reqSpec.Topology.Data != nil {
+			// Get StatefulSet
+			sts, err := to.KubeClient().AppsV1().StatefulSets(db.Namespace).Get(context.TODO(), db.DataStatefulSetName(), metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			container := GetElasticsearchContainer(sts, api.ElasticsearchContainerName)
+			if !cmp.Equal(container.Resources, *reqSpec.Topology.Data) {
+				log.Error("statefulSet....container.Resources and reqSpec.topology.data are not equal!")
+				return false
+			}
+
+			if !cmp.Equal(*reqSpec.Topology.Data, dbSpec.Topology.Data.Resources) {
+				log.Error("reqSpec.Topology.Data and dbSpec.Topology.Data.Resources are not equal!")
+				return false
+			}
 		}
-		if reqSpec.Topology.Ingest != nil && !cmp.Equal(*reqSpec.Topology.Ingest, dbSpec.Topology.Ingest.Resources) {
-			log.Error("reqSpec.Topology.Ingest and dbSpec.Topology.Ingest.Resources are not equal!")
-			return false
+
+		if reqSpec.Topology.Ingest != nil {
+			// Get StatefulSet
+			sts, err := to.KubeClient().AppsV1().StatefulSets(db.Namespace).Get(context.TODO(), db.IngestStatefulSetName(), metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			container := GetElasticsearchContainer(sts, api.ElasticsearchContainerName)
+			if !cmp.Equal(container.Resources, *reqSpec.Topology.Ingest) {
+				log.Error("statefulSet....container.Resources and reqSpec.topology.ingest are not equal!")
+				return false
+			}
+			// Exporter sidecar of ingest node
+			if reqSpec.Exporter != nil && dbSpec.Monitor != nil && dbSpec.Monitor.Prometheus != nil {
+				container = GetElasticsearchContainer(sts, api.ElasticsearchExporterContainerName)
+				if !cmp.Equal(container.Resources, *reqSpec.Exporter) {
+					log.Error("statefulSet....container.Resources and reqSpec.exporter are not equal!")
+					return false
+				}
+			}
+
+			if !cmp.Equal(*reqSpec.Topology.Ingest, dbSpec.Topology.Ingest.Resources) {
+				log.Error("reqSpec.Topology.Ingest and dbSpec.Topology.Ingest.Resources are not equal!")
+				return false
+			}
 		}
 	}
 	if reqSpec.Exporter != nil && dbSpec.Monitor != nil && dbSpec.Monitor.Prometheus != nil {
@@ -263,4 +316,14 @@ func (to *testOptions) verifyResources() bool {
 
 func (to *testOptions) transformElasticsearch(db *api.Elasticsearch, transform func(in *api.Elasticsearch) *api.Elasticsearch) *api.Elasticsearch {
 	return transform(db)
+}
+
+func GetElasticsearchContainer(sts *apps.StatefulSet, containerName string) core.Container {
+	for _, c := range sts.Spec.Template.Spec.Containers {
+		if c.Name == containerName {
+			return c
+		}
+	}
+
+	return core.Container{}
 }

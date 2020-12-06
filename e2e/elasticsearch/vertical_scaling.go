@@ -28,6 +28,7 @@ import (
 	"gomodules.xyz/pointer"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	mona "kmodules.xyz/monitoring-agent-api/api/v1"
 )
 
 var _ = Describe("Vertical Scaling", func() {
@@ -240,6 +241,46 @@ var _ = Describe("Vertical Scaling", func() {
 							core.ResourceCPU:    resource.MustParse(".650"),
 							core.ResourceMemory: resource.MustParse("500Mi"),
 						},
+					},
+				},
+			})
+			to.createElasticsearchAndWaitForBeingReady()
+			indicesCount := to.insertData()
+			to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
+			to.verifyData(indicesCount)
+			ok := to.verifyResources()
+			Expect(ok).Should(BeTrue())
+		})
+	})
+
+	Context("Dedicated Cluster with metrics exporter", func() {
+		AfterEach(func() {
+			to.wipeOutElasticsearch()
+			err := to.DeleteElasticsearchOpsRequest(to.elasticsearchOpsReq.ObjectMeta)
+			Expect(err).ShouldNot(HaveOccurred())
+		})
+
+		It("should run successfully", func() {
+			to.db = to.transformElasticsearch(to.ClusterElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
+				in.Spec.Monitor = &mona.AgentSpec{
+					Agent: mona.AgentPrometheus,
+				}
+
+				in.Spec.EnableSSL = framework.SSLEnabled
+				in.Spec.Topology.Master.Replicas = pointer.Int32P(1)
+				in.Spec.Topology.Data.Replicas = pointer.Int32P(1)
+				in.Spec.Topology.Ingest.Replicas = pointer.Int32P(1)
+				return in
+			})
+			to.elasticsearchOpsReq = to.GetElasticsearchOpsRequestVerticalScale(to.db.ObjectMeta, &dbaapi.ElasticsearchVerticalScalingSpec{
+				Exporter: &core.ResourceRequirements{
+					Requests: core.ResourceList{
+						core.ResourceMemory: resource.MustParse("100Mi"),
+						core.ResourceCPU:    resource.MustParse("100m"),
+					},
+					Limits: core.ResourceList{
+						core.ResourceMemory: resource.MustParse("200Mi"),
+						core.ResourceCPU:    resource.MustParse("250m"),
 					},
 				},
 			})
