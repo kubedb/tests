@@ -26,6 +26,7 @@ import (
 
 	"github.com/appscode/go/crypto/rand"
 	"github.com/appscode/go/log"
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
@@ -159,4 +160,28 @@ func (f *Framework) GetMySQLRootPassword(my *api.MySQL) (string, error) {
 	}
 	password := string(secret.Data[KeyMySQLPassword])
 	return password, nil
+}
+
+func (f *Invocation) GetCustomConfigForMySQL(configs []string, name string) *core.Secret {
+	configs = append([]string{"[mysqld]"}, configs...)
+	return &core.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: f.namespace,
+		},
+		StringData: map[string]string{
+			"my-custom.cnf": strings.Join(configs, "\n"),
+		},
+	}
+}
+
+func (fi *Invocation) CustomConfigForMySQL(customConfigs []string, name string) (*core.Secret, error) {
+	cm := fi.GetCustomConfigForMySQL(customConfigs, name)
+	By("Creating custom Config for MySQL " + cm.Namespace + "/" + cm.Name)
+	cm, err := fi.CreateSecret(cm)
+	if err != nil {
+		return nil, err
+	}
+	fi.AppendToCleanupList(cm)
+	return cm, err
 }

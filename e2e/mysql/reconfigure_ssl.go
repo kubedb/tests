@@ -47,7 +47,7 @@ var _ = Describe("MySQL", func() {
 			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
 		}
 		if !runTestEnterprise(framework.ReconfigureTLS) {
-			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.Upgrade))
+			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.ReconfigureTLS))
 		}
 		if !framework.SSLEnabled {
 			Skip("Enable SSL to test this")
@@ -155,6 +155,71 @@ var _ = Describe("MySQL", func() {
 				})
 			})
 
+			Context("Add TLS/SSL", func() {
+				It("Should remove TLS/SSL", func() {
+					// MySQL objectMeta
+					myMeta := metav1.ObjectMeta{
+						Name:      rand.WithUniqSuffix("mysql"),
+						Namespace: fi.Namespace(),
+					}
+					issuer, err := fi.InsureIssuer(myMeta, api.ResourceKindMySQL)
+					Expect(err).NotTo(HaveOccurred())
+					// Create MySQL standalone with tls secured and wait for running
+					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
+						in.Name = myMeta.Name
+					})
+					Expect(err).NotTo(HaveOccurred())
+					// Database connection information
+					dbInfo := framework.DatabaseConnectionInfo{
+						StatefulSetOrdinal: 0,
+						ClientPodIndex:     0,
+						DatabaseName:       framework.DBMySQL,
+						User:               framework.MySQLRootUser,
+						Param:              "",
+					}
+					fi.EventuallyDBReady(my, dbInfo)
+
+					By("Creating Table")
+					fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
+
+					By("Inserting Rows")
+					fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
+
+					By("Checking Row Count of Table")
+					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+					// Adding TLS/SSL and waiting for the success
+					requireSSL := true
+					_ = fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
+						in.Spec.Type = opsapi.OpsRequestTypeReconfigureTLSs
+						in.Spec.TLS = &opsapi.MySQLTLSSpec{
+							RequireSSL: &requireSSL,
+							TLSSpec: opsapi.TLSSpec{
+								TLSConfig: kmapi.TLSConfig{
+									IssuerRef: &core.TypedLocalObjectReference{
+										Name:     issuer.Name,
+										Kind:     "Issuer",
+										APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
+									},
+								},
+							},
+						}
+					})
+					// ReconfigureTLS OpsRequest is succeeded, That's why TLS configuration have been added.
+					// we need to set `User` and `Param` to access database with TLSCustom config.
+					dbInfo.User = framework.MySQLRootUser
+					dbInfo.Param = fmt.Sprintf("tls=%s", framework.TLSCustomConfig)
+					By("Checking MySQL TLS config have added")
+					my, err = fi.DBClient().KubedbV1alpha2().MySQLs(fi.Namespace()).Get(context.TODO(), my.Name, metav1.GetOptions{})
+					Expect(err).NotTo(HaveOccurred())
+					sts, err := fi.KubeClient().AppsV1().StatefulSets(fi.Namespace()).Get(context.TODO(), my.OffshootName(), metav1.GetOptions{})
+					Expect(err).NotTo(HaveOccurred())
+					util.CheckMySQLTLSConfigAdded(my, sts)
+
+					// Retrieve Inserted Data
+					By("Checking Row Count of Table")
+					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+				})
+			})
 		})
 		Context("MySQL Group Replication", func() {
 			Context("Remove TLS/SSL", func() {
@@ -314,8 +379,8 @@ var _ = Describe("MySQL", func() {
 						}
 					})
 
-					// ReconfigureTLS OpsRequest is succeeded, That's why TLS configuration have been removed.
-					// we need to set `User` and `Param` to access database without TLSCustom config.
+					// ReconfigureTLS OpsRequest is succeeded, That's why TLS configuration have been added.
+					// we need to set `User` and `Param` to access database with TLSCustom config.
 					dbInfo.User = framework.MySQLRootUser
 					dbInfo.Param = fmt.Sprintf("tls=%s", framework.TLSCustomConfig)
 					By("Checking MySQL TLS config have added")
@@ -448,7 +513,7 @@ var _ = Describe("MySQL", func() {
 			})
 
 			Context("Set require secure transport OFF", func() {
-				FIt("Should set secure require transport OFF", func() {
+				It("Should set secure require transport OFF", func() {
 					// MySQL objectMeta
 					myMeta := metav1.ObjectMeta{
 						Name:      rand.WithUniqSuffix("mysql"),

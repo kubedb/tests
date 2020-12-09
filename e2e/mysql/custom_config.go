@@ -23,6 +23,7 @@ import (
 	"kubedb.dev/tests/e2e/framework"
 	"kubedb.dev/tests/e2e/matcher"
 
+	"github.com/appscode/go/crypto/rand"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
@@ -31,6 +32,11 @@ import (
 var _ = Describe("MySQL", func() {
 
 	var fi *framework.Invocation
+
+	var customConfigs = []string{
+		"max_connections=200",
+		"read_buffer_size=1048576", // 1MB
+	}
 
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
@@ -56,25 +62,10 @@ var _ = Describe("MySQL", func() {
 	Describe("Test", func() {
 
 		Context("Custom config", func() {
-
-			var customConfigs = []string{
-				"max_connections=200",
-				"read_buffer_size=1048576", // 1MB
-			}
-			var customConfigForMySQL = func() (*core.Secret, error) {
-				cm := fi.GetCustomConfigForMySQL(customConfigs)
-				By("Creating custom Config for MySQL " + cm.Namespace + "/" + cm.Name)
-				cm, err := fi.CreateSecret(cm)
-				if err != nil {
-					return nil, err
-				}
-				fi.AppendToCleanupList(cm)
-				return cm, err
-			}
-
 			Context("from secret", func() {
 				It("should set configuration provided in secret", func() {
-					cm, err := customConfigForMySQL()
+					customConfigName := rand.WithUniqSuffix("mysql")
+					cm, err := fi.CustomConfigForMySQL(customConfigs, customConfigName)
 					Expect(err).NotTo(HaveOccurred())
 
 					// Create MySQL standalone and wait for running

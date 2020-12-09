@@ -72,9 +72,8 @@ func (fi *Invocation) GetPersistentVolumeClaim() *core.PersistentVolumeClaim {
 	}
 }
 
-func (fi *Invocation) CreatePersistentVolumeClaim(pvc *core.PersistentVolumeClaim) error {
-	_, err := fi.kubeClient.CoreV1().PersistentVolumeClaims(pvc.Namespace).Create(context.TODO(), pvc, metav1.CreateOptions{})
-	return err
+func (i *Invocation) GetPersistentVolumeClaim(name string) (*core.PersistentVolumeClaim, error) {
+	return i.kubeClient.CoreV1().PersistentVolumeClaims(i.Namespace()).Get(context.TODO(), name, metav1.GetOptions{})
 }
 
 func (fi *Invocation) DeletePersistentVolumeClaim(meta metav1.ObjectMeta) error {
