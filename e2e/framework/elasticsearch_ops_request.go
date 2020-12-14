@@ -91,6 +91,26 @@ func (i *Invocation) GetElasticsearchOpsRequestVerticalScale(esMeta metav1.Objec
 	}
 }
 
+func (i *Invocation) GetElasticsearchOpsRequestVolumeExpansion(esMeta metav1.ObjectMeta, veSpec *dbaapi.ElasticsearchVolumeExpansionSpec) *dbaapi.ElasticsearchOpsRequest {
+	return &dbaapi.ElasticsearchOpsRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      rand.WithUniqSuffix("es-volume-expansion"),
+			Namespace: i.namespace,
+			Labels: map[string]string{
+				"app": i.app,
+			},
+		},
+
+		Spec: dbaapi.ElasticsearchOpsRequestSpec{
+			Type: dbaapi.OpsRequestTypeVolumeExpansion,
+			DatabaseRef: corev1.LocalObjectReference{
+				Name: esMeta.Name,
+			},
+			VolumeExpansion: veSpec,
+		},
+	}
+}
+
 func (i *Invocation) EventuallyElasticsearchOpsRequestSuccessful(meta metav1.ObjectMeta, timeOut time.Duration) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {

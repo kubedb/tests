@@ -314,6 +314,136 @@ func (to *testOptions) verifyResources() bool {
 	return true
 }
 
+func (to *testOptions) verifyStorage() bool {
+	reqSpec := to.elasticsearchOpsReq.Spec.VolumeExpansion
+	if reqSpec == nil {
+		return false
+	}
+	db, err := to.DBClient().KubedbV1alpha2().Elasticsearches(to.db.Namespace).Get(context.TODO(), to.db.Name, metav1.GetOptions{})
+	Expect(err).NotTo(HaveOccurred())
+	dbSpec := db.Spec
+
+	if reqSpec.Node != nil && dbSpec.Topology == nil {
+		// Get StatefulSet
+		sts, err := to.KubeClient().AppsV1().StatefulSets(db.Namespace).Get(context.TODO(), db.CombinedStatefulSetName(), metav1.GetOptions{})
+		Expect(err).NotTo(HaveOccurred())
+
+		// with statefulSet
+		if !cmp.Equal(*sts.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage(), *reqSpec.Node) {
+			log.Error("VolumeClaimTemplates[0].Spec.Resources.Requests.Storage() and reqSpec.Node are not equal!")
+			return false
+		}
+
+		// with PVCs
+		pvcNames := GetPVCNamesForStatefulSet(sts)
+		for _, pvcName := range pvcNames {
+			pvc, err := to.KubeClient().CoreV1().PersistentVolumeClaims(to.db.Namespace).Get(context.TODO(), pvcName, metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			if !cmp.Equal(*pvc.Spec.Resources.Requests.Storage(), *reqSpec.Node) {
+				log.Error("pvc.Spec.Resources.Requests.Storage() and reqSpec.Node are not equal!")
+				return false
+			}
+		}
+
+		// with Elasticsearch CRD
+		if !cmp.Equal(*dbSpec.Storage.Resources.Requests.Storage(), *reqSpec.Node) {
+			log.Error("db.Spec.Storage.Resources.Requests.Storage() and reqSpec.Node are not equal!")
+			return false
+		}
+	}
+
+	if reqSpec.Topology != nil && dbSpec.Topology != nil {
+		if reqSpec.Topology.Master != nil {
+			// Get StatefulSet
+			sts, err := to.KubeClient().AppsV1().StatefulSets(db.Namespace).Get(context.TODO(), db.MasterStatefulSetName(), metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
+			// with StatefulSet
+			if !cmp.Equal(*sts.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage(), *reqSpec.Topology.Master) {
+				log.Error("VolumeClaimTemplates[0].Spec.Resources.Requests.Storage() and reqSpec.Topology.Master are not equal!")
+				return false
+			}
+
+			// with PVCs
+			pvcNames := GetPVCNamesForStatefulSet(sts)
+			for _, pvcName := range pvcNames {
+				pvc, err := to.KubeClient().CoreV1().PersistentVolumeClaims(to.db.Namespace).Get(context.TODO(), pvcName, metav1.GetOptions{})
+				Expect(err).NotTo(HaveOccurred())
+				if !cmp.Equal(*pvc.Spec.Resources.Requests.Storage(), *reqSpec.Topology.Master) {
+					log.Error("pvc.Spec.Resources.Requests.Storage() and reqSpec.Topology.Master are not equal!")
+					return false
+				}
+			}
+
+			// with Elasticsearch CRD
+			if !cmp.Equal(*dbSpec.Topology.Master.Storage.Resources.Requests.Storage(), *reqSpec.Topology.Master) {
+				log.Error("db.Spec.Topology.Master.Storage.Resources.Requests.Storage() and reqSpec.Topology.Master are not equal!")
+				return false
+			}
+		}
+
+		if reqSpec.Topology.Data != nil {
+			// Get StatefulSet
+			sts, err := to.KubeClient().AppsV1().StatefulSets(db.Namespace).Get(context.TODO(), db.DataStatefulSetName(), metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
+			// with statefulSet
+			if !cmp.Equal(*sts.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage(), *reqSpec.Topology.Data) {
+				log.Error("VolumeClaimTemplates[0].Spec.Resources.Requests.Storage() and reqSpec.topology.data are not equal!")
+				return false
+			}
+
+			// with PVCs
+			pvcNames := GetPVCNamesForStatefulSet(sts)
+			for _, pvcName := range pvcNames {
+				pvc, err := to.KubeClient().CoreV1().PersistentVolumeClaims(to.db.Namespace).Get(context.TODO(), pvcName, metav1.GetOptions{})
+				Expect(err).NotTo(HaveOccurred())
+				if !cmp.Equal(*pvc.Spec.Resources.Requests.Storage(), *reqSpec.Topology.Data) {
+					log.Error("pvc.Spec.Resources.Requests.Storage() and reqSpec.Topology.Data are not equal!")
+					return false
+				}
+			}
+
+			// with Elasticsearch CRD
+			if !cmp.Equal(*dbSpec.Topology.Data.Storage.Resources.Requests.Storage(), *reqSpec.Topology.Data) {
+				log.Error("dbSpec.Topology.Data.Storage.Resources.Requests.Storage() and reqSpec.Topology.Data are not equal!")
+				return false
+			}
+		}
+
+		if reqSpec.Topology.Ingest != nil {
+			// Get StatefulSet
+			sts, err := to.KubeClient().AppsV1().StatefulSets(db.Namespace).Get(context.TODO(), db.IngestStatefulSetName(), metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
+			// with statefulSet
+			if !cmp.Equal(*sts.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage(), *reqSpec.Topology.Ingest) {
+				log.Error("sts.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage() and reqSpec.topology.ingest are not equal!")
+				return false
+			}
+
+			// with PVCs
+			pvcNames := GetPVCNamesForStatefulSet(sts)
+			for _, pvcName := range pvcNames {
+				pvc, err := to.KubeClient().CoreV1().PersistentVolumeClaims(to.db.Namespace).Get(context.TODO(), pvcName, metav1.GetOptions{})
+				Expect(err).NotTo(HaveOccurred())
+				if !cmp.Equal(*pvc.Spec.Resources.Requests.Storage(), *reqSpec.Topology.Ingest) {
+					log.Error("pvc.Spec.Resources.Requests.Storage() and reqSpec.Topology.Ingest are not equal!")
+					return false
+				}
+			}
+
+			// with Elasticsearch CRD
+			if !cmp.Equal(*dbSpec.Topology.Ingest.Storage.Resources.Requests.Storage(), *reqSpec.Topology.Ingest) {
+				log.Error("reqSpec.Topology.Ingest and dbSpec.Topology.Ingest.Resources are not equal!")
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
 func (to *testOptions) transformElasticsearch(db *api.Elasticsearch, transform func(in *api.Elasticsearch) *api.Elasticsearch) *api.Elasticsearch {
 	return transform(db)
 }
@@ -326,4 +456,13 @@ func GetElasticsearchContainer(sts *apps.StatefulSet, containerName string) core
 	}
 
 	return core.Container{}
+}
+
+func GetPVCNamesForStatefulSet(sts *apps.StatefulSet) []string {
+	replicas := *sts.Spec.Replicas
+	var names []string
+	for idx := int32(0); idx < replicas; idx++ {
+		names = append(names, fmt.Sprintf("%s-%s-%d", api.DefaultVolumeClaimTemplateName, sts.Name, idx))
+	}
+	return names
 }
