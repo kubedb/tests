@@ -84,6 +84,7 @@ var _ = Describe("MySQL", func() {
 						Namespace: fi.Namespace(),
 					}
 					issuer, err := fi.InsureIssuer(myMeta, api.ResourceKindMySQL)
+					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL standalone and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
 						in.Name = myMeta.Name
@@ -161,6 +162,7 @@ var _ = Describe("MySQL", func() {
 						Namespace: fi.Namespace(),
 					}
 					issuer, err := fi.InsureIssuer(myMeta, api.ResourceKindMySQL)
+					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL standalone and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
 						in.Name = myMeta.Name

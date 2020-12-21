@@ -317,6 +317,7 @@ var _ = Describe("MySQL", func() {
 							},
 						}
 					})
+					Expect(err).NotTo(HaveOccurred())
 					fi.EventuallyDBReady(my, dbInfo)
 
 					By("Checking mysql custom configuration have been reconfigured")
