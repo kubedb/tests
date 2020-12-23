@@ -83,7 +83,7 @@ var _ = Describe("General SSL", func() {
 			Skip(to.skipMessage)
 		}
 		// Create MongoDB
-		to.createAndWaitForRunning(true)
+		to.createAndWaitForReady(true)
 
 		By("Checking SSL settings (if enabled any)")
 		to.EventuallyUserSSLSettings(to.mongodb.ObjectMeta, to.clusterAuthMode, to.sslMode).Should(BeTrue())
@@ -116,7 +116,7 @@ var _ = Describe("General SSL", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Wait for Running mongodb")
-		to.EventuallyMongoDBRunning(to.mongodb.ObjectMeta).Should(BeTrue())
+		to.EventuallyMongoDBReady(to.mongodb.ObjectMeta).Should(BeTrue())
 
 		By("Ping mongodb database")
 		to.EventuallyPingMongo(to.mongodb.ObjectMeta)
@@ -138,7 +138,7 @@ var _ = Describe("General SSL", func() {
 
 	var shouldInitializeFromScript = func() {
 		// Create and wait for running MongoDB
-		to.createAndWaitForRunning(true)
+		to.createAndWaitForReady(true)
 
 		By("Checking SSL settings (if enabled any)")
 		to.EventuallyUserSSLSettings(to.mongodb.ObjectMeta, to.clusterAuthMode, to.sslMode).Should(BeTrue())

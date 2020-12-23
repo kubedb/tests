@@ -19,9 +19,11 @@ package framework
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
+	"kubedb.dev/apimachinery/apis/autoscaling/v1alpha1"
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 
 	"github.com/appscode/go/log"
@@ -34,6 +36,8 @@ import (
 	"gomodules.xyz/x/arrays"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "kmodules.xyz/client-go/api/v1"
+	"kmodules.xyz/client-go/tools/exec"
 	"kmodules.xyz/client-go/tools/portforward"
 )
 
@@ -732,4 +736,127 @@ func (f *Framework) MovePrimary(meta metav1.ObjectMeta, dbName string) error {
 	}
 
 	return nil
+}
+
+func (f *Framework) getDiskSize(db *api.MongoDB, storage *v1alpha1.MongoDBStorageAutoscalerSpec) (float64, error) {
+	var (
+		podName string
+		pod     *core.Pod
+		err     error
+	)
+
+	if storage.ReplicaSet != nil || storage.Standalone != nil {
+		podName = fmt.Sprintf("%v-0", db.OffshootName())
+	} else if storage.Shard != nil {
+		podName = fmt.Sprintf("%v-0", db.ShardNodeName(0))
+	} else {
+		podName = fmt.Sprintf("%v-0", db.ConfigSvrNodeName())
+	}
+
+	pod, err = f.kubeClient.CoreV1().Pods(f.namespace).Get(context.TODO(), podName, metav1.GetOptions{})
+	if err != nil {
+		return -1, err
+	}
+	command := []string{"df", "/data/db", "--output=size"}
+	res, err := exec.ExecIntoPod(f.restConfig, pod, exec.Command(command...))
+	if err != nil {
+		return -1, err
+	}
+
+	s := strings.Split(res, "\n")
+	if len(s) >= 2 {
+		return strconv.ParseFloat(strings.Trim(s[1], " "), 64)
+	} else {
+		return -1, errors.New("bad df output")
+	}
+}
+
+func (f *Framework) FillDisk(db *api.MongoDB, storage *v1alpha1.MongoDBStorageAutoscalerSpec) error {
+	var (
+		podName string
+		pod     *core.Pod
+		err     error
+	)
+
+	if storage.ReplicaSet != nil || storage.Standalone != nil {
+		podName = fmt.Sprintf("%v-0", db.OffshootName())
+	} else if storage.Shard != nil {
+		podName = fmt.Sprintf("%v-0", db.ShardNodeName(0))
+	} else {
+		podName = fmt.Sprintf("%v-0", db.ConfigSvrNodeName())
+	}
+
+	pod, err = f.kubeClient.CoreV1().Pods(f.namespace).Get(context.TODO(), podName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	command := []string{"dd", "if=/dev/zero", "of=/data/db/file.txt", "count=1024", "bs=548576"}
+
+	exec.ExecIntoPod(f.restConfig, pod, exec.Command(command...))
+
+	return nil
+}
+
+func (f *Framework) EventuallyVolumeExpanded(db *api.MongoDB, storage *v1alpha1.MongoDBStorageAutoscalerSpec) GomegaAsyncAssertion {
+	return Eventually(
+		func() (bool, error) {
+			size, err := f.getDiskSize(db, storage)
+			if err != nil {
+				return false, err
+			}
+			if size > 1048576 { //1GB
+				return true, nil
+			}
+			return false, nil
+		},
+		time.Minute*10,
+		time.Second*5,
+	)
+}
+
+func (f *Framework) getCurrentCPU(prevDB *api.MongoDB, compute *v1alpha1.MongoDBComputeAutoscalerSpec) (bool, error) {
+	db, err := f.dbClient.KubedbV1alpha2().MongoDBs(prevDB.Namespace).Get(context.TODO(), prevDB.Name, metav1.GetOptions{})
+	if err != nil {
+		return false, err
+	}
+	if compute.ReplicaSet != nil || compute.Standalone != nil {
+		return db.Spec.PodTemplate.Spec.Resources.Requests.Cpu().MilliValue() > prevDB.Spec.PodTemplate.Spec.Resources.Requests.Cpu().MilliValue(), nil
+	} else if compute.Shard != nil {
+		return db.Spec.ShardTopology.Shard.PodTemplate.Spec.Resources.Requests.Cpu().MilliValue() > prevDB.Spec.ShardTopology.Shard.PodTemplate.Spec.Resources.Requests.Cpu().MilliValue(), nil
+	} else if compute.ConfigServer != nil {
+		return db.Spec.ShardTopology.ConfigServer.PodTemplate.Spec.Resources.Requests.Cpu().MilliValue() > prevDB.Spec.ShardTopology.ConfigServer.PodTemplate.Spec.Resources.Requests.Cpu().MilliValue(), nil
+	} else {
+		return db.Spec.ShardTopology.Mongos.PodTemplate.Spec.Resources.Requests.Cpu().MilliValue() > prevDB.Spec.ShardTopology.Mongos.PodTemplate.Spec.Resources.Requests.Cpu().MilliValue(), nil
+	}
+}
+
+func (f *Framework) EventuallyVerticallyScaled(meta metav1.ObjectMeta, compute *v1alpha1.MongoDBComputeAutoscalerSpec) GomegaAsyncAssertion {
+	db, err := f.dbClient.KubedbV1alpha2().MongoDBs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+	Expect(err).NotTo(HaveOccurred())
+
+	return Eventually(
+		func() (bool, error) {
+			return f.getCurrentCPU(db, compute)
+		},
+		time.Minute*30,
+		time.Second*5,
+	)
+}
+
+func (f *Framework) EventuallyDatabaseResumed(db *api.MongoDB) GomegaAsyncAssertion {
+	return Eventually(
+		func() (bool, error) {
+			db, err := f.dbClient.KubedbV1alpha2().MongoDBs(db.Namespace).Get(context.TODO(), db.Name, metav1.GetOptions{})
+			if err != nil {
+				return false, err
+			}
+
+			if v1.IsConditionTrue(db.Status.Conditions, api.DatabasePaused) {
+				return false, nil
+			}
+			return true, nil
+		},
+		time.Minute*5,
+		time.Second*5,
+	)
 }

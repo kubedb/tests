@@ -100,7 +100,7 @@ var _ = Describe("General MongoDB", func() {
 				Skip(to.skipMessage)
 			}
 			// Create MongoDB
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 
 			if to.enableSharding {
 				By("Enable sharding for db:" + dbName)
@@ -135,7 +135,7 @@ var _ = Describe("General MongoDB", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			By("Wait for Running mongodb")
-			to.EventuallyMongoDBRunning(to.mongodb.ObjectMeta).Should(BeTrue())
+			to.EventuallyMongoDBReady(to.mongodb.ObjectMeta).Should(BeTrue())
 
 			By("Ping mongodb database")
 			to.EventuallyPingMongo(to.mongodb.ObjectMeta)
@@ -187,7 +187,7 @@ var _ = Describe("General MongoDB", func() {
 			to.mongodb = to.MongoDBRS()
 			to.mongodb.Spec.Replicas = types.Int32P(3)
 			// Create MongoDB
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 			//Evict a MongoDB pod
 			By("Try to evict pods")
 			err = to.EvictPodsFromStatefulSet(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN())
@@ -202,7 +202,7 @@ var _ = Describe("General MongoDB", func() {
 			to.mongodb.Spec.ShardTopology.Mongos.Replicas = int32(3)
 			to.mongodb.Spec.ShardTopology.Shard.Replicas = int32(3)
 			// Create MongoDB
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 			//Evict a MongoDB pod from each sts
 			By("Try to evict pods from each statefulset")
 			err := to.EvictPodsFromStatefulSet(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN())
@@ -228,7 +228,7 @@ var _ = Describe("General MongoDB", func() {
 					ServiceAccountName: "my-custom-sa",
 				},
 			}
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 			if to.mongodb == nil {
 				Skip("Skipping")
 			}
@@ -258,7 +258,7 @@ var _ = Describe("General MongoDB", func() {
 			to.EventuallyMongoDB(to.mongodb.ObjectMeta).Should(BeFalse())
 
 			By("Resume DB")
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 		})
 
 		It("should start and resume with shard successfully", func() {
@@ -285,7 +285,7 @@ var _ = Describe("General MongoDB", func() {
 				},
 			}
 
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 			if to.mongodb == nil {
 				Skip("Skipping")
 			}
@@ -315,7 +315,7 @@ var _ = Describe("General MongoDB", func() {
 			to.EventuallyMongoDB(to.mongodb.ObjectMeta).Should(BeFalse())
 
 			By("Resume DB")
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 		})
 	})
 })

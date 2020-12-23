@@ -220,6 +220,7 @@ var _ = Describe("Horizontal Scaling", func() {
 	Context("Scale Up Shard, Shard Replicas, ConfigServer and Mongos", func() {
 		BeforeEach(func() {
 			to.mongodb = to.MongoDBShard()
+			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 			shard := dbaapi.MongoDBShardNode{
 				Shards:   3,
 				Replicas: 4,
@@ -241,6 +242,7 @@ var _ = Describe("Horizontal Scaling", func() {
 	Context("Scale Down Shard, Shard Replicas, ConfigServer and Mongos", func() {
 		BeforeEach(func() {
 			to.mongodb = to.MongoDBShard()
+			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 			to.mongodb.Spec.ShardTopology.Shard.Shards = 3
 			to.mongodb.Spec.ShardTopology.Shard.Replicas = 3
 			to.mongodb.Spec.ShardTopology.Mongos.Replicas = 3

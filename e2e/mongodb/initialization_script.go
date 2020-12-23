@@ -118,7 +118,7 @@ var _ = Describe("Initialize With Script", func() {
 
 	It("should run successfully", func() {
 		// Create MongoDB
-		to.createAndWaitForRunning()
+		to.createAndWaitForReady()
 
 		By("Checking Inserted Document")
 		to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 1).Should(BeTrue())
@@ -142,7 +142,7 @@ var _ = Describe("Initialize With Script", func() {
 		})
 		It("should Initialize successfully", func() {
 			// Create MongoDB
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 
 			By("Checking Inserted Document")
 			to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 1).Should(BeTrue())
@@ -166,7 +166,7 @@ var _ = Describe("Initialize With Script", func() {
 		})
 		It("should Initialize successfully", func() {
 			// Create MongoDB
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 
 			By("Checking Inserted Document")
 			to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 1).Should(BeTrue())

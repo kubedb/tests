@@ -100,7 +100,7 @@ var _ = Describe("MongoDB Initialization", func() {
 					f.RestoreDatabase(dstAppBinding, repo)
 
 					By("Verify that database is healthy after restore")
-					f.EventuallyMongoDBRunning(dstMongo.ObjectMeta).Should(BeTrue())
+					f.EventuallyMongoDBReady(dstMongo.ObjectMeta).Should(BeTrue())
 
 					// Verify restored data
 					By("Verifying that the data has been restored from backup")
@@ -146,7 +146,7 @@ var _ = Describe("MongoDB Initialization", func() {
 					f.RestoreDatabase(customAppBinding, repo)
 
 					By("Verify that database is healthy after restore")
-					f.EventuallyMongoDBRunning(dstMongo.ObjectMeta).Should(BeTrue())
+					f.EventuallyMongoDBReady(dstMongo.ObjectMeta).Should(BeTrue())
 
 					// Verify restored data
 					By("Verifying that the data has been restored from backup")
@@ -192,7 +192,7 @@ var _ = Describe("MongoDB Initialization", func() {
 					f.RestoreDatabase(customAppBinding, repo)
 
 					By("Verify that database is healthy after restore")
-					f.EventuallyMongoDBRunning(dstMongo.ObjectMeta).Should(BeTrue())
+					f.EventuallyMongoDBReady(dstMongo.ObjectMeta).Should(BeTrue())
 
 					// Verify restored data
 					By("Verifying that the data has been restored from backup")
@@ -236,7 +236,7 @@ var _ = Describe("MongoDB Initialization", func() {
 					f.RestoreDatabase(dstAppBinding, repo)
 
 					By("Verify that database is healthy after restore")
-					f.EventuallyMongoDBRunning(dstMongo.ObjectMeta).Should(BeTrue())
+					f.EventuallyMongoDBReady(dstMongo.ObjectMeta).Should(BeTrue())
 
 					// Verify restored data
 					By("Verifying that the data has been restored from backup")
@@ -279,7 +279,7 @@ var _ = Describe("MongoDB Initialization", func() {
 					f.RestoreDatabase(dstAppBinding, repo)
 
 					By("Verify that database is healthy after restore")
-					f.EventuallyMongoDBRunning(dstMongo.ObjectMeta).Should(BeTrue())
+					f.EventuallyMongoDBReady(dstMongo.ObjectMeta).Should(BeTrue())
 
 					// Verify restored data
 					By("Verifying that the data has been restored from backup")
@@ -327,7 +327,7 @@ var _ = Describe("MongoDB Initialization", func() {
 					f.RestoreDatabase(customAppBinding, repo)
 
 					By("Verify that database is healthy after restore")
-					f.EventuallyMongoDBRunning(dstMongo.ObjectMeta).Should(BeTrue())
+					f.EventuallyMongoDBReady(dstMongo.ObjectMeta).Should(BeTrue())
 
 					// Verify restored data
 					By("Verifying that the data has been restored from backup")
@@ -371,7 +371,7 @@ var _ = Describe("MongoDB Initialization", func() {
 					f.RestoreDatabase(dstAppBinding, repo)
 
 					By("Verify that database is healthy after restore")
-					f.EventuallyMongoDBRunning(dstMongo.ObjectMeta).Should(BeTrue())
+					f.EventuallyMongoDBReady(dstMongo.ObjectMeta).Should(BeTrue())
 
 					// Verify restored data
 					By("Verifying that the data has been restored from backup")
@@ -419,7 +419,7 @@ var _ = Describe("MongoDB Initialization", func() {
 					f.RestoreDatabase(customAppBinding, repo)
 
 					By("Verify that database is healthy after restore")
-					f.EventuallyMongoDBRunning(dstMongo.ObjectMeta).Should(BeTrue())
+					f.EventuallyMongoDBReady(dstMongo.ObjectMeta).Should(BeTrue())
 
 					// Verify restored data
 					By("Verifying that the data has been restored from backup")
@@ -462,7 +462,7 @@ var _ = Describe("MongoDB Initialization", func() {
 					f.RestoreDatabase(dstAppBinding, repo)
 
 					By("Verify that database is healthy after restore")
-					f.EventuallyMongoDBRunning(dstMongo.ObjectMeta).Should(BeTrue())
+					f.EventuallyMongoDBReady(dstMongo.ObjectMeta).Should(BeTrue())
 
 					// Verify restored data
 					By("Verifying that the data has been restored from backup")

@@ -100,7 +100,7 @@ var _ = Describe("Resume", func() {
 	Context("Super Fast User - Create-Delete-Create-Delete-Create ", func() {
 		It("should resume DormantDatabase successfully", func() {
 			// Create and wait for running MongoDB
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 
 			By("Insert Document Inside DB")
 			to.EventuallyInsertDocument(to.mongodb.ObjectMeta, dbName, 1).Should(BeTrue())
@@ -134,7 +134,7 @@ var _ = Describe("Resume", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			By("Wait for Running mongodb")
-			to.EventuallyMongoDBRunning(to.mongodb.ObjectMeta).Should(BeTrue())
+			to.EventuallyMongoDBReady(to.mongodb.ObjectMeta).Should(BeTrue())
 
 			By("Ping mongodb database")
 			to.EventuallyPingMongo(to.mongodb.ObjectMeta)
@@ -151,7 +151,7 @@ var _ = Describe("Resume", func() {
 
 		var shouldResumeWithoutInit = func() {
 			// Create and wait for running MongoDB
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 
 			By("Insert Document Inside DB")
 			to.EventuallyInsertDocument(to.mongodb.ObjectMeta, dbName, 1).Should(BeTrue())
@@ -172,7 +172,7 @@ var _ = Describe("Resume", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			By("Wait for Running mongodb")
-			to.EventuallyMongoDBRunning(to.mongodb.ObjectMeta).Should(BeTrue())
+			to.EventuallyMongoDBReady(to.mongodb.ObjectMeta).Should(BeTrue())
 
 			By("Ping mongodb database")
 			to.EventuallyPingMongo(to.mongodb.ObjectMeta)
@@ -232,7 +232,7 @@ var _ = Describe("Resume", func() {
 
 		var shouldResumeWithInit = func() {
 			// Create and wait for running MongoDB
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 
 			By("Checking Inserted Document")
 			to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 1).Should(BeTrue())
@@ -250,7 +250,7 @@ var _ = Describe("Resume", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			By("Wait for Running mongodb")
-			to.EventuallyMongoDBRunning(to.mongodb.ObjectMeta).Should(BeTrue())
+			to.EventuallyMongoDBReady(to.mongodb.ObjectMeta).Should(BeTrue())
 
 			By("Ping mongodb database")
 			to.EventuallyPingMongo(to.mongodb.ObjectMeta)
@@ -338,7 +338,7 @@ var _ = Describe("Resume", func() {
 
 		var shouldResumeMultipleTimes = func() {
 			// Create and wait for running MongoDB
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 
 			By("Checking Inserted Document")
 			to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 1).Should(BeTrue())
@@ -358,7 +358,7 @@ var _ = Describe("Resume", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				By("Wait for Running mongodb")
-				to.EventuallyMongoDBRunning(to.mongodb.ObjectMeta).Should(BeTrue())
+				to.EventuallyMongoDBReady(to.mongodb.ObjectMeta).Should(BeTrue())
 
 				_, err := to.GetMongoDB(to.mongodb.ObjectMeta)
 				Expect(err).NotTo(HaveOccurred())

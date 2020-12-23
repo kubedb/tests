@@ -166,6 +166,7 @@ var _ = Describe("Reconfigure", func() {
 		Context("With Replica Set", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBRS()
+				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				to.mongodb.Spec.ConfigSecret = configSecret
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, nil, newCustomConfig, nil, nil, nil)
@@ -176,6 +177,7 @@ var _ = Describe("Reconfigure", func() {
 			})
 		})
 
+		// TODO: check with percona
 		Context("With Sharding", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBShard()
