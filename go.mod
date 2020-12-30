@@ -22,6 +22,7 @@ require (
 	gocloud.dev v0.20.0
 	gomodules.xyz/blobfs v0.1.4
 	gomodules.xyz/cert v1.1.2
+	gomodules.xyz/pointer v0.0.0-20201105071923-daf60fa55209
 	gopkg.in/olivere/elastic.v5 v5.0.86
 	gopkg.in/olivere/elastic.v6 v6.2.35
 	gopkg.in/yaml.v2 v2.3.0
@@ -31,7 +32,7 @@ require (
 	k8s.io/client-go v0.19.0
 	k8s.io/kube-aggregator v0.19.0
 	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
-	kmodules.xyz/client-go v0.0.0-20201229202653-b029d8e7bcbb
+	kmodules.xyz/client-go v0.0.0-20201229141519-8f62b8456302
 	kmodules.xyz/constants v0.0.0-20200923054614-6b87dbbae4d6
 	kmodules.xyz/custom-resources v0.0.0-20201124062543-bd8d35c21b0c
 	kmodules.xyz/monitoring-agent-api v0.0.0-20201105074044-be7a1044891a
