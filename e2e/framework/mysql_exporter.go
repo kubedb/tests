@@ -28,7 +28,6 @@ import (
 	promClient "github.com/prometheus/client_model/go"
 	"github.com/prometheus/prom2json"
 	core "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	kutil "kmodules.xyz/client-go"
 	mona "kmodules.xyz/monitoring-agent-api/api/v1"
@@ -56,8 +55,8 @@ func (f *Framework) AddMySQLMonitor(obj *api.MySQL) {
 //VerifyMySQLExporter uses metrics from given URL
 //and check against known key and value
 //to verify the connection is functioning as intended
-func (f *Framework) VerifyMySQLExporter(meta metav1.ObjectMeta, version string) error {
-	tunnel, err := f.ForwardToPort(meta, fmt.Sprintf("%v-0", meta.Name), aws.Int(mona.PrometheusExporterPortNumber))
+func (f *Framework) VerifyMySQLExporter(my *api.MySQL) error {
+	tunnel, err := f.ForwardToPort(my.ObjectMeta, string(core.ResourceServices), my.StatsService().ServiceName(), aws.Int(mona.PrometheusExporterPortNumber))
 	if err != nil {
 		log.Infoln(err)
 		return err
@@ -77,7 +76,7 @@ func (f *Framework) VerifyMySQLExporter(meta metav1.ObjectMeta, version string) 
 		var count = 0
 		for mf := range mfChan {
 			if mf.Metric != nil && mf.Metric[0].Gauge != nil && mf.Metric[0].Gauge.Value != nil {
-				if *mf.Name == mysqlVersionMetric && strings.Contains(version, *mf.Metric[0].Label[0].Value) {
+				if *mf.Name == mysqlVersionMetric && strings.Contains(my.Spec.Version, *mf.Metric[0].Label[0].Value) {
 					count++
 				} else if *mf.Name == mysqlUpMetric && int(*mf.Metric[0].Gauge.Value) > 0 {
 					count++

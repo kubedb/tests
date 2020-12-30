@@ -37,6 +37,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	promClient "github.com/prometheus/client_model/go"
 	"github.com/prometheus/prom2json"
+	"gomodules.xyz/pointer"
 	core "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
@@ -124,21 +125,21 @@ func (f *Framework) VerifyShardExporters(meta metav1.ObjectMeta) error {
 	}
 	// for config server
 	newMeta.Name = mongoDB.ConfigSvrNodeName()
-	err = f.VerifyExporter(newMeta)
+	err = f.VerifyMongoDBExporter(newMeta)
 	if err != nil {
 		log.Infoln(err)
 		return err
 	}
 	// for shards
 	newMeta.Name = mongoDB.ShardNodeName(int32(0))
-	err = f.VerifyExporter(newMeta)
+	err = f.VerifyMongoDBExporter(newMeta)
 	if err != nil {
 		log.Infoln(err)
 		return err
 	}
 	// for mongos
 	newMeta.Name = mongoDB.MongosNodeName()
-	err = f.VerifyExporter(newMeta)
+	err = f.VerifyMongoDBExporter(newMeta)
 	if err != nil {
 		log.Infoln(err)
 		return err
@@ -148,29 +149,8 @@ func (f *Framework) VerifyShardExporters(meta metav1.ObjectMeta) error {
 }
 
 func (f *Framework) VerifyInMemory(meta metav1.ObjectMeta) error {
-	mongoDB, err := f.dbClient.KubedbV1alpha2().MongoDBs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
-	if err != nil {
-		log.Infoln(err)
-		return err
-	}
-
-	if mongoDB.Spec.ShardTopology == nil {
-		podName := fmt.Sprintf("%s-0", mongoDB.OffshootName())
-		storageEngine, err := f.getStorageEngine(mongoDB.ObjectMeta, podName)
-		if err != nil {
-			log.Infoln(err)
-			return err
-		}
-
-		if storageEngine != string(api.StorageEngineInMemory) {
-			return fmt.Errorf("storageEngine is not inMemory")
-		}
-
-		return nil
-	}
-	// for shards
-	podName := fmt.Sprintf("%s-0", mongoDB.ShardNodeName(int32(0)))
-	storageEngine, err := f.getStorageEngine(mongoDB.ObjectMeta, podName)
+	svcName := f.GetPrimaryService(meta)
+	storageEngine, err := f.getStorageEngine(meta, string(core.ResourceServices), svcName)
 	if err != nil {
 		log.Infoln(err)
 		return err
@@ -183,11 +163,11 @@ func (f *Framework) VerifyInMemory(meta metav1.ObjectMeta) error {
 	return nil
 }
 
-//VerifyExporter uses metrics from given URL
+//VerifyMongoDBExporter uses metrics from given URL
 //and check against known key and value
 //to verify the connection is functioning as intended
-func (f *Framework) VerifyExporter(meta metav1.ObjectMeta) error {
-	tunnel, err := f.ForwardToPort(meta, fmt.Sprintf("%v-0", meta.Name), aws.Int(mona.PrometheusExporterPortNumber))
+func (f *Framework) VerifyMongoDBExporter(meta metav1.ObjectMeta) error {
+	tunnel, err := f.ForwardToPort(meta, string(core.ResourcePods), fmt.Sprintf("%v-0", meta.Name), aws.Int(mona.PrometheusExporterPortNumber))
 	if err != nil {
 		log.Infoln(err)
 		return err
@@ -228,18 +208,18 @@ func makeTransport() *http.Transport {
 	}
 }
 
-func (f *Framework) ForwardToPort(meta metav1.ObjectMeta, clientPodName string, port *int) (*portforward.Tunnel, error) {
-	var defaultPort = mona.PrometheusExporterPortNumber
-	if port != nil {
-		defaultPort = *port
+func (f *Framework) ForwardToPort(meta metav1.ObjectMeta, resource, name string, port *int) (*portforward.Tunnel, error) {
+	if port == nil {
+		port = pointer.IntP(mona.PrometheusExporterPortNumber)
 	}
 
 	tunnel := portforward.NewTunnel(
 		f.kubeClient.CoreV1().RESTClient(),
 		f.restConfig,
+		resource,
 		meta.Namespace,
-		clientPodName,
-		defaultPort,
+		name,
+		*port,
 	)
 	if err := tunnel.ForwardPort(); err != nil {
 		return nil, err
