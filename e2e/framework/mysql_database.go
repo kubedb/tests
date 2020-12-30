@@ -70,13 +70,14 @@ func (f *Framework) forwardPort(meta metav1.ObjectMeta, stsOrdinal, clientPodInd
 	}
 
 	tunnel := portforward.NewTunnel(
-		f.kubeClient.CoreV1().RESTClient(),
-		f.restConfig,
-		string(core.ResourcePods),
-		meta.Namespace,
-		clientPodName,
-		3306,
-	)
+		portforward.TunnelOptions{
+			Client:    f.kubeClient.CoreV1().RESTClient(),
+			Config:    f.restConfig,
+			Resource:  string(core.ResourcePods),
+			Namespace: meta.Namespace,
+			Name:      clientPodName,
+			Remote:    3306,
+		})
 
 	if err := tunnel.ForwardPort(); err != nil {
 		return nil, err

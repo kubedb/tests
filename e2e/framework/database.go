@@ -45,14 +45,14 @@ type KubedbTable struct {
 }
 
 func (f *Framework) ForwardPort(meta metav1.ObjectMeta, resource, name string, remotePort int) (*portforward.Tunnel, error) {
-	tunnel := portforward.NewTunnel(
-		f.kubeClient.CoreV1().RESTClient(),
-		f.restConfig,
-		resource,
-		meta.Namespace,
-		name,
-		remotePort,
-	)
+	tunnel := portforward.NewTunnel(portforward.TunnelOptions{
+		Client:    f.kubeClient.CoreV1().RESTClient(),
+		Config:    f.restConfig,
+		Resource:  resource,
+		Namespace: meta.Namespace,
+		Name:      name,
+		Remote:    remotePort,
+	})
 
 	if err := tunnel.ForwardPort(); err != nil {
 		return nil, err

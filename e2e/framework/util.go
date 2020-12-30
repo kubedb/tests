@@ -214,13 +214,14 @@ func (f *Framework) ForwardToPort(meta metav1.ObjectMeta, resource, name string,
 	}
 
 	tunnel := portforward.NewTunnel(
-		f.kubeClient.CoreV1().RESTClient(),
-		f.restConfig,
-		resource,
-		meta.Namespace,
-		name,
-		*port,
-	)
+		portforward.TunnelOptions{
+			Client:    f.kubeClient.CoreV1().RESTClient(),
+			Config:    f.restConfig,
+			Resource:  resource,
+			Namespace: meta.Namespace,
+			Name:      name,
+			Remote:    *port,
+		})
 	if err := tunnel.ForwardPort(); err != nil {
 		return nil, err
 	}
