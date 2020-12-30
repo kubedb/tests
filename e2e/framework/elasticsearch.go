@@ -425,7 +425,7 @@ func (f *Framework) GetElasticClient(meta metav1.ObjectMeta) (es.ESClient, *port
 	}
 	ingestPodName := f.GetElasticsearchIngestPodName(db)
 
-	tunnel, err := f.ForwardPort(meta, ingestPodName, api.ElasticsearchRestPort)
+	tunnel, err := f.ForwardPort(meta, string(core.ResourcePods), ingestPodName, api.ElasticsearchRestPort)
 	if err != nil {
 		return nil, nil, err
 	}

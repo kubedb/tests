@@ -29,6 +29,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	sql_driver "github.com/go-sql-driver/mysql"
 	. "github.com/onsi/gomega"
+	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kmodules.xyz/client-go/tools/portforward"
 	"xorm.io/xorm"
@@ -69,12 +70,14 @@ func (f *Framework) forwardPort(meta metav1.ObjectMeta, stsOrdinal, clientPodInd
 	}
 
 	tunnel := portforward.NewTunnel(
-		f.kubeClient.CoreV1().RESTClient(),
-		f.restConfig,
-		meta.Namespace,
-		clientPodName,
-		3306,
-	)
+		portforward.TunnelOptions{
+			Client:    f.kubeClient.CoreV1().RESTClient(),
+			Config:    f.restConfig,
+			Resource:  string(core.ResourcePods),
+			Namespace: meta.Namespace,
+			Name:      clientPodName,
+			Remote:    3306,
+		})
 
 	if err := tunnel.ForwardPort(); err != nil {
 		return nil, err

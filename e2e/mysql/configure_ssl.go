@@ -114,7 +114,7 @@ var _ = Describe("MySQL TLS/SSL", func() {
 					fi.EventuallyDBReady(my, dbInfo)
 
 					By("Verify exporter")
-					err = fi.VerifyMySQLExporter(my.ObjectMeta, my.Spec.Version)
+					err = fi.VerifyMySQLExporter(my)
 					Expect(err).NotTo(HaveOccurred())
 					By("Done")
 				})
@@ -180,7 +180,7 @@ var _ = Describe("MySQL TLS/SSL", func() {
 					fi.EventuallyDBReady(my, dbInfo)
 
 					By("Verify exporter")
-					err = fi.VerifyMySQLExporter(my.ObjectMeta, my.Spec.Version)
+					err = fi.VerifyMySQLExporter(my)
 					Expect(err).NotTo(HaveOccurred())
 					By("Done")
 				})

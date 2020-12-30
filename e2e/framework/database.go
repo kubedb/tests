@@ -31,6 +31,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kmodules.xyz/client-go/tools/portforward"
 )
@@ -43,14 +44,15 @@ type KubedbTable struct {
 	Name string `xorm:"varchar(25) not null unique 'usr_name' comment('NickName')"`
 }
 
-func (f *Framework) ForwardPort(meta metav1.ObjectMeta, clientPodName string, remotePort int) (*portforward.Tunnel, error) {
-	tunnel := portforward.NewTunnel(
-		f.kubeClient.CoreV1().RESTClient(),
-		f.restConfig,
-		meta.Namespace,
-		clientPodName,
-		remotePort,
-	)
+func (f *Framework) ForwardPort(meta metav1.ObjectMeta, resource, name string, remotePort int) (*portforward.Tunnel, error) {
+	tunnel := portforward.NewTunnel(portforward.TunnelOptions{
+		Client:    f.kubeClient.CoreV1().RESTClient(),
+		Config:    f.restConfig,
+		Resource:  resource,
+		Namespace: meta.Namespace,
+		Name:      name,
+		Remote:    remotePort,
+	})
 
 	if err := tunnel.ForwardPort(); err != nil {
 		return nil, err
@@ -84,8 +86,8 @@ func (f *Framework) GetMongoDBClient(meta metav1.ObjectMeta, tunnel *portforward
 	return clientOpts, nil
 }
 
-func (f *Framework) ConnectAndPing(meta metav1.ObjectMeta, clientPodName string, isReplSet ...bool) (*mongo.Client, *portforward.Tunnel, error) {
-	tunnel, err := f.ForwardPort(meta, clientPodName, api.MongoDBDatabasePort)
+func (f *Framework) ConnectAndPing(meta metav1.ObjectMeta, resource, name string, isReplSet ...bool) (*mongo.Client, *portforward.Tunnel, error) {
+	tunnel, err := f.ForwardPort(meta, resource, name, api.MongoDBDatabasePort)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -126,7 +128,7 @@ func (f *Framework) GetReplicaMasterNode(meta metav1.ObjectMeta, nodeName string
 	}
 
 	fn := func(clientPodName string) (bool, error) {
-		client, tunnel, err := f.ConnectAndPing(meta, clientPodName, true)
+		client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourcePods), clientPodName, true)
 		if err != nil {
 			return false, err
 		}
@@ -173,16 +175,16 @@ func (f *Framework) GetPrimaryInstance(meta metav1.ObjectMeta) (string, error) {
 	return f.GetReplicaMasterNode(meta, mongodb.RepSetName(), mongodb.Spec.Replicas)
 }
 
+func (f *Framework) GetPrimaryService(meta metav1.ObjectMeta) string {
+	// MongoDB creates primary Service with the same name as the database.
+	return meta.Name
+}
+
 func (f *Framework) EventuallyPingMongo(meta metav1.ObjectMeta) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			podName, err := f.GetPrimaryInstance(meta)
-			if err != nil {
-				log.Errorln("GetPrimaryInstance error:", err)
-				return false
-			}
-
-			_, tunnel, err := f.ConnectAndPing(meta, podName)
+			svcName := f.GetPrimaryService(meta)
+			_, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName)
 			if err != nil {
 				log.Errorln("Failed to ConnectAndPing. Reason: ", err)
 				return false
@@ -198,13 +200,8 @@ func (f *Framework) EventuallyPingMongo(meta metav1.ObjectMeta) GomegaAsyncAsser
 func (f *Framework) EventuallyInsertDocument(meta metav1.ObjectMeta, dbName string, collectionCount int) GomegaAsyncAssertion {
 	return Eventually(
 		func() (bool, error) {
-			podName, err := f.GetPrimaryInstance(meta)
-			if err != nil {
-				log.Errorln("GetPrimaryInstance error:", err)
-				return false, err
-			}
-
-			client, tunnel, err := f.ConnectAndPing(meta, podName)
+			svcName := f.GetPrimaryService(meta)
+			client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName)
 			if err != nil {
 				log.Errorln("Failed to ConnectAndPing. Reason: ", err)
 				return false, err
@@ -245,13 +242,8 @@ func (f *Framework) EventuallyInsertDocument(meta metav1.ObjectMeta, dbName stri
 func (f *Framework) EventuallyDocumentExists(meta metav1.ObjectMeta, dbName string, collectionCount int) GomegaAsyncAssertion {
 	return Eventually(
 		func() (bool, error) {
-			podName, err := f.GetPrimaryInstance(meta)
-			if err != nil {
-				log.Errorln("GetPrimaryInstance error:", err)
-				return false, err
-			}
-
-			client, tunnel, err := f.ConnectAndPing(meta, podName)
+			svcName := f.GetPrimaryService(meta)
+			client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName)
 			if err != nil {
 				log.Errorln("Failed to ConnectAndPing. Reason: ", err)
 				return false, err
@@ -293,13 +285,8 @@ func (f *Framework) EventuallyDocumentExists(meta metav1.ObjectMeta, dbName stri
 func (f *Framework) EventuallyEnableSharding(meta metav1.ObjectMeta, dbName string) GomegaAsyncAssertion {
 	return Eventually(
 		func() (bool, error) {
-			podName, err := f.GetPrimaryInstance(meta)
-			if err != nil {
-				log.Errorln("GetPrimaryInstance error:", err)
-				return false, err
-			}
-
-			client, tunnel, err := f.ConnectAndPing(meta, podName, false)
+			svcName := f.GetPrimaryService(meta)
+			client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName, false)
 			if err != nil {
 				log.Errorln("Failed to ConnectAndPing. Reason: ", err)
 				return false, err
@@ -330,13 +317,8 @@ func (f *Framework) EventuallyEnableSharding(meta metav1.ObjectMeta, dbName stri
 func (f *Framework) EventuallyCollectionPartitioned(meta metav1.ObjectMeta, dbName string) GomegaAsyncAssertion {
 	return Eventually(
 		func() (bool, error) {
-			podName, err := f.GetPrimaryInstance(meta)
-			if err != nil {
-				log.Errorln("GetPrimaryInstance error:", err)
-				return false, err
-			}
-
-			client, tunnel, err := f.ConnectAndPing(meta, podName, false)
+			svcName := f.GetPrimaryService(meta)
+			client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName, false)
 			if err != nil {
 				log.Errorln("Failed to ConnectAndPing. Reason: ", err)
 				return false, err
@@ -366,8 +348,8 @@ func (f *Framework) EventuallyCollectionPartitioned(meta metav1.ObjectMeta, dbNa
 	)
 }
 
-func (f *Framework) getMaxIncomingConnections(meta metav1.ObjectMeta, podName string, isRepSet bool) (int32, error) {
-	client, tunnel, err := f.ConnectAndPing(meta, podName, isRepSet)
+func (f *Framework) getMaxIncomingConnections(meta metav1.ObjectMeta, resource, name string, isRepSet bool) (int32, error) {
+	client, tunnel, err := f.ConnectAndPing(meta, resource, name, isRepSet)
 	if err != nil {
 		return 0, fmt.Errorf("failed to ConnectAndPing. Reason: %v", err)
 	}
@@ -406,24 +388,21 @@ func (f *Framework) EventuallyMaxIncomingConnections(meta metav1.ObjectMeta) Gom
 				return 0, err
 			}
 			if mongodb.Spec.ShardTopology == nil {
-				podName, err := f.GetPrimaryInstance(meta)
-				if err != nil {
-					log.Errorln("GetPrimaryInstance error:", err)
-					return 0, err
-				}
-
-				val, err := f.getMaxIncomingConnections(meta, podName, IsRepSet(mongodb))
+				// Sharding isn't enabled. We can use the Service to verify incoming connection
+				svcName := f.GetPrimaryService(meta)
+				val, err := f.getMaxIncomingConnections(meta, string(core.ResourceServices), svcName, IsRepSet(mongodb))
 				return val, err
 			} else {
 				value := int32(-1)
-				// shard nodes
+				// Sharding is enabled. We have to verify the MaxIncomingConnections on each shards, mongos nodes,
+				// and config server nodes.
 				for i := int32(0); i < mongodb.Spec.ShardTopology.Shard.Shards; i++ {
 					nodeName := mongodb.ShardNodeName(i)
 					podName, err := f.GetReplicaMasterNode(meta, nodeName, &mongodb.Spec.ShardTopology.Shard.Replicas)
 					if err != nil {
 						return 0, err
 					}
-					val, err := f.getMaxIncomingConnections(meta, podName, true)
+					val, err := f.getMaxIncomingConnections(meta, string(core.ResourcePods), podName, true)
 					if err != nil {
 						return 0, err
 					}
@@ -439,7 +418,7 @@ func (f *Framework) EventuallyMaxIncomingConnections(meta metav1.ObjectMeta) Gom
 				if err != nil {
 					return 0, err
 				}
-				val, err := f.getMaxIncomingConnections(meta, podName, true)
+				val, err := f.getMaxIncomingConnections(meta, string(core.ResourcePods), podName, true)
 				if err != nil {
 					return 0, err
 				}
@@ -449,12 +428,12 @@ func (f *Framework) EventuallyMaxIncomingConnections(meta metav1.ObjectMeta) Gom
 				}
 				value = val
 
-				// config server nodes
+				// mongos nodes
 				podName, err = f.GetMongosPodName(meta)
 				if err != nil {
 					return 0, err
 				}
-				val, err = f.getMaxIncomingConnections(meta, podName, true)
+				val, err = f.getMaxIncomingConnections(meta, string(core.ResourcePods), podName, true)
 				if err != nil {
 					return 0, err
 				}
@@ -472,13 +451,8 @@ func (f *Framework) EventuallyMaxIncomingConnections(meta metav1.ObjectMeta) Gom
 }
 
 func (f *Framework) getClusterAuthModeFromDB(meta metav1.ObjectMeta) (string, error) {
-	podName, err := f.GetPrimaryInstance(meta)
-	if err != nil {
-		log.Errorln("GetPrimaryInstance error:", err)
-		return "", err
-	}
-
-	client, tunnel, err := f.ConnectAndPing(meta, podName, true)
+	svcName := f.GetPrimaryService(meta)
+	client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName, true)
 	if err != nil {
 		return "", fmt.Errorf("failed to ConnectAndPing. Reason: %v", err)
 	}
@@ -504,13 +478,9 @@ func (f *Framework) getClusterAuthModeFromDB(meta metav1.ObjectMeta) (string, er
 }
 
 func (f *Framework) getSSLModeFromDB(meta metav1.ObjectMeta) (string, error) {
-	podName, err := f.GetPrimaryInstance(meta)
-	if err != nil {
-		log.Errorln("GetPrimaryInstance error:", err)
-		return "", err
-	}
+	svcName := f.GetPrimaryService(meta)
 
-	client, tunnel, err := f.ConnectAndPing(meta, podName, true)
+	client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName, true)
 	if err != nil {
 		return "", fmt.Errorf("failed to ConnectAndPing. Reason: %v", err)
 	}
@@ -578,8 +548,8 @@ func (f *Framework) EventuallyUserSSLSettings(meta metav1.ObjectMeta, clusterAut
 	)
 }
 
-func (f *Framework) getStorageEngine(meta metav1.ObjectMeta, podName string) (string, error) {
-	client, tunnel, err := f.ConnectAndPing(meta, podName, true)
+func (f *Framework) getStorageEngine(meta metav1.ObjectMeta, resource, name string) (string, error) {
+	client, tunnel, err := f.ConnectAndPing(meta, resource, name, true)
 	if err != nil {
 		return "", fmt.Errorf("failed to ConnectAndPing. Reason: %v", err)
 	}
@@ -607,13 +577,8 @@ func (f *Framework) getStorageEngine(meta metav1.ObjectMeta, podName string) (st
 }
 
 func (f *Framework) MovePrimary(meta metav1.ObjectMeta, dbName string) error {
-	podName, err := f.GetPrimaryInstance(meta)
-	if err != nil {
-		log.Errorln("GetPrimaryInstance error:", err)
-		return err
-	}
-
-	client, tunnel, err := f.ConnectAndPing(meta, podName, true)
+	svcName := f.GetPrimaryService(meta)
+	client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName, true)
 	if err != nil {
 		return err
 	}

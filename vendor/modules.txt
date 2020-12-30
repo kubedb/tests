@@ -422,6 +422,7 @@ gomodules.xyz/jsonpatch/v2
 # gomodules.xyz/password-generator v0.2.6
 gomodules.xyz/password-generator
 # gomodules.xyz/pointer v0.0.0-20201105071923-daf60fa55209
+## explicit
 gomodules.xyz/pointer
 # gomodules.xyz/version v0.1.0
 gomodules.xyz/version
@@ -719,7 +720,7 @@ k8s.io/utils/buffer
 k8s.io/utils/integer
 k8s.io/utils/pointer
 k8s.io/utils/trace
-# kmodules.xyz/client-go v0.0.0-20201229202653-b029d8e7bcbb
+# kmodules.xyz/client-go v0.0.0-20201230092550-8ca15cfcbefa
 ## explicit
 kmodules.xyz/client-go
 kmodules.xyz/client-go/api/v1

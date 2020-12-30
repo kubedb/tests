@@ -100,7 +100,7 @@ var _ = Describe("Exporter", func() {
 			// Create MongoDB
 			to.createAndWaitForRunning()
 			By("Verify exporter")
-			err = to.VerifyExporter(to.mongodb.ObjectMeta)
+			err = to.VerifyMongoDBExporter(to.mongodb.ObjectMeta)
 			Expect(err).NotTo(HaveOccurred())
 			By("Done")
 		})
@@ -116,7 +116,7 @@ var _ = Describe("Exporter", func() {
 			// Create MongoDB
 			to.createAndWaitForRunning()
 			By("Verify exporter")
-			err = to.VerifyExporter(to.mongodb.ObjectMeta)
+			err = to.VerifyMongoDBExporter(to.mongodb.ObjectMeta)
 			Expect(err).NotTo(HaveOccurred())
 			By("Done")
 		})
