@@ -98,7 +98,7 @@ var _ = Describe("General Redis", func() {
 		to.EventuallyRedis(to.redis.ObjectMeta).Should(BeFalse())
 
 		By("Wait for redis resources to be wipedOut")
-		to.EventuallyWipedOut(to.redis.ObjectMeta, api.ResourceKindRedis).Should(Succeed())
+		to.EventuallyWipedOut(to.redis.ObjectMeta, api.Redis{}.ResourceFQN()).Should(Succeed())
 	})
 
 	var shouldBeSuccessfullyRunning = func() {

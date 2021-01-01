@@ -70,7 +70,7 @@ type testOptions struct {
 
 func (to *testOptions) addIssuerRef() {
 	//create cert-manager ca secret
-	issuer, err := to.InsureIssuer(to.mongodb.ObjectMeta, api.ResourceKindMongoDB)
+	issuer, err := to.InsureIssuer(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN())
 	Expect(err).NotTo(HaveOccurred())
 	to.mongodb.Spec.TLS = &kmapi.TLSConfig{
 		IssuerRef: &core.TypedLocalObjectReference{
@@ -178,7 +178,7 @@ func (to *testOptions) deleteTestResource() {
 	to.EventuallyMongoDB(to.mongodb.ObjectMeta).Should(BeFalse())
 
 	By("Wait for mongodb resources to be wipedOut")
-	to.EventuallyWipedOut(to.mongodb.ObjectMeta, api.ResourceKindMongoDB).Should(Succeed())
+	to.EventuallyWipedOut(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN()).Should(Succeed())
 }
 
 func (to *testOptions) runWithUserProvidedConfig(userConfig, newUserConfig *core.Secret) {

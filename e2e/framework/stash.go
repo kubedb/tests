@@ -197,8 +197,8 @@ func (i *Invocation) RestoreSession(dbMeta metav1.ObjectMeta, repo *stashV1alpha
 			Name:      dbMeta.Name + "-stash",
 			Namespace: i.namespace,
 			Labels: map[string]string{
-				"app":                 i.app,
-				api.LabelDatabaseKind: api.ResourceKindMongoDB,
+				"app":                  i.app,
+				meta_util.NameLabelKey: api.MongoDB{}.ResourceFQN(),
 			},
 		},
 		Spec: stashv1beta1.RestoreSessionSpec{

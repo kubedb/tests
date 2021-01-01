@@ -52,7 +52,7 @@ var _ = Describe("Horizontal Scaling", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Wait for mongodb resources to be wipedOut")
-		to.EventuallyWipedOut(to.mongodb.ObjectMeta, api.ResourceKindMongoDB).Should(Succeed())
+		to.EventuallyWipedOut(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN()).Should(Succeed())
 	})
 	Context("Scale Up Shard Replica", func() {
 		BeforeEach(func() {

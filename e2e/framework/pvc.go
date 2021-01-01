@@ -20,8 +20,6 @@ import (
 	"context"
 	"time"
 
-	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
-
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -30,10 +28,10 @@ import (
 	meta_util "kmodules.xyz/client-go/meta"
 )
 
-func (f *Framework) EventuallyPVCCount(meta metav1.ObjectMeta, kind string) GomegaAsyncAssertion {
+func (f *Framework) EventuallyPVCCount(meta metav1.ObjectMeta, fqn string) GomegaAsyncAssertion {
 	labelMap := map[string]string{
-		api.LabelDatabaseKind: kind,
-		api.LabelDatabaseName: meta.Name,
+		meta_util.NameLabelKey:     fqn,
+		meta_util.InstanceLabelKey: meta.Name,
 	}
 	labelSelector := labels.SelectorFromSet(labelMap)
 

@@ -60,7 +60,7 @@ var _ = Describe("Termination Policy", func() {
 		By("Delete left over MongoDB objects")
 		to.CleanMongoDB()
 		By("Delete left over workloads if exists any")
-		to.CleanWorkloadLeftOvers(api.ResourceKindMongoDB)
+		to.CleanWorkloadLeftOvers(api.MongoDB{}.ResourceFQN())
 		if to.snapshotPVC != nil {
 			err := to.DeletePersistentVolumeClaim(to.snapshotPVC.ObjectMeta)
 			if err != nil && !kerr.IsNotFound(err) {
@@ -226,10 +226,10 @@ var _ = Describe("Termination Policy", func() {
 			to.EventuallyMongoDB(to.mongodb.ObjectMeta).Should(BeFalse())
 
 			By("Check for deleted PVCs")
-			to.EventuallyPVCCount(to.mongodb.ObjectMeta, api.ResourceKindMongoDB).Should(Equal(0))
+			to.EventuallyPVCCount(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN()).Should(Equal(0))
 
 			By("Check for intact Secrets")
-			to.EventuallyDBSecretCount(to.mongodb.ObjectMeta, api.ResourceKindMongoDB).ShouldNot(Equal(0))
+			to.EventuallyDBSecretCount(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN()).ShouldNot(Equal(0))
 		}
 
 		It("should run with TerminationPolicyDelete", shouldRunWithTerminationDelete)
@@ -267,10 +267,10 @@ var _ = Describe("Termination Policy", func() {
 			to.EventuallyMongoDB(to.mongodb.ObjectMeta).Should(BeFalse())
 
 			By("Check for deleted PVCs")
-			to.EventuallyPVCCount(to.mongodb.ObjectMeta, api.ResourceKindMongoDB).Should(Equal(0))
+			to.EventuallyPVCCount(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN()).Should(Equal(0))
 
 			By("Check for deleted Secrets")
-			to.EventuallyDBSecretCount(to.mongodb.ObjectMeta, api.ResourceKindMongoDB).Should(Equal(0))
+			to.EventuallyDBSecretCount(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN()).Should(Equal(0))
 		}
 
 		It("should run with TerminationPolicyWipeOut", shouldRunWithTerminationWipeOut)

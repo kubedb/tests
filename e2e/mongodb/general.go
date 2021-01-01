@@ -63,7 +63,7 @@ var _ = Describe("General MongoDB", func() {
 		By("Delete left over MongoDB objects")
 		to.CleanMongoDB()
 		By("Delete left over workloads if exists any")
-		to.CleanWorkloadLeftOvers(api.ResourceKindMongoDB)
+		to.CleanWorkloadLeftOvers(api.MongoDB{}.ResourceFQN())
 		if to.snapshotPVC != nil {
 			err := to.DeletePersistentVolumeClaim(to.snapshotPVC.ObjectMeta)
 			if err != nil && !kerr.IsNotFound(err) {
@@ -190,7 +190,7 @@ var _ = Describe("General MongoDB", func() {
 			to.createAndWaitForRunning()
 			//Evict a MongoDB pod
 			By("Try to evict pods")
-			err = to.EvictPodsFromStatefulSet(to.mongodb.ObjectMeta, api.ResourceKindMongoDB)
+			err = to.EvictPodsFromStatefulSet(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN())
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -205,7 +205,7 @@ var _ = Describe("General MongoDB", func() {
 			to.createAndWaitForRunning()
 			//Evict a MongoDB pod from each sts
 			By("Try to evict pods from each statefulset")
-			err := to.EvictPodsFromStatefulSet(to.mongodb.ObjectMeta, api.ResourceKindMongoDB)
+			err := to.EvictPodsFromStatefulSet(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN())
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})

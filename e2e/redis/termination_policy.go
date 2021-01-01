@@ -93,7 +93,7 @@ var _ = Describe("Termination Policy Redis", func() {
 		to.EventuallyRedis(to.redis.ObjectMeta).Should(BeFalse())
 
 		By("Wait for redis resources to be wipedOut")
-		to.EventuallyWipedOut(to.redis.ObjectMeta, api.ResourceKindRedis).Should(Succeed())
+		to.EventuallyWipedOut(to.redis.ObjectMeta, api.Redis{}.ResourceFQN()).Should(Succeed())
 	})
 
 	var shouldBeSuccessfullyRunning = func() {
@@ -204,7 +204,7 @@ var _ = Describe("Termination Policy Redis", func() {
 			to.EventuallyRedis(to.redis.ObjectMeta).Should(BeFalse())
 
 			By("Check for deleted PVCs")
-			to.EventuallyPVCCount(to.redis.ObjectMeta, api.ResourceKindRedis).Should(Equal(0))
+			to.EventuallyPVCCount(to.redis.ObjectMeta, api.Redis{}.ResourceFQN()).Should(Equal(0))
 		}
 
 		It("should run with TerminationPolicyDelete", shouldRunWithTerminationDelete)
@@ -227,7 +227,7 @@ var _ = Describe("Termination Policy Redis", func() {
 			to.EventuallyRedis(to.redis.ObjectMeta).Should(BeFalse())
 
 			By("Check for deleted PVCs")
-			to.EventuallyPVCCount(to.redis.ObjectMeta, api.ResourceKindRedis).Should(Equal(0))
+			to.EventuallyPVCCount(to.redis.ObjectMeta, api.Redis{}.ResourceFQN()).Should(Equal(0))
 		}
 
 		It("should run with TerminationPolicyDelete", shouldRunWithTerminationWipeOut)

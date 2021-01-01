@@ -184,10 +184,10 @@ func (f *Framework) DeleteSecret(meta metav1.ObjectMeta) error {
 	return f.kubeClient.CoreV1().Secrets(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInForeground())
 }
 
-func (f *Framework) EventuallyDBSecretCount(meta metav1.ObjectMeta, kind string) GomegaAsyncAssertion {
+func (f *Framework) EventuallyDBSecretCount(meta metav1.ObjectMeta, fqn string) GomegaAsyncAssertion {
 	labelMap := map[string]string{
-		api.LabelDatabaseKind: kind,
-		api.LabelDatabaseName: meta.Name,
+		meta_util.NameLabelKey:     fqn,
+		meta_util.InstanceLabelKey: meta.Name,
 	}
 	labelSelector := labels.SelectorFromSet(labelMap)
 
@@ -242,10 +242,10 @@ func (i *Invocation) SecretForDatabaseAuthentication(meta metav1.ObjectMeta, man
 	}
 }
 
-func (f *Framework) SelfSignedCASecret(meta metav1.ObjectMeta, kind string) *core.Secret {
+func (f *Framework) SelfSignedCASecret(meta metav1.ObjectMeta, fqn string) *core.Secret {
 	labelMap := map[string]string{
-		api.LabelDatabaseName: meta.Name,
-		api.LabelDatabaseKind: kind,
+		meta_util.NameLabelKey:     fqn,
+		meta_util.InstanceLabelKey: meta.Name,
 	}
 	return &core.Secret{
 		ObjectMeta: metav1.ObjectMeta{

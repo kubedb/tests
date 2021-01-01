@@ -49,7 +49,7 @@ var _ = Describe("Upgrade Database Version", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Wait for mongodb resources to be wipedOut")
-		to.EventuallyWipedOut(to.mongodb.ObjectMeta, api.ResourceKindMongoDB).Should(Succeed())
+		to.EventuallyWipedOut(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN()).Should(Succeed())
 	})
 
 	Context("Update Standalone DB", func() {

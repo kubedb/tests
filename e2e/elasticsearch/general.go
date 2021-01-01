@@ -61,7 +61,7 @@ var _ = Describe("General", func() {
 		By("Delete left over Elasticsearch objects")
 		to.CleanElasticsearch()
 		By("Delete left over workloads if exists any")
-		to.CleanWorkloadLeftOvers(api.ResourceKindElasticsearch)
+		to.CleanWorkloadLeftOvers(api.Elasticsearch{}.ResourceFQN())
 	})
 
 	JustAfterEach(func() {
@@ -148,7 +148,7 @@ var _ = Describe("General", func() {
 			to.createElasticsearchAndWaitForBeingReady()
 
 			By("Evicting pods from statefulSet...")
-			err := to.EvictPodsFromStatefulSet(to.db.ObjectMeta, api.ResourceKindElasticsearch)
+			err := to.EvictPodsFromStatefulSet(to.db.ObjectMeta, api.Elasticsearch{}.ResourceFQN())
 			Expect(err).NotTo(HaveOccurred())
 			to.wipeOutElasticsearch()
 		})
@@ -167,7 +167,7 @@ var _ = Describe("General", func() {
 			to.createElasticsearchAndWaitForBeingReady()
 
 			By("Evicting pods from statefulSet...")
-			err := to.EvictPodsFromStatefulSet(to.db.ObjectMeta, api.ResourceKindElasticsearch)
+			err := to.EvictPodsFromStatefulSet(to.db.ObjectMeta, api.Elasticsearch{}.ResourceFQN())
 			Expect(err).NotTo(HaveOccurred())
 			to.wipeOutElasticsearch()
 		})

@@ -90,7 +90,7 @@ func (fi *Invocation) RedisCluster(version string, master, replicas *int32) *api
 }
 
 func (fi *Invocation) RedisWithTLS(redis *api.Redis) *api.Redis {
-	issuer, err := fi.InsureIssuer(redis.ObjectMeta, api.ResourceKindRedis)
+	issuer, err := fi.InsureIssuer(redis.ObjectMeta, api.Redis{}.ResourceFQN())
 	Expect(err).NotTo(HaveOccurred())
 	if redis.Spec.TLS == nil {
 		redis.Spec.TLS = &kmapi.TLSConfig{
@@ -205,8 +205,8 @@ func (f *Framework) EvictPodsFromStatefulSetRedis(meta metav1.ObjectMeta) error 
 	var err error
 	labelSelector := labels.Set{
 		meta_util.ManagedByLabelKey: kubedb.GroupName,
-		api.LabelDatabaseKind:       api.ResourceKindRedis,
-		api.LabelDatabaseName:       meta.GetName(),
+		meta_util.NameLabelKey:      api.Redis{}.ResourceFQN(),
+		meta_util.InstanceLabelKey:  meta.Name,
 	}
 
 	// get sts in the namespace
