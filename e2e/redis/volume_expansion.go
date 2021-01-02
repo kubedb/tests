@@ -74,7 +74,7 @@ var _ = Describe("Redis Volume Expansion", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Wait for redis resources to be wipedOut")
-		to.EventuallyWipedOut(to.redis.ObjectMeta, api.ResourceKindRedis).Should(Succeed())
+		to.EventuallyWipedOut(to.redis.ObjectMeta, api.Redis{}.ResourceFQN()).Should(Succeed())
 	})
 
 	Context("Volume Expansion in StandAlone Redis", func() {

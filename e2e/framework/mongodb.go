@@ -211,12 +211,12 @@ func (f *Framework) GetMongoDBVersion(name string) (*v1alpha1.MongoDBVersion, er
 	return f.dbClient.CatalogV1alpha1().MongoDBVersions().Get(context.TODO(), name, metav1.GetOptions{})
 }
 
-func (f *Framework) EvictPodsFromStatefulSet(meta metav1.ObjectMeta, kind string) error {
+func (f *Framework) EvictPodsFromStatefulSet(meta metav1.ObjectMeta, fqn string) error {
 	var err error
 	labelSelector := labels.Set{
 		meta_util.ManagedByLabelKey: kubedb.GroupName,
-		api.LabelDatabaseKind:       kind,
-		api.LabelDatabaseName:       meta.GetName(),
+		meta_util.NameLabelKey:      fqn,
+		meta_util.InstanceLabelKey:  meta.Name,
 	}
 	// get sts in the namespace
 	stsList, err := f.kubeClient.AppsV1().StatefulSets(meta.Namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: labelSelector.String()})
@@ -383,12 +383,12 @@ func (f *Framework) CleanMongoDB() {
 	}
 }
 
-func (f *Framework) EventuallyWipedOut(meta metav1.ObjectMeta, kind string) GomegaAsyncAssertion {
+func (f *Framework) EventuallyWipedOut(meta metav1.ObjectMeta, fqn string) GomegaAsyncAssertion {
 	return Eventually(
 		func() error {
 			labelMap := map[string]string{
-				api.LabelDatabaseName: meta.Name,
-				api.LabelDatabaseKind: kind,
+				meta_util.NameLabelKey:     fqn,
+				meta_util.InstanceLabelKey: meta.Name,
 			}
 			labelSelector := labels.SelectorFromSet(labelMap)
 

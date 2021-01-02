@@ -21,8 +21,6 @@ import (
 	"fmt"
 	"time"
 
-	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
-
 	"github.com/appscode/go/crypto/rand"
 	"github.com/appscode/go/log"
 	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1beta1"
@@ -37,11 +35,11 @@ const (
 	tlsKeyFileKey  = "tls.key"
 )
 
-func (f *Framework) IssuerForDB(dbMeta, caSecretMeta metav1.ObjectMeta, kind string) *cm_api.Issuer {
+func (f *Framework) IssuerForDB(dbMeta, caSecretMeta metav1.ObjectMeta, fqn string) *cm_api.Issuer {
 	thisIssuerName := rand.WithUniqSuffix(IssuerName)
 	labelMap := map[string]string{
-		api.LabelDatabaseName: dbMeta.Name,
-		api.LabelDatabaseKind: kind,
+		meta_util.NameLabelKey:     fqn,
+		meta_util.InstanceLabelKey: dbMeta.Name,
 	}
 	return &cm_api.Issuer{
 		TypeMeta: metav1.TypeMeta{
@@ -89,16 +87,16 @@ func (f *Framework) DeleteIssuer(meta metav1.ObjectMeta) error {
 	return f.certManagerClient.CertmanagerV1beta1().Issuers(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInForeground())
 }
 
-func (fi *Invocation) InsureIssuer(myMeta metav1.ObjectMeta, kind string) (*cm_api.Issuer, error) {
+func (fi *Invocation) InsureIssuer(myMeta metav1.ObjectMeta, fqn string) (*cm_api.Issuer, error) {
 	//create cert-manager ca secret
-	clientCASecret := fi.SelfSignedCASecret(myMeta, kind)
+	clientCASecret := fi.SelfSignedCASecret(myMeta, fqn)
 	secret, err := fi.CreateSecret(clientCASecret)
 	if err != nil {
 		return nil, err
 	}
 	fi.AppendToCleanupList(secret)
 	//create issuer
-	issuer := fi.IssuerForDB(myMeta, clientCASecret.ObjectMeta, kind)
+	issuer := fi.IssuerForDB(myMeta, clientCASecret.ObjectMeta, fqn)
 	issuer, err = fi.CreateIssuer(issuer)
 	if err != nil {
 		return nil, err

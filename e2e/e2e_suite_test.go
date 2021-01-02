@@ -138,7 +138,7 @@ var _ = AfterSuite(func() {
 	By("Delete left over MongoDB objects")
 	framework.RootFramework.CleanMongoDB()
 	By("Delete left over workloads if exists any")
-	framework.RootFramework.CleanWorkloadLeftOvers(api.ResourceKindMongoDB)
+	framework.RootFramework.CleanWorkloadLeftOvers(api.MongoDB{}.ResourceFQN())
 
 	if framework.StorageProvider == framework.StorageProviderMinio {
 		By("Deleting Minio server")

@@ -175,10 +175,10 @@ func (to *testOptions) wipeOutElasticsearch() {
 	to.EventuallyElasticsearch(db.ObjectMeta).Should(BeFalse())
 
 	By("Wait for elasticsearch services to be deleted")
-	to.EventuallyServices(db.ObjectMeta, api.ResourceKindElasticsearch).Should(Succeed())
+	to.EventuallyServices(db.ObjectMeta, api.Elasticsearch{}.ResourceFQN()).Should(Succeed())
 
 	By("Wait for elasticsearch resources to be wipedOut")
-	to.EventuallyWipedOut(db.ObjectMeta, api.ResourceKindElasticsearch).Should(Succeed())
+	to.EventuallyWipedOut(db.ObjectMeta, api.Elasticsearch{}.ResourceFQN()).Should(Succeed())
 }
 
 func (to *testOptions) insertData() int {

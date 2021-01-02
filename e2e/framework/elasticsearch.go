@@ -259,11 +259,11 @@ func (f *Framework) DeleteElasticsearch(meta metav1.ObjectMeta) error {
 	return f.dbClient.KubedbV1alpha2().Elasticsearches(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInBackground())
 }
 
-func (f *Framework) EventuallyServices(meta metav1.ObjectMeta, kind string) GomegaAsyncAssertion {
+func (f *Framework) EventuallyServices(meta metav1.ObjectMeta, fqn string) GomegaAsyncAssertion {
 	return Eventually(func() error {
 		labelMap := map[string]string{
-			api.LabelDatabaseName: meta.Name,
-			api.LabelDatabaseKind: kind,
+			meta_util.NameLabelKey:     fqn,
+			meta_util.InstanceLabelKey: meta.Name,
 		}
 		se := labels.SelectorFromSet(labelMap)
 

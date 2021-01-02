@@ -58,7 +58,7 @@ var _ = Describe("Termination Policy", func() {
 		By("Delete left over Elasticsearch objects")
 		to.CleanElasticsearch()
 		By("Delete left over workloads if exists any")
-		to.CleanWorkloadLeftOvers(api.ResourceKindElasticsearch)
+		to.CleanWorkloadLeftOvers(api.Elasticsearch{}.ResourceFQN())
 	})
 
 	JustAfterEach(func() {
@@ -103,13 +103,13 @@ var _ = Describe("Termination Policy", func() {
 				to.EventuallyElasticsearch(to.db.ObjectMeta).Should(BeFalse())
 
 				By("Wait for elasticsearch services to be deleted")
-				to.EventuallyServices(to.db.ObjectMeta, api.ResourceKindElasticsearch).Should(Succeed())
+				to.EventuallyServices(to.db.ObjectMeta, api.Elasticsearch{}.ResourceFQN()).Should(Succeed())
 
 				By("Check for deleted PVCs")
-				to.EventuallyPVCCount(to.db.ObjectMeta, api.ResourceKindElasticsearch).Should(Equal(0))
+				to.EventuallyPVCCount(to.db.ObjectMeta, api.Elasticsearch{}.ResourceFQN()).Should(Equal(0))
 
 				By("Check for deleted Secrets")
-				to.EventuallyDBSecretCount(to.db.ObjectMeta, api.ResourceKindElasticsearch).Should(Equal(0))
+				to.EventuallyDBSecretCount(to.db.ObjectMeta, api.Elasticsearch{}.ResourceFQN()).Should(Equal(0))
 			}
 
 			It("Standalone Cluster", func() {
@@ -214,14 +214,14 @@ var _ = Describe("Termination Policy", func() {
 				to.EventuallyElasticsearch(to.db.ObjectMeta).Should(BeFalse())
 
 				By("Wait for elasticsearch services to be deleted")
-				to.EventuallyServices(to.db.ObjectMeta, api.ResourceKindElasticsearch).Should(Succeed())
+				to.EventuallyServices(to.db.ObjectMeta, api.Elasticsearch{}.ResourceFQN()).Should(Succeed())
 				Expect(err).NotTo(HaveOccurred())
 
 				By("Check for deleted PVCs")
-				to.EventuallyPVCCount(to.db.ObjectMeta, api.ResourceKindElasticsearch).Should(Equal(0))
+				to.EventuallyPVCCount(to.db.ObjectMeta, api.Elasticsearch{}.ResourceFQN()).Should(Equal(0))
 
 				By("Check for intact Secrets")
-				to.EventuallyDBSecretCount(to.db.ObjectMeta, api.ResourceKindElasticsearch).ShouldNot(Equal(0))
+				to.EventuallyDBSecretCount(to.db.ObjectMeta, api.Elasticsearch{}.ResourceFQN()).ShouldNot(Equal(0))
 			})
 		})
 	})

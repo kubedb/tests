@@ -60,7 +60,7 @@ var _ = Describe("Exporter", func() {
 		By("Delete left over MongoDB objects")
 		to.CleanMongoDB()
 		By("Delete left over workloads if exists any")
-		to.CleanWorkloadLeftOvers(api.ResourceKindMongoDB)
+		to.CleanWorkloadLeftOvers(api.MongoDB{}.ResourceFQN())
 		if to.snapshotPVC != nil {
 			err := to.DeletePersistentVolumeClaim(to.snapshotPVC.ObjectMeta)
 			if err != nil && !kerr.IsNotFound(err) {

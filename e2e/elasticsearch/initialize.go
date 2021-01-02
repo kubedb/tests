@@ -57,7 +57,7 @@ var _ = Describe("Initialize", func() {
 		By("Delete left over Elasticsearch objects")
 		to.CleanElasticsearch()
 		By("Delete left over workloads if exists any")
-		to.CleanWorkloadLeftOvers(api.ResourceKindElasticsearch)
+		to.CleanWorkloadLeftOvers(api.Elasticsearch{}.ResourceFQN())
 	})
 
 	JustAfterEach(func() {

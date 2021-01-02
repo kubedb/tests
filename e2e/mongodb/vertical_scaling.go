@@ -62,7 +62,7 @@ var _ = Describe("Vertical Scaling", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Wait for mongodb resources to be wipedOut")
-		to.EventuallyWipedOut(to.mongodb.ObjectMeta, api.ResourceKindMongoDB).Should(Succeed())
+		to.EventuallyWipedOut(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN()).Should(Succeed())
 	})
 	Context("Without Custom Config", func() {
 		Context("Scaling StandAlone Mongodb Resources", func() {
