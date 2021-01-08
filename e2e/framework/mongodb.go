@@ -29,6 +29,7 @@ import (
 
 	"github.com/appscode/go/crypto/rand"
 	"github.com/appscode/go/types"
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
 	policy "k8s.io/api/policy/v1beta1"
@@ -48,6 +49,11 @@ const (
 )
 
 func (i *Invocation) MongoDBStandalone() *api.MongoDB {
+	if InMemory {
+		Skip("standalone doesn't support inmemory")
+		return nil
+	}
+
 	return &api.MongoDB{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mongodb"),
@@ -75,6 +81,23 @@ func (i *Invocation) MongoDBStandalone() *api.MongoDB {
 
 func (i *Invocation) MongoDBRS() *api.MongoDB {
 	dbName := rand.WithUniqSuffix("mongo-rs")
+	storageType := api.StorageTypeDurable
+	storageEngine := api.StorageEngineWiredTiger
+	storage := &core.PersistentVolumeClaimSpec{
+		Resources: core.ResourceRequirements{
+			Requests: core.ResourceList{
+				core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
+			},
+		},
+		StorageClassName: types.StringP(i.StorageClass),
+	}
+
+	if InMemory {
+		storageType = api.StorageTypeEphemeral
+		storageEngine = api.StorageEngineInMemory
+		storage = nil
+	}
+
 	return &api.MongoDB{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      dbName,
@@ -85,24 +108,36 @@ func (i *Invocation) MongoDBRS() *api.MongoDB {
 		},
 		Spec: api.MongoDBSpec{
 			Version:  DBVersion,
-			Replicas: types.Int32P(2),
+			Replicas: types.Int32P(3),
 			ReplicaSet: &api.MongoDBReplicaSet{
 				Name: dbName,
 			},
-			Storage: &core.PersistentVolumeClaimSpec{
-				Resources: core.ResourceRequirements{
-					Requests: core.ResourceList{
-						core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
-					},
-				},
-				StorageClassName: types.StringP(i.StorageClass),
-			},
+			StorageEngine:     storageEngine,
+			StorageType:       storageType,
+			Storage:           storage,
 			TerminationPolicy: api.TerminationPolicyHalt,
 		},
 	}
 }
 
 func (i *Invocation) MongoDBShard() *api.MongoDB {
+	storageType := api.StorageTypeDurable
+	storageEngine := api.StorageEngineWiredTiger
+	storage := &core.PersistentVolumeClaimSpec{
+		Resources: core.ResourceRequirements{
+			Requests: core.ResourceList{
+				core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
+			},
+		},
+		StorageClassName: types.StringP(i.StorageClass),
+	}
+
+	if InMemory {
+		storageType = api.StorageTypeEphemeral
+		storageEngine = api.StorageEngineInMemory
+		storage = nil
+	}
+
 	return &api.MongoDB{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mongo-sh"),
@@ -112,34 +147,22 @@ func (i *Invocation) MongoDBShard() *api.MongoDB {
 			},
 		},
 		Spec: api.MongoDBSpec{
-			Version: DBVersion,
+			Version:       DBVersion,
+			StorageEngine: storageEngine,
+			StorageType:   storageType,
 			ShardTopology: &api.MongoDBShardingTopology{
 				Shard: api.MongoDBShardNode{
 					Shards: 2,
 					MongoDBNode: api.MongoDBNode{
-						Replicas: 2,
+						Replicas: 3,
 					},
-					Storage: &core.PersistentVolumeClaimSpec{
-						Resources: core.ResourceRequirements{
-							Requests: core.ResourceList{
-								core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
-							},
-						},
-						StorageClassName: types.StringP(i.StorageClass),
-					},
+					Storage: storage,
 				},
 				ConfigServer: api.MongoDBConfigNode{
 					MongoDBNode: api.MongoDBNode{
-						Replicas: 2,
+						Replicas: 3,
 					},
-					Storage: &core.PersistentVolumeClaimSpec{
-						Resources: core.ResourceRequirements{
-							Requests: core.ResourceList{
-								core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
-							},
-						},
-						StorageClassName: types.StringP(i.StorageClass),
-					},
+					Storage: storage,
 				},
 				Mongos: api.MongoDBMongosNode{
 					MongoDBNode: api.MongoDBNode{
@@ -204,7 +227,7 @@ func (f *Framework) PatchMongoDB(meta metav1.ObjectMeta, transform func(*api.Mon
 }
 
 func (f *Framework) DeleteMongoDB(meta metav1.ObjectMeta) error {
-	return f.dbClient.KubedbV1alpha2().MongoDBs(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInForeground())
+	return f.dbClient.KubedbV1alpha2().MongoDBs(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInBackground())
 }
 
 func (f *Framework) GetMongoDBVersion(name string) (*v1alpha1.MongoDBVersion, error) {

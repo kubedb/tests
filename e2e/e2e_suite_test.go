@@ -80,6 +80,7 @@ func init() {
 	flag.StringVar(&framework.StorageProvider, "storage-provider", framework.StorageProviderMinio, "Backend Storage Provider")
 	flag.StringVar(&framework.DBType, "db-type", api.ResourceSingularMongoDB, "Database type test")
 	flag.BoolVar(&framework.SSLEnabled, "ssl", framework.SSLEnabled, "enable ssl")
+	flag.BoolVar(&framework.InMemory, "inmemory", framework.SSLEnabled, "test percona inmemory")
 	flag.Var(&framework.TestProfiles, "test-profiles", "Test Profiles to test")
 }
 

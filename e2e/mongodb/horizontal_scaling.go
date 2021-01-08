@@ -61,7 +61,7 @@ var _ = Describe("Horizontal Scaling", func() {
 			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 			shard := dbaapi.MongoDBShardNode{
 				Shards:   0,
-				Replicas: 3,
+				Replicas: 4,
 			}
 			to.mongoOpsReq = to.MongoDBOpsRequestHorizontalScale(to.mongodb.Name, to.mongodb.Namespace, &shard, nil, nil, nil)
 		})
@@ -78,7 +78,7 @@ var _ = Describe("Horizontal Scaling", func() {
 			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 			shard := dbaapi.MongoDBShardNode{
 				Shards:   0,
-				Replicas: 1,
+				Replicas: 2,
 			}
 			to.mongoOpsReq = to.MongoDBOpsRequestHorizontalScale(to.mongodb.Name, to.mongodb.Namespace, &shard, nil, nil, nil)
 		})
@@ -153,7 +153,7 @@ var _ = Describe("Horizontal Scaling", func() {
 			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 			shard := dbaapi.MongoDBShardNode{
 				Shards:   3,
-				Replicas: 3,
+				Replicas: 4,
 			}
 			to.mongoOpsReq = to.MongoDBOpsRequestHorizontalScale(to.mongodb.Name, to.mongodb.Namespace, &shard, nil, nil, nil)
 		})
@@ -171,7 +171,7 @@ var _ = Describe("Horizontal Scaling", func() {
 			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 			shard := dbaapi.MongoDBShardNode{
 				Shards:   2,
-				Replicas: 1,
+				Replicas: 2,
 			}
 			to.mongoOpsReq = to.MongoDBOpsRequestHorizontalScale(to.mongodb.Name, to.mongodb.Namespace, &shard, nil, nil, nil)
 		})
@@ -189,7 +189,7 @@ var _ = Describe("Horizontal Scaling", func() {
 			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 			shard := dbaapi.MongoDBShardNode{
 				Shards:   2,
-				Replicas: 3,
+				Replicas: 4,
 			}
 			to.mongoOpsReq = to.MongoDBOpsRequestHorizontalScale(to.mongodb.Name, to.mongodb.Namespace, &shard, nil, nil, nil)
 		})
@@ -206,7 +206,7 @@ var _ = Describe("Horizontal Scaling", func() {
 			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 			shard := dbaapi.MongoDBShardNode{
 				Shards:   3,
-				Replicas: 1,
+				Replicas: 2,
 			}
 			to.mongoOpsReq = to.MongoDBOpsRequestHorizontalScale(to.mongodb.Name, to.mongodb.Namespace, &shard, nil, nil, nil)
 		})
@@ -222,18 +222,19 @@ var _ = Describe("Horizontal Scaling", func() {
 			to.mongodb = to.MongoDBShard()
 			shard := dbaapi.MongoDBShardNode{
 				Shards:   3,
-				Replicas: 3,
+				Replicas: 4,
 			}
 			confgSrvr := dbaapi.ConfigNode{
-				Replicas: 3,
+				Replicas: 4,
 			}
 			mongos := dbaapi.MongosNode{
 				Replicas: 3,
 			}
+			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 			to.mongoOpsReq = to.MongoDBOpsRequestHorizontalScale(to.mongodb.Name, to.mongodb.Namespace, &shard, &confgSrvr, &mongos, nil)
 		})
 
-		It("Should Scale Up Shard, Shard Replicas, ConfigServer and Mongosa", func() {
+		It("Should Scale Up Shard, Shard Replicas, ConfigServer and Mongos", func() {
 			to.shouldTestOpsRequest()
 		})
 	})
@@ -254,6 +255,7 @@ var _ = Describe("Horizontal Scaling", func() {
 			mongos := dbaapi.MongosNode{
 				Replicas: 2,
 			}
+			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 			to.mongoOpsReq = to.MongoDBOpsRequestHorizontalScale(to.mongodb.Name, to.mongodb.Namespace, &shard, &confgSrvr, &mongos, nil)
 		})
 
@@ -268,7 +270,7 @@ var _ = Describe("Horizontal Scaling", func() {
 			to.mongodb.Spec.Version = framework.DBVersion
 			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 			confgSrvr := dbaapi.ConfigNode{
-				Replicas: 3,
+				Replicas: 4,
 			}
 			to.mongoOpsReq = to.MongoDBOpsRequestHorizontalScale(to.mongodb.Name, to.mongodb.Namespace, nil, &confgSrvr, nil, nil)
 		})
@@ -335,7 +337,7 @@ var _ = Describe("Horizontal Scaling", func() {
 			to.mongodb = to.MongoDBRS()
 			to.mongodb.Spec.Version = framework.DBVersion
 			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-			to.mongoOpsReq = to.MongoDBOpsRequestHorizontalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, nil, pointer.Int32Ptr(3))
+			to.mongoOpsReq = to.MongoDBOpsRequestHorizontalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, nil, pointer.Int32Ptr(4))
 		})
 
 		It("Should Scale Up Mongodb ReplicaSet", func() {
