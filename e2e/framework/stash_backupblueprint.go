@@ -29,18 +29,18 @@ import (
 	stash_v1beta1 "stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 )
 
-func (i *Invocation) NewBackupBlueprint(secretName string) *stash_v1beta1.BackupBlueprint {
+func (fi *Invocation) NewBackupBlueprint(secretName string) *stash_v1beta1.BackupBlueprint {
 	return &stash_v1beta1.BackupBlueprint{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: meta.NameWithSuffix("blueprint", i.app),
+			Name: meta.NameWithSuffix("blueprint", fi.app),
 		},
 		Spec: stash_v1beta1.BackupBlueprintSpec{
 			RepositorySpec: stash_v1alpha1.RepositorySpec{
 				Backend: store.Backend{
 					S3: &store.S3Spec{
-						Endpoint: i.MinioServiceAddres(),
-						Bucket:   i.app,
-						Prefix:   fmt.Sprintf("kubedb/%s/%s", i.namespace, i.app),
+						Endpoint: fi.MinioServiceAddres(),
+						Bucket:   fi.app,
+						Prefix:   fmt.Sprintf("kubedb/%s/%s", fi.namespace, fi.app),
 					},
 					StorageSecretName: secretName,
 				},
@@ -56,18 +56,18 @@ func (i *Invocation) NewBackupBlueprint(secretName string) *stash_v1beta1.Backup
 	}
 }
 
-func (i *Invocation) CreateBackupBlueprint() *stash_v1beta1.BackupBlueprint {
+func (fi *Invocation) CreateBackupBlueprint() *stash_v1beta1.BackupBlueprint {
 	// Create Secret for BackupBlueprint
-	secret := i.CreateSecretForMinioBackend()
+	secret := fi.CreateSecretForMinioBackend()
 
 	// Generate BackupBlueprint definition
-	bb := i.NewBackupBlueprint(secret.Name)
+	bb := fi.NewBackupBlueprint(secret.Name)
 	bb.Spec.Task.Name = getBackupAddonName()
 
 	By(fmt.Sprintf("Creating BackupBlueprint: %s", bb.Name))
-	createdBB, err := i.StashClient.StashV1beta1().BackupBlueprints().Create(context.TODO(), bb, metav1.CreateOptions{})
+	createdBB, err := fi.StashClient.StashV1beta1().BackupBlueprints().Create(context.TODO(), bb, metav1.CreateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
-	i.AppendToCleanupList(createdBB)
+	fi.AppendToCleanupList(createdBB)
 	return createdBB
 }

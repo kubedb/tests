@@ -30,12 +30,12 @@ import (
 	stash_v1beta1 "stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 )
 
-func (i *Invocation) NewBackupConfiguration(repoName string, transformFuncs ...func(bc *stash_v1beta1.BackupConfiguration)) *stash_v1beta1.BackupConfiguration {
+func (fi *Invocation) NewBackupConfiguration(repoName string, transformFuncs ...func(bc *stash_v1beta1.BackupConfiguration)) *stash_v1beta1.BackupConfiguration {
 	// a generic BackupConfiguration definition
 	backupConfig := &stash_v1beta1.BackupConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      rand.WithUniqSuffix(i.app),
-			Namespace: i.namespace,
+			Name:      rand.WithUniqSuffix(fi.app),
+			Namespace: fi.namespace,
 		},
 		Spec: stash_v1beta1.BackupConfigurationSpec{
 			// Instead of waiting for a schedule to appear, we are going to trigger the backup manually  to minimize the testing period.
@@ -59,20 +59,20 @@ func (i *Invocation) NewBackupConfiguration(repoName string, transformFuncs ...f
 	return backupConfig
 }
 
-func (i *Invocation) SetupDatabaseBackup(appBinding *appcat.AppBinding, transformFuncs ...func(bc *stash_v1beta1.BackupConfiguration)) (*stash_v1beta1.BackupConfiguration, *stash_v1alpha1.Repository, error) {
+func (fi *Invocation) SetupDatabaseBackup(appBinding *appcat.AppBinding, transformFuncs ...func(bc *stash_v1beta1.BackupConfiguration)) (*stash_v1beta1.BackupConfiguration, *stash_v1alpha1.Repository, error) {
 	// Setup Repository
-	repo, err := i.SetupMinioRepository()
+	repo, err := fi.SetupMinioRepository()
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// Generate BackupConfiguration definition for database
-	backupConfig := i.NewBackupConfiguration(repo.Name, func(bc *stash_v1beta1.BackupConfiguration) {
+	backupConfig := fi.NewBackupConfiguration(repo.Name, func(bc *stash_v1beta1.BackupConfiguration) {
 		bc.Spec.Task = stash_v1beta1.TaskRef{
 			Name: getBackupAddonName(),
 		}
 		bc.Spec.Target = &stash_v1beta1.BackupTarget{
-			Alias: i.app,
+			Alias: fi.app,
 			Ref: stash_v1beta1.TargetRef{
 				APIVersion: appcat.SchemeGroupVersion.String(),
 				Kind:       appcat.ResourceKindApp,
@@ -87,22 +87,22 @@ func (i *Invocation) SetupDatabaseBackup(appBinding *appcat.AppBinding, transfor
 	}
 
 	By("Creating BackupConfiguration: " + backupConfig.Name)
-	createdBC, err := i.StashClient.StashV1beta1().BackupConfigurations(backupConfig.Namespace).Create(context.TODO(), backupConfig, metav1.CreateOptions{})
+	createdBC, err := fi.StashClient.StashV1beta1().BackupConfigurations(backupConfig.Namespace).Create(context.TODO(), backupConfig, metav1.CreateOptions{})
 	if err != nil {
 		return nil, nil, err
 	}
-	i.AppendToCleanupList(createdBC)
+	fi.AppendToCleanupList(createdBC)
 
 	By("Verifying that backup triggering CronJob has been created")
-	i.EventuallyCronJobCreated(createdBC).Should(BeTrue())
+	fi.EventuallyCronJobCreated(createdBC).Should(BeTrue())
 
 	return createdBC, repo, err
 }
 
-func (i *Invocation) EventuallyBackupConfigurationCreated(meta metav1.ObjectMeta) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyBackupConfigurationCreated(meta metav1.ObjectMeta) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			_, err := i.StashClient.StashV1beta1().BackupConfigurations(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+			_, err := fi.StashClient.StashV1beta1().BackupConfigurations(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 			if err == nil && !kerr.IsNotFound(err) {
 				return true
 			}
@@ -113,12 +113,12 @@ func (i *Invocation) EventuallyBackupConfigurationCreated(meta metav1.ObjectMeta
 	)
 }
 
-func (i *Invocation) VerifyCustomSchedule(backupConfig *stash_v1beta1.BackupConfiguration, schedule string) {
+func (fi *Invocation) VerifyCustomSchedule(backupConfig *stash_v1beta1.BackupConfiguration, schedule string) {
 	By("Verifying that the BackupConfiguration is using schedule from the annotations")
 	Expect(backupConfig.Spec.Schedule).Should(BeEquivalentTo(schedule))
 }
 
-func (i *Invocation) VerifyParameterPassed(parameters []stash_v1beta1.Param, key, value string) {
+func (fi *Invocation) VerifyParameterPassed(parameters []stash_v1beta1.Param, key, value string) {
 	By("Verifying that the custom args has been passed to the BackupConfiguration")
 	Expect(paramPassed(parameters, key, value)).Should(BeTrue())
 }

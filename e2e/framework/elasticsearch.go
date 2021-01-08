@@ -48,12 +48,12 @@ var (
 	JobPvcStorageSize = "200Mi"
 )
 
-func (i *Invocation) getElasticsearchDataDir() string {
+func (fi *Invocation) getElasticsearchDataDir() string {
 	return api.ElasticsearchDataDir
 }
 
-func (i *Invocation) GetElasticsearchCommonConfig() string {
-	dataPath := i.getElasticsearchDataDir()
+func (fi *Invocation) GetElasticsearchCommonConfig() string {
+	dataPath := fi.getElasticsearchDataDir()
 
 	commonSetting := es.Setting{
 		Path: &es.PathSetting{
@@ -65,8 +65,8 @@ func (i *Invocation) GetElasticsearchCommonConfig() string {
 	return string(data)
 }
 
-func (i *Invocation) GetElasticsearchMasterConfig() string {
-	dataPath := i.getElasticsearchDataDir()
+func (fi *Invocation) GetElasticsearchMasterConfig() string {
+	dataPath := fi.getElasticsearchDataDir()
 
 	masterSetting := es.Setting{
 		Path: &es.PathSetting{
@@ -78,8 +78,8 @@ func (i *Invocation) GetElasticsearchMasterConfig() string {
 	return string(data)
 }
 
-func (i *Invocation) GetElasticsearchIngestConfig() string {
-	dataPath := i.getElasticsearchDataDir()
+func (fi *Invocation) GetElasticsearchIngestConfig() string {
+	dataPath := fi.getElasticsearchDataDir()
 	clientSetting := es.Setting{
 		Path: &es.PathSetting{
 			Data: []string{filepath.Join(dataPath, "/elasticsearch/ingest-datadir")},
@@ -90,8 +90,8 @@ func (i *Invocation) GetElasticsearchIngestConfig() string {
 	return string(data)
 }
 
-func (i *Invocation) GetElasticsearchDataConfig() string {
-	dataPath := i.getElasticsearchDataDir()
+func (fi *Invocation) GetElasticsearchDataConfig() string {
+	dataPath := fi.getElasticsearchDataDir()
 	dataSetting := es.Setting{
 		Path: &es.PathSetting{
 			Data: []string{filepath.Join(dataPath, "/elasticsearch/data-datadir")},
@@ -102,22 +102,22 @@ func (i *Invocation) GetElasticsearchDataConfig() string {
 	return string(data)
 }
 
-func (i *Invocation) GetElasticsearchCustomConfig() *core.Secret {
+func (fi *Invocation) GetElasticsearchCustomConfig() *core.Secret {
 	return &core.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      i.app,
-			Namespace: i.namespace,
+			Name:      fi.app,
+			Namespace: fi.namespace,
 		},
 		StringData: map[string]string{},
 	}
 }
 
-func (i *Invocation) IsElasticsearchUsingProvidedConfig(nodeInfo []es.NodeInfo) bool {
+func (fi *Invocation) IsElasticsearchUsingProvidedConfig(nodeInfo []es.NodeInfo) bool {
 	for _, node := range nodeInfo {
 		fmt.Println("node: ", node)
 		if string_util.Contains(node.Roles, "master") || strings.HasSuffix(node.Name, "master") {
 			masterConfig := &es.Setting{}
-			err := yaml.Unmarshal([]byte(i.GetElasticsearchMasterConfig()), masterConfig)
+			err := yaml.Unmarshal([]byte(fi.GetElasticsearchMasterConfig()), masterConfig)
 			Expect(err).NotTo(HaveOccurred())
 
 			if !string_util.EqualSlice(node.Settings.Path.Data, masterConfig.Path.Data) {
@@ -129,7 +129,7 @@ func (i *Invocation) IsElasticsearchUsingProvidedConfig(nodeInfo []es.NodeInfo) 
 			strings.HasSuffix(node.Name, "ingest") { // master config has higher precedence
 
 			ingestConfig := &es.Setting{}
-			err := yaml.Unmarshal([]byte(i.GetElasticsearchIngestConfig()), ingestConfig)
+			err := yaml.Unmarshal([]byte(fi.GetElasticsearchIngestConfig()), ingestConfig)
 			Expect(err).NotTo(HaveOccurred())
 
 			if !string_util.EqualSlice(node.Settings.Path.Data, ingestConfig.Path.Data) {
@@ -140,7 +140,7 @@ func (i *Invocation) IsElasticsearchUsingProvidedConfig(nodeInfo []es.NodeInfo) 
 			!(string_util.Contains(node.Roles, "master") && !string_util.Contains(node.Roles, "ingest"))) ||
 			strings.HasSuffix(node.Name, "data") { //master and ingest config has higher precedence
 			dataConfig := &es.Setting{}
-			err := yaml.Unmarshal([]byte(i.GetElasticsearchDataConfig()), dataConfig)
+			err := yaml.Unmarshal([]byte(fi.GetElasticsearchDataConfig()), dataConfig)
 			Expect(err).NotTo(HaveOccurred())
 			if !string_util.EqualSlice(node.Settings.Path.Data, dataConfig.Path.Data) {
 				return false
@@ -149,7 +149,7 @@ func (i *Invocation) IsElasticsearchUsingProvidedConfig(nodeInfo []es.NodeInfo) 
 
 		// check for common config
 		commonConfig := &es.Setting{}
-		err := yaml.Unmarshal([]byte(i.GetElasticsearchCommonConfig()), commonConfig)
+		err := yaml.Unmarshal([]byte(fi.GetElasticsearchCommonConfig()), commonConfig)
 		Expect(err).NotTo(HaveOccurred())
 		if node.Settings.Path.Logs != commonConfig.Path.Logs {
 			return false
@@ -158,13 +158,13 @@ func (i *Invocation) IsElasticsearchUsingProvidedConfig(nodeInfo []es.NodeInfo) 
 	return true
 }
 
-func (i *Invocation) StandaloneElasticsearch() *api.Elasticsearch {
+func (fi *Invocation) StandaloneElasticsearch() *api.Elasticsearch {
 	return &api.Elasticsearch{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("elasticsearch"),
-			Namespace: i.namespace,
+			Namespace: fi.namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 		Spec: api.ElasticsearchSpec{
@@ -176,20 +176,20 @@ func (i *Invocation) StandaloneElasticsearch() *api.Elasticsearch {
 						core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
 					},
 				},
-				StorageClassName: types.StringP(i.StorageClass),
+				StorageClassName: types.StringP(fi.StorageClass),
 			},
 			TerminationPolicy: api.TerminationPolicyHalt,
 		},
 	}
 }
 
-func (i *Invocation) ClusterElasticsearch() *api.Elasticsearch {
+func (fi *Invocation) ClusterElasticsearch() *api.Elasticsearch {
 	return &api.Elasticsearch{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("elasticsearch"),
-			Namespace: i.namespace,
+			Namespace: fi.namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 		Spec: api.ElasticsearchSpec{
@@ -204,7 +204,7 @@ func (i *Invocation) ClusterElasticsearch() *api.Elasticsearch {
 								core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
 							},
 						},
-						StorageClassName: types.StringP(i.StorageClass),
+						StorageClassName: types.StringP(fi.StorageClass),
 					},
 				},
 				Data: api.ElasticsearchNode{
@@ -216,7 +216,7 @@ func (i *Invocation) ClusterElasticsearch() *api.Elasticsearch {
 								core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
 							},
 						},
-						StorageClassName: types.StringP(i.StorageClass),
+						StorageClassName: types.StringP(fi.StorageClass),
 					},
 				},
 				Ingest: api.ElasticsearchNode{
@@ -228,7 +228,7 @@ func (i *Invocation) ClusterElasticsearch() *api.Elasticsearch {
 								core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
 							},
 						},
-						StorageClassName: types.StringP(i.StorageClass),
+						StorageClassName: types.StringP(fi.StorageClass),
 					},
 				},
 			},

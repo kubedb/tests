@@ -40,13 +40,13 @@ import (
 	meta_util "kmodules.xyz/client-go/meta"
 )
 
-func (i *Invocation) RedisStandalone(version string) *api.Redis {
+func (fi *Invocation) RedisStandalone(version string) *api.Redis {
 	redis := &api.Redis{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("redis"),
-			Namespace: i.namespace,
+			Namespace: fi.namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 		Spec: api.RedisSpec{
@@ -60,20 +60,20 @@ func (i *Invocation) RedisStandalone(version string) *api.Redis {
 						core.ResourceStorage: resource.MustParse("1Gi"),
 					},
 				},
-				StorageClassName: types.StringP(i.StorageClass),
+				StorageClassName: types.StringP(fi.StorageClass),
 			},
 		},
 	}
 
-	if i.testConfig.UseTLS {
-		redis = i.RedisWithTLS(redis)
+	if fi.testConfig.UseTLS {
+		redis = fi.RedisWithTLS(redis)
 	}
 
 	return redis
 }
 
-func (i *Invocation) RedisCluster(version string, master, replicas *int32) *api.Redis {
-	redis := i.RedisStandalone(version)
+func (fi *Invocation) RedisCluster(version string, master, replicas *int32) *api.Redis {
+	redis := fi.RedisStandalone(version)
 	redis.Spec.Mode = api.RedisModeCluster
 	if master == nil {
 		master = types.Int32P(3)
@@ -89,8 +89,8 @@ func (i *Invocation) RedisCluster(version string, master, replicas *int32) *api.
 	return redis
 }
 
-func (i *Invocation) RedisWithTLS(redis *api.Redis) *api.Redis {
-	issuer, err := i.InsureIssuer(redis.ObjectMeta, api.Redis{}.ResourceFQN())
+func (fi *Invocation) RedisWithTLS(redis *api.Redis) *api.Redis {
+	issuer, err := fi.InsureIssuer(redis.ObjectMeta, api.Redis{}.ResourceFQN())
 	Expect(err).NotTo(HaveOccurred())
 	if redis.Spec.TLS == nil {
 		redis.Spec.TLS = &kmapi.TLSConfig{

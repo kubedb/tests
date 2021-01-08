@@ -30,13 +30,13 @@ import (
 	kmmeta "kmodules.xyz/client-go/meta"
 )
 
-func (i *Invocation) MongoDBOpsRequestUpgrade(name, namespace, version string) *dbaapi.MongoDBOpsRequest {
+func (fi *Invocation) MongoDBOpsRequestUpgrade(name, namespace, version string) *dbaapi.MongoDBOpsRequest {
 	return &dbaapi.MongoDBOpsRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mor"),
 			Namespace: namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 
@@ -52,13 +52,13 @@ func (i *Invocation) MongoDBOpsRequestUpgrade(name, namespace, version string) *
 	}
 }
 
-func (i *Invocation) MongoDBOpsRequestHorizontalScale(name, namespace string, shard *dbaapi.MongoDBShardNode, configServer *dbaapi.ConfigNode, mongos *dbaapi.MongosNode, replicas *int32) *dbaapi.MongoDBOpsRequest {
+func (fi *Invocation) MongoDBOpsRequestHorizontalScale(name, namespace string, shard *dbaapi.MongoDBShardNode, configServer *dbaapi.ConfigNode, mongos *dbaapi.MongosNode, replicas *int32) *dbaapi.MongoDBOpsRequest {
 	return &dbaapi.MongoDBOpsRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mor"),
 			Namespace: namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 
@@ -77,13 +77,13 @@ func (i *Invocation) MongoDBOpsRequestHorizontalScale(name, namespace string, sh
 	}
 }
 
-func (i *Invocation) MongoDBOpsRequestVerticalScale(name, namespace string, containers, replicaset, mongos, configServer, shard, exporter *corev1.ResourceRequirements) *dbaapi.MongoDBOpsRequest {
+func (fi *Invocation) MongoDBOpsRequestVerticalScale(name, namespace string, containers, replicaset, mongos, configServer, shard, exporter *corev1.ResourceRequirements) *dbaapi.MongoDBOpsRequest {
 	return &dbaapi.MongoDBOpsRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mor"),
 			Namespace: namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 
@@ -104,13 +104,13 @@ func (i *Invocation) MongoDBOpsRequestVerticalScale(name, namespace string, cont
 	}
 }
 
-func (i *Invocation) MongoDBOpsRequestVolumeExpansion(name, namespace string, standalone, replicaset, shard, configServer *resource.Quantity) *dbaapi.MongoDBOpsRequest {
+func (fi *Invocation) MongoDBOpsRequestVolumeExpansion(name, namespace string, standalone, replicaset, shard, configServer *resource.Quantity) *dbaapi.MongoDBOpsRequest {
 	return &dbaapi.MongoDBOpsRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mor"),
 			Namespace: namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 
@@ -129,13 +129,13 @@ func (i *Invocation) MongoDBOpsRequestVolumeExpansion(name, namespace string, st
 	}
 }
 
-func (i *Invocation) MongoDBOpsRequestReconfigure(name, namespace string, standalone, replicaset, shard, configServer, mongos *dbaapi.MongoDBCustomConfiguration) *dbaapi.MongoDBOpsRequest {
+func (fi *Invocation) MongoDBOpsRequestReconfigure(name, namespace string, standalone, replicaset, shard, configServer, mongos *dbaapi.MongoDBCustomConfiguration) *dbaapi.MongoDBOpsRequest {
 	return &dbaapi.MongoDBOpsRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mor"),
 			Namespace: namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 
@@ -155,8 +155,8 @@ func (i *Invocation) MongoDBOpsRequestReconfigure(name, namespace string, standa
 	}
 }
 
-func (i *Invocation) CreateMongoDBOpsRequest(obj *dbaapi.MongoDBOpsRequest) error {
-	_, err := i.dbClient.OpsV1alpha1().MongoDBOpsRequests(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
+func (fi *Invocation) CreateMongoDBOpsRequest(obj *dbaapi.MongoDBOpsRequest) error {
+	_, err := fi.dbClient.OpsV1alpha1().MongoDBOpsRequests(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
 	return err
 }
 

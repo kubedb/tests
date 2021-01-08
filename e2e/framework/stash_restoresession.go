@@ -29,12 +29,12 @@ import (
 	stash_v1beta1 "stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 )
 
-func (i *Invocation) NewRestoreSession(repoName string, transformFuncs ...func(bc *stash_v1beta1.RestoreSession)) *stash_v1beta1.RestoreSession {
+func (fi *Invocation) NewRestoreSession(repoName string, transformFuncs ...func(bc *stash_v1beta1.RestoreSession)) *stash_v1beta1.RestoreSession {
 	// A generic RestoreSession definition
 	restoreSession := &stash_v1beta1.RestoreSession{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      rand.WithUniqSuffix(i.app),
-			Namespace: i.namespace,
+			Name:      rand.WithUniqSuffix(fi.app),
+			Namespace: fi.namespace,
 		},
 		Spec: stash_v1beta1.RestoreSessionSpec{
 			Repository: core.LocalObjectReference{
@@ -50,15 +50,15 @@ func (i *Invocation) NewRestoreSession(repoName string, transformFuncs ...func(b
 	return restoreSession
 }
 
-func (i *Invocation) SetupDatabaseRestore(appBinding *appcat.AppBinding, repo *stash_v1alpha1.Repository, transformFuncs ...func(rs *stash_v1beta1.RestoreSession)) (*stash_v1beta1.RestoreSession, error) {
+func (fi *Invocation) SetupDatabaseRestore(appBinding *appcat.AppBinding, repo *stash_v1alpha1.Repository, transformFuncs ...func(rs *stash_v1beta1.RestoreSession)) (*stash_v1beta1.RestoreSession, error) {
 	// Generate RestoreSession definition for database
-	restoreSession := i.NewRestoreSession(repo.Name, func(rs *stash_v1beta1.RestoreSession) {
+	restoreSession := fi.NewRestoreSession(repo.Name, func(rs *stash_v1beta1.RestoreSession) {
 		rs.Labels = appBinding.Labels
 		rs.Spec.Task = stash_v1beta1.TaskRef{
 			Name: getRestoreAddonName(),
 		}
 		rs.Spec.Target = &stash_v1beta1.RestoreTarget{
-			Alias: i.app,
+			Alias: fi.app,
 			Ref: stash_v1beta1.TargetRef{
 				APIVersion: appcat.SchemeGroupVersion.String(),
 				Kind:       appcat.ResourceKindApp,
@@ -78,11 +78,11 @@ func (i *Invocation) SetupDatabaseRestore(appBinding *appcat.AppBinding, repo *s
 	}
 
 	By("Creating RestoreSession: " + restoreSession.Name)
-	createdRS, err := i.StashClient.StashV1beta1().RestoreSessions(restoreSession.Namespace).Create(context.TODO(), restoreSession, metav1.CreateOptions{})
+	createdRS, err := fi.StashClient.StashV1beta1().RestoreSessions(restoreSession.Namespace).Create(context.TODO(), restoreSession, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
-	i.AppendToCleanupList(createdRS)
+	fi.AppendToCleanupList(createdRS)
 
 	return createdRS, err
 }

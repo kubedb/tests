@@ -90,21 +90,21 @@ func (f *Framework) DeleteIssuer(meta metav1.ObjectMeta) error {
 	return f.certManagerClient.CertmanagerV1beta1().Issuers(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInForeground())
 }
 
-func (i *Invocation) InsureIssuer(myMeta metav1.ObjectMeta, fqn string) (*cm_api.Issuer, error) {
+func (fi *Invocation) InsureIssuer(myMeta metav1.ObjectMeta, fqn string) (*cm_api.Issuer, error) {
 	//create cert-manager ca secret
-	clientCASecret := i.SelfSignedCASecret(myMeta, fqn)
-	secret, err := i.CreateSecret(clientCASecret)
+	clientCASecret := fi.SelfSignedCASecret(myMeta, fqn)
+	secret, err := fi.CreateSecret(clientCASecret)
 	if err != nil {
 		return nil, err
 	}
-	i.AppendToCleanupList(secret)
+	fi.AppendToCleanupList(secret)
 	//create issuer
-	issuer := i.IssuerForDB(myMeta, clientCASecret.ObjectMeta, fqn)
-	issuer, err = i.CreateIssuer(issuer)
+	issuer := fi.IssuerForDB(myMeta, clientCASecret.ObjectMeta, fqn)
+	issuer, err = fi.CreateIssuer(issuer)
 	if err != nil {
 		return nil, err
 	}
-	i.AppendToCleanupList(issuer)
+	fi.AppendToCleanupList(issuer)
 	return issuer, err
 }
 

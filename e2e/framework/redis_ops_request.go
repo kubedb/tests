@@ -30,13 +30,13 @@ import (
 	meta_util "kmodules.xyz/client-go/meta"
 )
 
-func (i *Invocation) RedisOpsRequestUpgrade(name, version string, typ api.OpsRequestType) *api.RedisOpsRequest {
+func (fi *Invocation) RedisOpsRequestUpgrade(name, version string, typ api.OpsRequestType) *api.RedisOpsRequest {
 	return &api.RedisOpsRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mmr"),
-			Namespace: i.namespace,
+			Namespace: fi.namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 
@@ -52,13 +52,13 @@ func (i *Invocation) RedisOpsRequestUpgrade(name, version string, typ api.OpsReq
 	}
 }
 
-func (i *Invocation) RedisOpsRequestHorizontalScale(name, namespace string, scale *api.RedisHorizontalScalingSpec) *api.RedisOpsRequest {
+func (fi *Invocation) RedisOpsRequestHorizontalScale(name, namespace string, scale *api.RedisHorizontalScalingSpec) *api.RedisOpsRequest {
 	return &api.RedisOpsRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mmr"),
 			Namespace: namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 
@@ -72,13 +72,13 @@ func (i *Invocation) RedisOpsRequestHorizontalScale(name, namespace string, scal
 	}
 }
 
-func (i *Invocation) RedisOpsRequestVerticalScale(name, namespace string, containers, exporter *v1.ResourceRequirements) *api.RedisOpsRequest {
+func (fi *Invocation) RedisOpsRequestVerticalScale(name, namespace string, containers, exporter *v1.ResourceRequirements) *api.RedisOpsRequest {
 	return &api.RedisOpsRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mmr"),
 			Namespace: namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 
@@ -95,13 +95,13 @@ func (i *Invocation) RedisOpsRequestVerticalScale(name, namespace string, contai
 	}
 }
 
-func (i *Invocation) RedisOpsRequestVolumeExpansion(name, namespace string, redis *resource.Quantity) *api.RedisOpsRequest {
+func (fi *Invocation) RedisOpsRequestVolumeExpansion(name, namespace string, redis *resource.Quantity) *api.RedisOpsRequest {
 	return &api.RedisOpsRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mmr"),
 			Namespace: namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 
@@ -117,12 +117,12 @@ func (i *Invocation) RedisOpsRequestVolumeExpansion(name, namespace string, redi
 	}
 }
 
-func (i *Invocation) CreateRedisOpsRequest(obj *api.RedisOpsRequest) (*api.RedisOpsRequest, error) {
-	return i.dbClient.OpsV1alpha1().RedisOpsRequests(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
+func (fi *Invocation) CreateRedisOpsRequest(obj *api.RedisOpsRequest) (*api.RedisOpsRequest, error) {
+	return fi.dbClient.OpsV1alpha1().RedisOpsRequests(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
 }
 
-func (i *Invocation) DeleteRedisOpsRequest(meta metav1.ObjectMeta) error {
-	return i.dbClient.OpsV1alpha1().RedisOpsRequests(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInBackground())
+func (fi *Invocation) DeleteRedisOpsRequest(meta metav1.ObjectMeta) error {
+	return fi.dbClient.OpsV1alpha1().RedisOpsRequests(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInBackground())
 }
 
 func (f *Framework) EventuallyRedisOpsRequestPhase(meta metav1.ObjectMeta) GomegaAsyncAssertion {

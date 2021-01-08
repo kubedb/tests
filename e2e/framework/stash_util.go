@@ -48,9 +48,9 @@ func (f *Framework) StashInstalled() bool {
 	return discovery.ExistsGroupKind(f.kubeClient.Discovery(), stash.GroupName, stash_v1beta1.ResourceKindRestoreSession)
 }
 
-func (i *Invocation) AddonExist() (bool, error) {
+func (fi *Invocation) AddonExist() (bool, error) {
 	// check whether the respective addon has been installed or not
-	_, err := i.StashClient.StashV1beta1().Tasks().Get(context.TODO(), getBackupAddonName(), metav1.GetOptions{})
+	_, err := fi.StashClient.StashV1beta1().Tasks().Get(context.TODO(), getBackupAddonName(), metav1.GetOptions{})
 	if err != nil {
 		if !kerr.IsNotFound(err) {
 			return false, err
@@ -61,59 +61,59 @@ func (i *Invocation) AddonExist() (bool, error) {
 	return true, nil
 }
 
-func (i *Invocation) BackupDatabase(dbMeta metav1.ObjectMeta, expectedSnapshotCount int32, transformFuncs ...func(bc *stash_v1beta1.BackupConfiguration)) (*appcat.AppBinding, *stash_v1alpha1.Repository) {
+func (fi *Invocation) BackupDatabase(dbMeta metav1.ObjectMeta, expectedSnapshotCount int32, transformFuncs ...func(bc *stash_v1beta1.BackupConfiguration)) (*appcat.AppBinding, *stash_v1alpha1.Repository) {
 	By("Configuring backup")
-	appBinding, err := i.GetAppBinding(dbMeta)
+	appBinding, err := fi.GetAppBinding(dbMeta)
 	Expect(err).NotTo(HaveOccurred())
-	backupConfig, repo, err := i.SetupDatabaseBackup(appBinding, transformFuncs...)
+	backupConfig, repo, err := fi.SetupDatabaseBackup(appBinding, transformFuncs...)
 	Expect(err).NotTo(HaveOccurred())
 
 	// Simulate a backup run
-	i.SimulateBackupRun(backupConfig.ObjectMeta, repo.ObjectMeta, expectedSnapshotCount)
+	fi.SimulateBackupRun(backupConfig.ObjectMeta, repo.ObjectMeta, expectedSnapshotCount)
 
 	return appBinding, repo
 }
 
-func (i *Invocation) SimulateBackupRun(backupConfig, repoMeta metav1.ObjectMeta, expectedSnapshotCount int32) {
+func (fi *Invocation) SimulateBackupRun(backupConfig, repoMeta metav1.ObjectMeta, expectedSnapshotCount int32) {
 	By("Triggering an instant backup")
-	backupSession, err := i.TriggerInstantBackup(backupConfig, stash_v1beta1.BackupInvokerRef{
+	backupSession, err := fi.TriggerInstantBackup(backupConfig, stash_v1beta1.BackupInvokerRef{
 		Name: backupConfig.Name,
 		Kind: stash_v1beta1.ResourceKindBackupConfiguration,
 	})
 	Expect(err).NotTo(HaveOccurred())
-	i.AppendToCleanupList(backupSession)
+	fi.AppendToCleanupList(backupSession)
 
 	By("Waiting for the backup to complete")
-	i.EventuallyBackupProcessCompleted(backupSession.ObjectMeta).Should(BeTrue())
+	fi.EventuallyBackupProcessCompleted(backupSession.ObjectMeta).Should(BeTrue())
 
 	By("Verifying that the backup has succeeded")
-	completedBS, err := i.StashClient.StashV1beta1().BackupSessions(backupSession.Namespace).Get(context.TODO(), backupSession.Name, metav1.GetOptions{})
+	completedBS, err := fi.StashClient.StashV1beta1().BackupSessions(backupSession.Namespace).Get(context.TODO(), backupSession.Name, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(completedBS.Status.Phase).Should(Equal(stash_v1beta1.BackupSessionSucceeded))
 
 	By(fmt.Sprintf("Verifying that number of backup snapshots = %d", expectedSnapshotCount))
-	repo, err := i.StashClient.StashV1alpha1().Repositories(repoMeta.Namespace).Get(context.TODO(), repoMeta.Name, metav1.GetOptions{})
+	repo, err := fi.StashClient.StashV1alpha1().Repositories(repoMeta.Namespace).Get(context.TODO(), repoMeta.Name, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(repo.Status.SnapshotCount).Should(BeEquivalentTo(expectedSnapshotCount))
 }
 
-func (i *Invocation) RestoreDatabase(appBinding *appcat.AppBinding, repo *stash_v1alpha1.Repository, transformFuncs ...func(rs *stash_v1beta1.RestoreSession)) {
+func (fi *Invocation) RestoreDatabase(appBinding *appcat.AppBinding, repo *stash_v1alpha1.Repository, transformFuncs ...func(rs *stash_v1beta1.RestoreSession)) {
 	By("Restoring database from backup")
-	restoreSession, err := i.SetupDatabaseRestore(appBinding, repo, transformFuncs...)
+	restoreSession, err := fi.SetupDatabaseRestore(appBinding, repo, transformFuncs...)
 	Expect(err).NotTo(HaveOccurred())
 
 	By("Waiting for restore process to complete")
-	i.EventuallyRestoreProcessCompleted(restoreSession.ObjectMeta).Should(BeTrue())
+	fi.EventuallyRestoreProcessCompleted(restoreSession.ObjectMeta).Should(BeTrue())
 
 	By("Verifying that restore process has succeeded")
-	completedRS, err := i.StashClient.StashV1beta1().RestoreSessions(restoreSession.Namespace).Get(context.TODO(), restoreSession.Name, metav1.GetOptions{})
+	completedRS, err := fi.StashClient.StashV1beta1().RestoreSessions(restoreSession.Namespace).Get(context.TODO(), restoreSession.Name, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(completedRS.Status.Phase).Should(Equal(stash_v1beta1.RestoreSucceeded))
 }
 
-func (i *Invocation) ConfigureAutoBackup(db interface{}, meta metav1.ObjectMeta, transformFuncs ...func(annotations map[string]string)) (*stash_v1beta1.BackupConfiguration, *stash_v1alpha1.Repository) {
+func (fi *Invocation) ConfigureAutoBackup(db interface{}, meta metav1.ObjectMeta, transformFuncs ...func(annotations map[string]string)) (*stash_v1beta1.BackupConfiguration, *stash_v1alpha1.Repository) {
 	// Create BackupBlueprint
-	bb := i.CreateBackupBlueprint()
+	bb := fi.CreateBackupBlueprint()
 
 	annotations := map[string]string{
 		stash_v1beta1.KeyBackupBlueprint: bb.Name,
@@ -124,54 +124,54 @@ func (i *Invocation) ConfigureAutoBackup(db interface{}, meta metav1.ObjectMeta,
 	}
 
 	// Add add auto-backup annotations into the target
-	err := i.AddAutoBackupAnnotations(db, meta, annotations)
+	err := fi.AddAutoBackupAnnotations(db, meta, annotations)
 	Expect(err).NotTo(HaveOccurred())
 
 	// Verify Repository and BackupConfiguration has been created
-	return i.VerifyAutoBackupConfigured(meta)
+	return fi.VerifyAutoBackupConfigured(meta)
 }
 
-func (i *Invocation) AddAutoBackupAnnotations(db interface{}, meta metav1.ObjectMeta, annotations map[string]string) error {
+func (fi *Invocation) AddAutoBackupAnnotations(db interface{}, meta metav1.ObjectMeta, annotations map[string]string) error {
 	By("Adding auto-backup specific annotations to the Target")
-	err := i.AddAnnotations(annotations, db)
+	err := fi.AddAnnotations(annotations, db)
 	if err != nil {
 		return err
 	}
 
 	By("Verifying that the auto-backup annotations has been passed to AppBinding")
-	i.EventuallyAnnotationsPassed(meta, annotations).Should(BeTrue())
+	fi.EventuallyAnnotationsPassed(meta, annotations).Should(BeTrue())
 	return nil
 }
 
-func (i *Invocation) VerifyAutoBackupConfigured(meta metav1.ObjectMeta) (*stash_v1beta1.BackupConfiguration, *stash_v1alpha1.Repository) {
+func (fi *Invocation) VerifyAutoBackupConfigured(meta metav1.ObjectMeta) (*stash_v1beta1.BackupConfiguration, *stash_v1alpha1.Repository) {
 	// BackupBlueprint create BackupConfiguration and Repository such that
 	// the name of the BackupConfiguration and Repository will follow
 	// the patter: <lower case of the workload kind>-<workload name>.
 	// we will form the meta name and namespace for farther process.
 	objMeta := metav1.ObjectMeta{
-		Namespace: i.Namespace(),
+		Namespace: fi.Namespace(),
 		Name:      meta_util.NameWithPrefix("app", meta.Name),
 	}
 
 	By("Waiting for Repository")
-	i.EventuallyRepositoryCreated(objMeta).Should(BeTrue())
-	repo, err := i.StashClient.StashV1alpha1().Repositories(objMeta.Namespace).Get(context.TODO(), objMeta.Name, metav1.GetOptions{})
+	fi.EventuallyRepositoryCreated(objMeta).Should(BeTrue())
+	repo, err := fi.StashClient.StashV1alpha1().Repositories(objMeta.Namespace).Get(context.TODO(), objMeta.Name, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
-	i.AppendToCleanupList(repo)
+	fi.AppendToCleanupList(repo)
 
 	By("Waiting for BackupConfiguration")
-	i.EventuallyBackupConfigurationCreated(objMeta).Should(BeTrue())
-	backupConfig, err := i.StashClient.StashV1beta1().BackupConfigurations(objMeta.Namespace).Get(context.TODO(), objMeta.Name, metav1.GetOptions{})
+	fi.EventuallyBackupConfigurationCreated(objMeta).Should(BeTrue())
+	backupConfig, err := fi.StashClient.StashV1beta1().BackupConfigurations(objMeta.Namespace).Get(context.TODO(), objMeta.Name, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
-	i.AppendToCleanupList(backupConfig)
+	fi.AppendToCleanupList(backupConfig)
 
 	By("Verifying that backup triggering CronJob has been created")
-	i.EventuallyCronJobCreated(backupConfig).Should(BeTrue())
+	fi.EventuallyCronJobCreated(backupConfig).Should(BeTrue())
 
 	return backupConfig, repo
 }
 
-func (i *Invocation) AddAnnotations(annotations map[string]string, db interface{}) error {
+func (fi *Invocation) AddAnnotations(annotations map[string]string, db interface{}) error {
 	schm := scheme.Scheme
 	gvr, _, err := getGVRAndObjectMeta(db)
 	if err != nil {
@@ -188,17 +188,17 @@ func (i *Invocation) AddAnnotations(annotations map[string]string, db interface{
 	// add annotations
 	mod := cur.DeepCopy()
 	mod.SetAnnotations(annotations)
-	_, _, err = dm_util.PatchObject(context.TODO(), i.dmClient, gvr, cur, mod, metav1.PatchOptions{})
+	_, _, err = dm_util.PatchObject(context.TODO(), fi.dmClient, gvr, cur, mod, metav1.PatchOptions{})
 	return err
 }
 
-func (i *Invocation) RemoveAutoBackupAnnotations(db interface{}) {
+func (fi *Invocation) RemoveAutoBackupAnnotations(db interface{}) {
 	By("Removing auto-backup annotations")
 	gvr, meta, err := getGVRAndObjectMeta(db)
 	Expect(err).NotTo(HaveOccurred())
 
 	// get the database
-	cur, err := i.dmClient.Resource(gvr).Namespace(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+	cur, err := fi.dmClient.Resource(gvr).Namespace(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
 	// remove auto-backup annotation
@@ -207,17 +207,17 @@ func (i *Invocation) RemoveAutoBackupAnnotations(db interface{}) {
 	annotations = meta_util.RemoveKey(annotations, stash_v1beta1.KeyBackupBlueprint)
 
 	mod.SetAnnotations(annotations)
-	_, _, err = dm_util.PatchObject(context.TODO(), i.dmClient, gvr, cur, mod, metav1.PatchOptions{})
+	_, _, err = dm_util.PatchObject(context.TODO(), fi.dmClient, gvr, cur, mod, metav1.PatchOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
 	By("Verifying that auto-backup annotations has been removed from the AppBinding")
-	i.EventuallyAnnotationsRemoved(meta, []string{stash_v1beta1.KeyBackupBlueprint}).Should(BeTrue())
+	fi.EventuallyAnnotationsRemoved(meta, []string{stash_v1beta1.KeyBackupBlueprint}).Should(BeTrue())
 }
 
-func (i *Invocation) EventuallyAnnotationsPassed(meta metav1.ObjectMeta, expectedAnnotations map[string]string) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyAnnotationsPassed(meta metav1.ObjectMeta, expectedAnnotations map[string]string) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			appBinding, err := i.appCatalogClient.AppBindings(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+			appBinding, err := fi.appCatalogClient.AppBindings(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			annotations := appBinding.GetAnnotations()
@@ -233,10 +233,10 @@ func (i *Invocation) EventuallyAnnotationsPassed(meta metav1.ObjectMeta, expecte
 	)
 }
 
-func (i *Invocation) EventuallyAnnotationsRemoved(meta metav1.ObjectMeta, keys []string) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyAnnotationsRemoved(meta metav1.ObjectMeta, keys []string) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			appBinding, err := i.appCatalogClient.AppBindings(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+			appBinding, err := fi.appCatalogClient.AppBindings(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			annotations := appBinding.GetAnnotations()
@@ -252,10 +252,10 @@ func (i *Invocation) EventuallyAnnotationsRemoved(meta metav1.ObjectMeta, keys [
 	)
 }
 
-func (i *Invocation) EventuallyCronJobCreated(backupConfig *stash_v1beta1.BackupConfiguration) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyCronJobCreated(backupConfig *stash_v1beta1.BackupConfiguration) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			cronJobs, err := i.kubeClient.BatchV1beta1().CronJobs(backupConfig.Namespace).List(context.TODO(), metav1.ListOptions{})
+			cronJobs, err := fi.kubeClient.BatchV1beta1().CronJobs(backupConfig.Namespace).List(context.TODO(), metav1.ListOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			for _, cr := range cronJobs.Items {
 				if metav1.IsControlledBy(&cr, backupConfig) {
@@ -269,8 +269,8 @@ func (i *Invocation) EventuallyCronJobCreated(backupConfig *stash_v1beta1.Backup
 	)
 }
 
-func (i *Invocation) GetCronJob(meta metav1.ObjectMeta) (*batch.CronJob, error) {
-	cronJobs, err := i.kubeClient.BatchV1beta1().CronJobs(meta.Namespace).List(context.TODO(), metav1.ListOptions{})
+func (fi *Invocation) GetCronJob(meta metav1.ObjectMeta) (*batch.CronJob, error) {
+	cronJobs, err := fi.kubeClient.BatchV1beta1().CronJobs(meta.Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

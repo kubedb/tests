@@ -29,13 +29,13 @@ import (
 	meta_util "kmodules.xyz/client-go/meta"
 )
 
-func (i *Invocation) MySQLOpsRequestDefinition(dbName string) *opsapi.MySQLOpsRequest {
+func (fi *Invocation) MySQLOpsRequestDefinition(dbName string) *opsapi.MySQLOpsRequest {
 	return &opsapi.MySQLOpsRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("myops"),
-			Namespace: i.namespace,
+			Namespace: fi.namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 		Spec: opsapi.MySQLOpsRequestSpec{
@@ -73,10 +73,10 @@ func (f *Framework) EventuallyMySQLOpsRequestCompleted(meta metav1.ObjectMeta) G
 	)
 }
 
-func (i *Invocation) CreateMySQLOpsRequestsAndWaitForSuccess(dbName string, transformFuncs ...func(in *opsapi.MySQLOpsRequest)) *opsapi.MySQLOpsRequest {
+func (fi *Invocation) CreateMySQLOpsRequestsAndWaitForSuccess(dbName string, transformFuncs ...func(in *opsapi.MySQLOpsRequest)) *opsapi.MySQLOpsRequest {
 	var err error
 	// Generate MySQL Ops Request
-	myOR := i.MySQLOpsRequestDefinition(dbName)
+	myOR := fi.MySQLOpsRequestDefinition(dbName)
 
 	// transformFunc provide a function that made test specific change on the MySQL OpsRequest
 	// apply these test specific changes
@@ -85,15 +85,15 @@ func (i *Invocation) CreateMySQLOpsRequestsAndWaitForSuccess(dbName string, tran
 	}
 
 	By("Creating MySQL Ops Request")
-	myOR, err = i.CreateMySQLOpsRequest(myOR)
+	myOR, err = fi.CreateMySQLOpsRequest(myOR)
 	Expect(err).NotTo(HaveOccurred())
-	i.AppendToCleanupList(myOR)
+	fi.AppendToCleanupList(myOR)
 
 	By("Waiting for MySQL Ops Request to be Completed")
-	i.EventuallyMySQLOpsRequestCompleted(myOR.ObjectMeta).Should(BeTrue())
+	fi.EventuallyMySQLOpsRequestCompleted(myOR.ObjectMeta).Should(BeTrue())
 
 	By("Verify that MySQL OpsRequest Phase has Succeeded")
-	myOR, err = i.dbClient.OpsV1alpha1().MySQLOpsRequests(myOR.Namespace).Get(context.TODO(), myOR.Name, metav1.GetOptions{})
+	myOR, err = fi.dbClient.OpsV1alpha1().MySQLOpsRequests(myOR.Namespace).Get(context.TODO(), myOR.Name, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(myOR.Status.Phase).Should(Equal(opsapi.OpsRequestPhaseSuccessful))
 

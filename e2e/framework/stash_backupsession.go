@@ -26,7 +26,7 @@ import (
 	stash_v1beta1 "stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 )
 
-func (i *Invocation) TriggerInstantBackup(objMeta metav1.ObjectMeta, invokerRef stash_v1beta1.BackupInvokerRef) (*stash_v1beta1.BackupSession, error) {
+func (fi *Invocation) TriggerInstantBackup(objMeta metav1.ObjectMeta, invokerRef stash_v1beta1.BackupInvokerRef) (*stash_v1beta1.BackupSession, error) {
 	backupSession := &stash_v1beta1.BackupSession{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix(objMeta.Name),
@@ -45,7 +45,7 @@ func (i *Invocation) TriggerInstantBackup(objMeta metav1.ObjectMeta, invokerRef 
 			},
 		},
 	}
-	return i.StashClient.StashV1beta1().BackupSessions(backupSession.Namespace).Create(context.TODO(), backupSession, metav1.CreateOptions{})
+	return fi.StashClient.StashV1beta1().BackupSessions(backupSession.Namespace).Create(context.TODO(), backupSession, metav1.CreateOptions{})
 }
 
 func (f *Framework) EventuallyBackupProcessCompleted(meta metav1.ObjectMeta) GomegaAsyncAssertion {

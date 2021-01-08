@@ -150,11 +150,11 @@ func (f *Framework) DeleteAppBinding(meta metav1.ObjectMeta) error {
 	return f.appCatalogClient.AppBindings(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInForeground())
 }
 
-func (i *Invocation) CheckMySQLAppBindingSpec(meta metav1.ObjectMeta) error {
-	mysql, err := i.GetMySQL(meta)
+func (fi *Invocation) CheckMySQLAppBindingSpec(meta metav1.ObjectMeta) error {
+	mysql, err := fi.GetMySQL(meta)
 	Expect(err).NotTo(HaveOccurred())
 
-	appBinding, err := i.appCatalogClient.AppBindings(mysql.Namespace).Get(context.TODO(), mysql.Name, metav1.GetOptions{})
+	appBinding, err := fi.appCatalogClient.AppBindings(mysql.Namespace).Get(context.TODO(), mysql.Name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}

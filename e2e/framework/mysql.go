@@ -35,13 +35,13 @@ import (
 	meta_util "kmodules.xyz/client-go/meta"
 )
 
-func (i *Invocation) MySQLDefinition(version string) *api.MySQL {
+func (fi *Invocation) MySQLDefinition(version string) *api.MySQL {
 	return &api.MySQL{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mysql"),
-			Namespace: i.namespace,
+			Namespace: fi.namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 		Spec: api.MySQLSpec{
@@ -56,33 +56,33 @@ func (i *Invocation) MySQLDefinition(version string) *api.MySQL {
 				AccessModes: []core.PersistentVolumeAccessMode{
 					core.ReadWriteOnce,
 				},
-				StorageClassName: types.StringP(i.StorageClass),
+				StorageClassName: types.StringP(fi.StorageClass),
 			},
 		},
 	}
 }
 
-func (i *Invocation) CreateMySQL(obj *api.MySQL) (*api.MySQL, error) {
-	return i.dbClient.KubedbV1alpha2().MySQLs(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
+func (fi *Invocation) CreateMySQL(obj *api.MySQL) (*api.MySQL, error) {
+	return fi.dbClient.KubedbV1alpha2().MySQLs(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
 }
 
-func (i *Invocation) GetMySQL(meta metav1.ObjectMeta) (*api.MySQL, error) {
-	return i.dbClient.KubedbV1alpha2().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+func (fi *Invocation) GetMySQL(meta metav1.ObjectMeta) (*api.MySQL, error) {
+	return fi.dbClient.KubedbV1alpha2().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 }
 
-func (i *Invocation) PatchMySQL(meta metav1.ObjectMeta, transform func(*api.MySQL) *api.MySQL) (*api.MySQL, error) {
-	mysql, err := i.dbClient.KubedbV1alpha2().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+func (fi *Invocation) PatchMySQL(meta metav1.ObjectMeta, transform func(*api.MySQL) *api.MySQL) (*api.MySQL, error) {
+	mysql, err := fi.dbClient.KubedbV1alpha2().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	mysql, _, err = util.PatchMySQL(context.TODO(), i.dbClient.KubedbV1alpha2(), mysql, transform, metav1.PatchOptions{})
+	mysql, _, err = util.PatchMySQL(context.TODO(), fi.dbClient.KubedbV1alpha2(), mysql, transform, metav1.PatchOptions{})
 	return mysql, err
 }
 
-func (i *Invocation) EventuallyMySQLPhase(meta metav1.ObjectMeta) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyMySQLPhase(meta metav1.ObjectMeta) GomegaAsyncAssertion {
 	return Eventually(
 		func() api.DatabasePhase {
-			db, err := i.dbClient.KubedbV1alpha2().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+			db, err := fi.dbClient.KubedbV1alpha2().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			return db.Status.Phase
 		},
@@ -91,10 +91,10 @@ func (i *Invocation) EventuallyMySQLPhase(meta metav1.ObjectMeta) GomegaAsyncAss
 	)
 }
 
-func (i *Invocation) EventuallyMySQLReady(meta metav1.ObjectMeta) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyMySQLReady(meta metav1.ObjectMeta) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			my, err := i.dbClient.KubedbV1alpha2().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+			my, err := fi.dbClient.KubedbV1alpha2().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			return my.Status.Phase == api.DatabasePhaseReady
 		},
@@ -103,10 +103,10 @@ func (i *Invocation) EventuallyMySQLReady(meta metav1.ObjectMeta) GomegaAsyncAss
 	)
 }
 
-func (i *Invocation) EventuallyMySQL(meta metav1.ObjectMeta) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyMySQL(meta metav1.ObjectMeta) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			_, err := i.dbClient.KubedbV1alpha2().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+			_, err := fi.dbClient.KubedbV1alpha2().MySQLs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 			if err != nil {
 				if kerr.IsNotFound(err) {
 					return false
@@ -120,13 +120,13 @@ func (i *Invocation) EventuallyMySQL(meta metav1.ObjectMeta) GomegaAsyncAssertio
 	)
 }
 
-func (i *Invocation) DeleteMySQL(meta metav1.ObjectMeta) error {
-	return i.dbClient.KubedbV1alpha2().MySQLs(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInForeground())
+func (fi *Invocation) DeleteMySQL(meta metav1.ObjectMeta) error {
+	return fi.dbClient.KubedbV1alpha2().MySQLs(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInForeground())
 }
 
-func (i *Invocation) CreateMySQLAndWaitForRunning(version string, transformFuncs ...func(in *api.MySQL)) (*api.MySQL, error) {
+func (fi *Invocation) CreateMySQLAndWaitForRunning(version string, transformFuncs ...func(in *api.MySQL)) (*api.MySQL, error) {
 	// Generate MySQL definition
-	my := i.MySQLDefinition(version)
+	my := fi.MySQLDefinition(version)
 	// transformFunc provide a function that made test specific change on the MySQL
 	// apply these test specific changes
 	for _, fn := range transformFuncs {
@@ -134,37 +134,37 @@ func (i *Invocation) CreateMySQLAndWaitForRunning(version string, transformFuncs
 	}
 
 	By("Create MySQL: " + my.Namespace + "/" + my.Name)
-	my, err := i.CreateMySQL(my)
+	my, err := fi.CreateMySQL(my)
 	if err != nil {
 		return my, err
 	}
-	i.AppendToCleanupList(my)
+	fi.AppendToCleanupList(my)
 
 	By("Wait for Running mysql")
-	i.EventuallyMySQLReady(my.ObjectMeta).Should(BeTrue())
+	fi.EventuallyMySQLReady(my.ObjectMeta).Should(BeTrue())
 
 	By("Wait for AppBinding to create")
-	i.EventuallyAppBinding(my.ObjectMeta).Should(BeTrue())
+	fi.EventuallyAppBinding(my.ObjectMeta).Should(BeTrue())
 
 	By("Check valid AppBinding Specs")
-	err = i.CheckMySQLAppBindingSpec(my.ObjectMeta)
+	err = fi.CheckMySQLAppBindingSpec(my.ObjectMeta)
 
 	return my, err
 }
 
-func (i *Invocation) EventuallyDBReady(my *api.MySQL, dbInfo DatabaseConnectionInfo) {
+func (fi *Invocation) EventuallyDBReady(my *api.MySQL, dbInfo DatabaseConnectionInfo) {
 	if my.Spec.TLS == nil {
-		for idx := int32(0); idx < *my.Spec.Replicas; idx++ {
-			By(fmt.Sprintf("Waiting for database to be ready for pod '%s-%d'", my.Name, idx))
-			dbInfo.ClientPodIndex = int(idx)
-			i.EventuallyDBConnection(my.ObjectMeta, dbInfo).Should(BeTrue())
+		for i := int32(0); i < *my.Spec.Replicas; i++ {
+			By(fmt.Sprintf("Waiting for database to be ready for pod '%s-%d'", my.Name, i))
+			dbInfo.ClientPodIndex = int(i)
+			fi.EventuallyDBConnection(my.ObjectMeta, dbInfo).Should(BeTrue())
 		}
 
 		if my.Spec.Topology != nil && my.Spec.Topology.Mode != nil {
-			for idx := int32(0); idx < *my.Spec.Replicas; idx++ {
-				By(fmt.Sprintf("Checking ONLINE member count from Pod '%s-%d'", my.Name, idx))
-				dbInfo.ClientPodIndex = int(idx)
-				i.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*my.Spec.Replicas)))
+			for i := int32(0); i < *my.Spec.Replicas; i++ {
+				By(fmt.Sprintf("Checking ONLINE member count from Pod '%s-%d'", my.Name, i))
+				dbInfo.ClientPodIndex = int(i)
+				fi.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*my.Spec.Replicas)))
 			}
 		}
 	}
@@ -178,7 +178,7 @@ func (i *Invocation) EventuallyDBReady(my *api.MySQL, dbInfo DatabaseConnectionI
 			}
 		}(my.Spec.RequireSSL)
 
-		i.EventuallyCheckConnectionRootUser(my, requireSecureTransport, dbInfo)
+		fi.EventuallyCheckConnectionRootUser(my, requireSecureTransport, dbInfo)
 
 		By("Checking MySQL SSL server settings")
 		sslConfigVar := []string{
@@ -194,12 +194,12 @@ func (i *Invocation) EventuallyDBReady(my *api.MySQL, dbInfo DatabaseConnectionI
 
 		for _, cfg := range sslConfigVar {
 			dbInfo.Param = fmt.Sprintf("tls=%s", TLSCustomConfig)
-			i.EventuallyCheckSSLSettings(my.ObjectMeta, dbInfo, cfg).Should(matcher.HaveSSL(cfg))
+			fi.EventuallyCheckSSLSettings(my.ObjectMeta, dbInfo, cfg).Should(matcher.HaveSSL(cfg))
 		}
 	}
 }
 
-func (i *Invocation) EventuallyCheckConnectionRootUser(my *api.MySQL, requireSecureTransport string, dbInfo DatabaseConnectionInfo) {
+func (fi *Invocation) EventuallyCheckConnectionRootUser(my *api.MySQL, requireSecureTransport string, dbInfo DatabaseConnectionInfo) {
 	params := []string{
 		fmt.Sprintf("tls=%s", TLSSkibVerify),
 		fmt.Sprintf("tls=%s", TLSCustomConfig),
@@ -211,23 +211,23 @@ func (i *Invocation) EventuallyCheckConnectionRootUser(my *api.MySQL, requireSec
 	for _, param := range params {
 		dbInfo.Param = param
 		By(fmt.Sprintf("Checking root User connection with tls: %s", param))
-		for idx := int32(0); idx < *my.Spec.Replicas; idx++ {
-			By(fmt.Sprintf("Waiting for database to be ready for pod '%s-%d'", my.Name, idx))
-			dbInfo.ClientPodIndex = int(idx)
-			i.EventuallyDBConnection(my.ObjectMeta, dbInfo).Should(BeTrue())
+		for i := int32(0); i < *my.Spec.Replicas; i++ {
+			By(fmt.Sprintf("Waiting for database to be ready for pod '%s-%d'", my.Name, i))
+			dbInfo.ClientPodIndex = int(i)
+			fi.EventuallyDBConnection(my.ObjectMeta, dbInfo).Should(BeTrue())
 		}
 
 		if my.Spec.Topology != nil && my.Spec.Topology.Mode != nil {
-			for idx := int32(0); idx < *my.Spec.Replicas; idx++ {
-				By(fmt.Sprintf("Checking ONLINE member count from Pod '%s-%d'", my.Name, idx))
-				dbInfo.ClientPodIndex = int(idx)
-				i.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*my.Spec.Replicas)))
+			for i := int32(0); i < *my.Spec.Replicas; i++ {
+				By(fmt.Sprintf("Checking ONLINE member count from Pod '%s-%d'", my.Name, i))
+				dbInfo.ClientPodIndex = int(i)
+				fi.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*my.Spec.Replicas)))
 			}
 		}
 	}
 }
 
-func (i *Invocation) EventuallyCheckConnectionRequiredSSLUser(my *api.MySQL, dbInfo DatabaseConnectionInfo) {
+func (fi *Invocation) EventuallyCheckConnectionRequiredSSLUser(my *api.MySQL, dbInfo DatabaseConnectionInfo) {
 	params := []string{
 		fmt.Sprintf("tls=%s", TLSSkibVerify),
 		fmt.Sprintf("tls=%s", TLSCustomConfig),
@@ -235,18 +235,18 @@ func (i *Invocation) EventuallyCheckConnectionRequiredSSLUser(my *api.MySQL, dbI
 	for _, param := range params {
 		dbInfo.Param = param
 		By(fmt.Sprintf("Checking ssl required User connection with tls: %s", param))
-		for idx := int32(0); idx < *my.Spec.Replicas; idx++ {
-			By(fmt.Sprintf("Waiting for database to be ready for pod '%s-%d'", my.Name, idx))
-			dbInfo.ClientPodIndex = int(idx)
-			i.EventuallyDBConnection(my.ObjectMeta, dbInfo).Should(BeTrue())
+		for i := int32(0); i < *my.Spec.Replicas; i++ {
+			By(fmt.Sprintf("Waiting for database to be ready for pod '%s-%d'", my.Name, i))
+			dbInfo.ClientPodIndex = int(i)
+			fi.EventuallyDBConnection(my.ObjectMeta, dbInfo).Should(BeTrue())
 		}
 
 		if my.Spec.Topology != nil && my.Spec.Topology.Mode != nil {
 			dbInfo.User = MySQLRootUser
-			for idx := int32(0); idx < *my.Spec.Replicas; idx++ {
-				By(fmt.Sprintf("Checking ONLINE member count from Pod '%s-%d'", my.Name, idx))
-				dbInfo.ClientPodIndex = int(idx)
-				i.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*my.Spec.Replicas)))
+			for i := int32(0); i < *my.Spec.Replicas; i++ {
+				By(fmt.Sprintf("Checking ONLINE member count from Pod '%s-%d'", my.Name, i))
+				dbInfo.ClientPodIndex = int(i)
+				fi.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*my.Spec.Replicas)))
 			}
 		}
 	}

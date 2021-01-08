@@ -245,9 +245,9 @@ func (fi *Framework) GetPod(meta metav1.ObjectMeta) (*core.Pod, error) {
 	return nil, fmt.Errorf("no pod found for workload %v", meta.Name)
 }
 
-func (i *Invocation) PrintDebugInfoOnFailure() {
+func (fi *Invocation) PrintDebugInfoOnFailure() {
 	if CurrentGinkgoTestDescription().Failed {
-		i.PrintDebugHelpers()
+		fi.PrintDebugHelpers()
 		TestFailed = true
 	}
 }
@@ -315,15 +315,15 @@ func (f *Framework) PrintDebugHelpers() {
 	}
 }
 
-func (i *Invocation) IsGKE() bool {
+func (fi *Invocation) IsGKE() bool {
 	_, ok := os.LookupEnv("GOOGLE_SERVICE_ACCOUNT_JSON_KEY")
 
 	return ok
 }
 
-func (i *Invocation) AppendToCleanupList(resources ...interface{}) {
+func (fi *Invocation) AppendToCleanupList(resources ...interface{}) {
 	for r := range resources {
-		i.testResources = append(i.testResources, resources[r])
+		fi.testResources = append(fi.testResources, resources[r])
 	}
 }
 
@@ -399,26 +399,26 @@ func (f *Framework) waitUntilResourceDeleted(gvr schema.GroupVersionResource, ob
 	})
 }
 
-func (i *Invocation) CleanupTestResources() error {
+func (fi *Invocation) CleanupTestResources() error {
 	// delete all test resources
-	for r := range i.testResources {
-		gvr, objMeta, err := getGVRAndObjectMeta(i.testResources[r])
+	for r := range fi.testResources {
+		gvr, objMeta, err := getGVRAndObjectMeta(fi.testResources[r])
 		if err != nil {
 			return err
 		}
-		err = i.dmClient.Resource(gvr).Namespace(objMeta.Namespace).Delete(context.TODO(), objMeta.Name, meta_util.DeleteInForeground())
+		err = fi.dmClient.Resource(gvr).Namespace(objMeta.Namespace).Delete(context.TODO(), objMeta.Name, meta_util.DeleteInForeground())
 		if err != nil && !kerr.IsNotFound(err) {
 			return err
 		}
 	}
 
 	// wait until resource has been deleted
-	for r := range i.testResources {
-		gvr, objMeta, err := getGVRAndObjectMeta(i.testResources[r])
+	for r := range fi.testResources {
+		gvr, objMeta, err := getGVRAndObjectMeta(fi.testResources[r])
 		if err != nil {
 			return err
 		}
-		err = i.waitUntilResourceDeleted(gvr, objMeta)
+		err = fi.waitUntilResourceDeleted(gvr, objMeta)
 		if err != nil {
 			return err
 		}

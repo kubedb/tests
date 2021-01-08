@@ -36,17 +36,17 @@ const (
 	RESTIC_PASSWORD = "not@secret"
 )
 
-func (i *Invocation) NewMinioRepository(secretName string) *stash_v1alpha1.Repository {
+func (fi *Invocation) NewMinioRepository(secretName string) *stash_v1alpha1.Repository {
 	return &stash_v1alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      meta.NameWithSuffix("minio", i.app),
-			Namespace: i.namespace,
+			Name:      meta.NameWithSuffix("minio", fi.app),
+			Namespace: fi.namespace,
 		},
 		Spec: stash_v1alpha1.RepositorySpec{
 			Backend: store.Backend{
 				S3: &store.S3Spec{
-					Endpoint: i.MinioServiceAddres(),
-					Bucket:   i.app,
+					Endpoint: fi.MinioServiceAddres(),
+					Bucket:   fi.app,
 					Prefix:   "kubedb/backup",
 				},
 				StorageSecretName: secretName,
@@ -56,26 +56,26 @@ func (i *Invocation) NewMinioRepository(secretName string) *stash_v1alpha1.Repos
 	}
 }
 
-func (i *Invocation) SetupMinioRepository() (*stash_v1alpha1.Repository, error) {
+func (fi *Invocation) SetupMinioRepository() (*stash_v1alpha1.Repository, error) {
 	// Create Storage Secret
 	By("Creating Storage Secret")
-	cred := i.SecretForMinioBackend(true)
+	cred := fi.SecretForMinioBackend(true)
 
 	// Generate Repository Definition
-	repo := i.NewMinioRepository(cred.Name)
+	repo := fi.NewMinioRepository(cred.Name)
 
 	// Create Repository
 	By("Creating Repository")
-	repo, err := i.StashClient.StashV1alpha1().Repositories(repo.Namespace).Create(context.TODO(), repo, metav1.CreateOptions{})
+	repo, err := fi.StashClient.StashV1alpha1().Repositories(repo.Namespace).Create(context.TODO(), repo, metav1.CreateOptions{})
 	if err != nil {
 		return repo, err
 	}
-	i.AppendToCleanupList(repo)
+	fi.AppendToCleanupList(repo)
 
 	// Set Repository as the owner of the storageSecret so that when we delete
 	// the Repository, the storage secret get garbage collected
 	repo.GetObjectKind().SetGroupVersionKind(stash_v1alpha1.SchemeGroupVersion.WithKind(stash_v1alpha1.ResourceKindRepository))
-	_, _, err = core_util.CreateOrPatchSecret(context.TODO(), i.kubeClient, cred.ObjectMeta, func(in *core.Secret) *core.Secret {
+	_, _, err = core_util.CreateOrPatchSecret(context.TODO(), fi.kubeClient, cred.ObjectMeta, func(in *core.Secret) *core.Secret {
 		core_util.EnsureOwnerReference(in, core_util.NewOwnerRef(repo, repo.GroupVersionKind()))
 		in.Data = cred.Data
 		return in
@@ -83,11 +83,11 @@ func (i *Invocation) SetupMinioRepository() (*stash_v1alpha1.Repository, error) 
 	return repo, err
 }
 
-func (i *Invocation) SecretForMinioBackend(includeCacert bool) *core.Secret {
+func (fi *Invocation) SecretForMinioBackend(includeCacert bool) *core.Secret {
 	secret := &core.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      meta.NameWithSuffix("minio", i.app),
-			Namespace: i.namespace,
+			Name:      meta.NameWithSuffix("minio", fi.app),
+			Namespace: fi.namespace,
 		},
 		Data: map[string][]byte{
 			restic.RESTIC_PASSWORD:       []byte(RESTIC_PASSWORD),
@@ -96,19 +96,19 @@ func (i *Invocation) SecretForMinioBackend(includeCacert bool) *core.Secret {
 		},
 	}
 	if includeCacert {
-		secret.Data[restic.CA_CERT_DATA] = i.CertStore.CACertBytes()
+		secret.Data[restic.CA_CERT_DATA] = fi.CertStore.CACertBytes()
 	}
 	return secret
 }
 
-func (i Invocation) CreateSecretForMinioBackend() *core.Secret {
+func (fi Invocation) CreateSecretForMinioBackend() *core.Secret {
 	// Create Storage Secret
-	cred := i.SecretForMinioBackend(true)
+	cred := fi.SecretForMinioBackend(true)
 
 	By(fmt.Sprintf("Creating Storage Secret for Minio: %s/%s", cred.Namespace, cred.Name))
-	createdCred, err := i.CreateSecret(cred)
+	createdCred, err := fi.CreateSecret(cred)
 	Expect(err).NotTo(HaveOccurred())
-	i.AppendToCleanupList(&cred)
+	fi.AppendToCleanupList(&cred)
 
 	return createdCred
 }

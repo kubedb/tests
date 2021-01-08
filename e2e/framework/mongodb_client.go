@@ -316,8 +316,8 @@ func (f *Framework) EventuallyInsertCollection(meta metav1.ObjectMeta, dbName st
 			}
 			defer tunnel.Close()
 
-			for idx := range collections {
-				if _, err := client.Database(dbName).Collection(collections[idx].Name).InsertOne(context.Background(), collections[idx].Document); err != nil {
+			for i := range collections {
+				if _, err := client.Database(dbName).Collection(collections[i].Name).InsertOne(context.Background(), collections[i].Document); err != nil {
 					log.Errorln("creation error:", err)
 					return false, err
 				}
@@ -340,14 +340,14 @@ func (f *Framework) EventuallyUpdateCollection(meta metav1.ObjectMeta, dbName st
 			}
 			defer tunnel.Close()
 
-			for idx := range collections {
-				updateResult, err := client.Database(dbName).Collection(collections[idx].Name).ReplaceOne(context.Background(), bson.M{"name": SampleDocument}, collections[idx].Document)
+			for i := range collections {
+				updateResult, err := client.Database(dbName).Collection(collections[i].Name).ReplaceOne(context.Background(), bson.M{"name": SampleDocument}, collections[i].Document)
 				if err != nil {
 					log.Errorln("update error:", err)
 					return false, err
 				}
 				if updateResult.MatchedCount == 0 {
-					return false, fmt.Errorf("no matching document found for the collection: %s", collections[idx].Name)
+					return false, fmt.Errorf("no matching document found for the collection: %s", collections[i].Name)
 				}
 			}
 			return true, nil
