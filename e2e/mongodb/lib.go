@@ -65,7 +65,7 @@ type testOptions struct {
 	clusterAuthMode  *api.ClusterAuthMode
 	sslMode          *api.SSLMode
 	garbageCASecrets []*core.Secret
-	anotherMongoDB   *api.MongoDB
+	//anotherMongoDB   *api.MongoDB
 }
 
 func (to *testOptions) addIssuerRef() {

@@ -22,9 +22,9 @@ import (
 	"net"
 	"path/filepath"
 
-	"github.com/appscode/go/types"
 	. "github.com/onsi/gomega"
 	"gomodules.xyz/cert"
+	"gomodules.xyz/pointer"
 	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
@@ -34,6 +34,7 @@ import (
 	apps_util "kmodules.xyz/client-go/apps/v1"
 	core_util "kmodules.xyz/client-go/core/v1"
 	meta_util "kmodules.xyz/client-go/meta"
+	"stash.appscode.dev/apimachinery/apis"
 )
 
 const (
@@ -68,21 +69,22 @@ func (f *Framework) CreateMinioServer(tls bool, ips []net.IP) (string, error) {
 		return "", err
 	}
 
-	//creating deployment for minio server
-	mdeploy = f.DeploymentForMinioServer()
-	if !tls { // if tls not enabled then don't mount secret for cacerts
-		mdeploy.Spec.Template.Spec.Containers = f.RemoveSecretVolumeMount(mdeploy.Spec.Template.Spec.Containers)
-	}
-	err = f.CreateDeploymentForMinioServer(mdeploy)
-	if err != nil {
-		return "", err
-	}
-
 	//creating pvc for minio server
 	mpvc = f.PVCForMinioServer()
 	err = f.CreatePersistentVolumeClaimForMinioServer(mpvc)
 	if err != nil {
 		return "", nil
+	}
+
+	//creating deployment for minio server
+	mdeploy = f.DeploymentForMinioServer(mpvc, mcred)
+	if !tls { // if tls not enabled then don't mount secret for cacerts
+		mdeploy.Spec.Template.Spec.Containers = f.RemoveSecretVolumeMount(mdeploy.Spec.Template.Spec.Containers, mcred)
+	}
+
+	err = f.CreateDeploymentForMinioServer(mdeploy)
+	if err != nil {
+		return "", err
 	}
 
 	//creating service for minio server
@@ -117,11 +119,11 @@ func (f *Framework) SecretForMinioServer(ips []net.IP) core.Secret {
 func (f *Framework) PVCForMinioServer() core.PersistentVolumeClaim {
 	return core.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf(MinioPVCStorage+"%s", f.namespace),
+			Name:      fmt.Sprintf("%s-%s", MinioPVCStorage, f.namespace),
 			Namespace: f.namespace,
 			Labels: map[string]string{
 				// this label will be used to mount this pvc as volume in minio server container
-				"app": "minio-storage-claim",
+				apis.LabelApp: fmt.Sprintf("%s-%s", MinioServer, f.namespace),
 			},
 		},
 		Spec: core.PersistentVolumeClaimSpec{
@@ -130,10 +132,10 @@ func (f *Framework) PVCForMinioServer() core.PersistentVolumeClaim {
 			},
 			Resources: core.ResourceRequirements{
 				Requests: core.ResourceList{
-					core.ResourceName(core.ResourceStorage): resource.MustParse("2Gi"),
+					core.ResourceStorage: resource.MustParse("1Gi"),
 				},
 			},
-			StorageClassName: types.StringP(f.StorageClass),
+			StorageClassName: pointer.StringP(f.StorageClass),
 		},
 	}
 }
@@ -143,9 +145,9 @@ func (f *Framework) CreatePersistentVolumeClaimForMinioServer(obj core.Persisten
 	return err
 }
 
-func (f *Framework) DeploymentForMinioServer() apps.Deployment {
+func (f *Framework) DeploymentForMinioServer(pvc core.PersistentVolumeClaim, secret core.Secret) apps.Deployment {
 	labels := map[string]string{
-		"app": f.namespace + "minio-server",
+		apis.LabelApp: fmt.Sprintf("%s-%s", MinioServer, f.namespace),
 	}
 
 	return apps.Deployment{
@@ -173,7 +175,7 @@ func (f *Framework) DeploymentForMinioServer() apps.Deployment {
 							Name: "minio-storage",
 							VolumeSource: core.VolumeSource{
 								PersistentVolumeClaim: &core.PersistentVolumeClaimVolumeSource{
-									ClaimName: fmt.Sprintf(MinioPVCStorage+"%s", f.namespace),
+									ClaimName: pvc.Name,
 								},
 							},
 						},
@@ -181,7 +183,7 @@ func (f *Framework) DeploymentForMinioServer() apps.Deployment {
 							Name: "minio-certs",
 							VolumeSource: core.VolumeSource{
 								Secret: &core.SecretVolumeSource{
-									SecretName: fmt.Sprintf(MinioServerSecret+"%s", f.namespace),
+									SecretName: secret.Name,
 									Items: []core.KeyToPath{
 										{
 											Key:  MINIO_PUBLIC_CRT_NAME,
@@ -245,11 +247,11 @@ func (f *Framework) DeploymentForMinioServer() apps.Deployment {
 	}
 }
 
-func (f *Framework) RemoveSecretVolumeMount(containers []core.Container) []core.Container {
+func (f *Framework) RemoveSecretVolumeMount(containers []core.Container, secret core.Secret) []core.Container {
 	resp := make([]core.Container, 0)
 	for _, c := range containers {
 		if c.Name == "minio-server" {
-			c.VolumeMounts = core_util.EnsureVolumeMountDeleted(c.VolumeMounts, "minio-secret")
+			c.VolumeMounts = core_util.EnsureVolumeMountDeleted(c.VolumeMounts, secret.Name)
 		}
 		resp = append(resp, c)
 	}
@@ -276,7 +278,7 @@ func (f *Framework) ServiceForMinioServer() core.Service {
 				},
 			},
 			Selector: map[string]string{
-				"app": f.namespace + "minio-server",
+				apis.LabelApp: fmt.Sprintf("%s-%s", MinioServer, f.namespace),
 			},
 		},
 	}

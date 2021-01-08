@@ -50,6 +50,8 @@ import (
 	"kmodules.xyz/client-go/tools/portforward"
 	mona "kmodules.xyz/monitoring-agent-api/api/v1"
 	"stash.appscode.dev/apimachinery/apis"
+	stash_v1alpha1 "stash.appscode.dev/apimachinery/apis/stash/v1alpha1"
+	stash_v1beta1 "stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 )
 
 const (
@@ -58,6 +60,7 @@ const (
 	mongodbUpMetric      = "mongodb_up"
 	metricsMatchedCount  = 2
 	mongodbVersionMetric = "mongodb_version_info"
+	labelApp             = "app"
 )
 
 func (f *Framework) DeleteCASecret(clientCASecret *v1.Secret) {
@@ -242,9 +245,9 @@ func (fi *Framework) GetPod(meta metav1.ObjectMeta) (*core.Pod, error) {
 	return nil, fmt.Errorf("no pod found for workload %v", meta.Name)
 }
 
-func (fi *Invocation) PrintDebugInfoOnFailure() {
+func (i *Invocation) PrintDebugInfoOnFailure() {
 	if CurrentGinkgoTestDescription().Failed {
-		fi.PrintDebugHelpers()
+		i.PrintDebugHelpers()
 		TestFailed = true
 	}
 }
@@ -281,6 +284,21 @@ func (f *Framework) PrintDebugHelpers() {
 		fmt.Println(err)
 	}
 
+	fmt.Println("\n======================================[ Describe Repository ]==========================================")
+	if err := sh.Command("/usr/bin/kubectl", "describe", "repository", "-n", f.Namespace()).Run(); err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println("\n======================================[ Describe BackupConfiguration ]==========================================")
+	if err := sh.Command("/usr/bin/kubectl", "describe", "backupconfiguration", "-n", f.Namespace()).Run(); err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println("\n======================================[ Describe BackupBlueprint ]==========================================")
+	if err := sh.Command("/usr/bin/kubectl", "describe", "backupblueprint", "-n", f.Namespace()).Run(); err != nil {
+		fmt.Println(err)
+	}
+
 	fmt.Println("\n======================================[ Describe BackupSession ]==========================================")
 	if err := sh.Command("/usr/bin/kubectl", "describe", "backupsession", "-n", f.Namespace()).Run(); err != nil {
 		fmt.Println(err)
@@ -297,52 +315,72 @@ func (f *Framework) PrintDebugHelpers() {
 	}
 }
 
-func (f *Invocation) IsGKE() bool {
+func (i *Invocation) IsGKE() bool {
 	_, ok := os.LookupEnv("GOOGLE_SERVICE_ACCOUNT_JSON_KEY")
 
 	return ok
 }
 
-func (fi *Invocation) AppendToCleanupList(resources ...interface{}) {
+func (i *Invocation) AppendToCleanupList(resources ...interface{}) {
 	for r := range resources {
-		fi.testResources = append(fi.testResources, resources[r])
+		i.testResources = append(i.testResources, resources[r])
 	}
 }
 
 func getGVRAndObjectMeta(obj interface{}) (schema.GroupVersionResource, metav1.ObjectMeta, error) {
-	switch w := obj.(type) {
+	switch r := obj.(type) {
 	case *api.MongoDB:
-		w.GetObjectKind().SetGroupVersionKind(api.SchemeGroupVersion.WithKind(api.ResourceKindMongoDB))
-		gvk := w.GroupVersionKind()
-		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: api.ResourcePluralMongoDB}, w.ObjectMeta, nil
+		r.GetObjectKind().SetGroupVersionKind(api.SchemeGroupVersion.WithKind(api.ResourceKindMongoDB))
+		gvk := r.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: api.ResourcePluralMongoDB}, r.ObjectMeta, nil
 	case *v1alpha1.MongoDBOpsRequest:
-		w.GetObjectKind().SetGroupVersionKind(opsapi.SchemeGroupVersion.WithKind(opsapi.ResourceKindMongoDBOpsRequest))
-		gvk := w.GroupVersionKind()
-		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: opsapi.ResourcePluralMongoDBOpsRequest}, w.ObjectMeta, nil
+		r.GetObjectKind().SetGroupVersionKind(opsapi.SchemeGroupVersion.WithKind(opsapi.ResourceKindMongoDBOpsRequest))
+		gvk := r.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: opsapi.ResourcePluralMongoDBOpsRequest}, r.ObjectMeta, nil
 	case *api.MySQL:
-		w.GetObjectKind().SetGroupVersionKind(api.SchemeGroupVersion.WithKind(api.ResourceKindMySQL))
-		gvk := w.GroupVersionKind()
-		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: api.ResourcePluralMySQL}, w.ObjectMeta, nil
+		r.GetObjectKind().SetGroupVersionKind(api.SchemeGroupVersion.WithKind(api.ResourceKindMySQL))
+		gvk := r.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: api.ResourcePluralMySQL}, r.ObjectMeta, nil
 	case *v1alpha1.MySQLOpsRequest:
-		w.GetObjectKind().SetGroupVersionKind(opsapi.SchemeGroupVersion.WithKind(opsapi.ResourceKindMySQLOpsRequest))
-		gvk := w.GroupVersionKind()
-		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: opsapi.ResourcePluralMySQLOpsRequest}, w.ObjectMeta, nil
+		r.GetObjectKind().SetGroupVersionKind(opsapi.SchemeGroupVersion.WithKind(opsapi.ResourceKindMySQLOpsRequest))
+		gvk := r.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: opsapi.ResourcePluralMySQLOpsRequest}, r.ObjectMeta, nil
 	case *core.Secret:
-		w.GetObjectKind().SetGroupVersionKind(core.SchemeGroupVersion.WithKind("Secret"))
-		gvk := w.GroupVersionKind()
-		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: "secrets"}, w.ObjectMeta, nil
+		r.GetObjectKind().SetGroupVersionKind(core.SchemeGroupVersion.WithKind("Secret"))
+		gvk := r.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: "secrets"}, r.ObjectMeta, nil
 	case *core.Service:
-		w.GetObjectKind().SetGroupVersionKind(core.SchemeGroupVersion.WithKind(apis.KindService))
-		gvk := w.GroupVersionKind()
-		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: apis.ResourcePluralService}, w.ObjectMeta, nil
+		r.GetObjectKind().SetGroupVersionKind(core.SchemeGroupVersion.WithKind(apis.KindService))
+		gvk := r.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: apis.ResourcePluralService}, r.ObjectMeta, nil
 	case *core.ConfigMap:
-		w.GetObjectKind().SetGroupVersionKind(core.SchemeGroupVersion.WithKind("ConfigMap"))
-		gvk := w.GroupVersionKind()
-		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: "configmaps"}, w.ObjectMeta, nil
+		r.GetObjectKind().SetGroupVersionKind(core.SchemeGroupVersion.WithKind("ConfigMap"))
+		gvk := r.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: "configmaps"}, r.ObjectMeta, nil
 	case *cm_api.Issuer:
-		w.GetObjectKind().SetGroupVersionKind(cm_api.SchemeGroupVersion.WithKind(cm_api.IssuerKind))
-		gvk := w.GroupVersionKind()
-		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: "issuers"}, w.ObjectMeta, nil
+		r.GetObjectKind().SetGroupVersionKind(cm_api.SchemeGroupVersion.WithKind(cm_api.IssuerKind))
+		gvk := r.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: "issuers"}, r.ObjectMeta, nil
+	case *stash_v1alpha1.Repository:
+		r.GetObjectKind().SetGroupVersionKind(stash_v1alpha1.SchemeGroupVersion.WithKind(stash_v1alpha1.ResourceKindRepository))
+		gvk := r.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: stash_v1alpha1.ResourcePluralRepository}, r.ObjectMeta, nil
+	case *stash_v1beta1.BackupConfiguration:
+		r.GetObjectKind().SetGroupVersionKind(stash_v1beta1.SchemeGroupVersion.WithKind(stash_v1beta1.ResourceKindBackupConfiguration))
+		gvk := r.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: stash_v1beta1.ResourcePluralBackupConfiguration}, r.ObjectMeta, nil
+	case *stash_v1beta1.BackupBlueprint:
+		r.GetObjectKind().SetGroupVersionKind(stash_v1beta1.SchemeGroupVersion.WithKind(stash_v1beta1.ResourceKindBackupBlueprint))
+		gvk := r.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: stash_v1beta1.ResourcePluralBackupConfiguration}, r.ObjectMeta, nil
+	case *stash_v1beta1.BackupSession:
+		r.GetObjectKind().SetGroupVersionKind(stash_v1beta1.SchemeGroupVersion.WithKind(stash_v1beta1.ResourceKindBackupSession))
+		gvk := r.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: stash_v1beta1.ResourcePluralBackupSession}, r.ObjectMeta, nil
+	case *stash_v1beta1.RestoreSession:
+		r.GetObjectKind().SetGroupVersionKind(stash_v1beta1.SchemeGroupVersion.WithKind(stash_v1beta1.ResourceKindRestoreSession))
+		gvk := r.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: stash_v1beta1.ResourcePluralRestoreSession}, r.ObjectMeta, nil
 	default:
 		return schema.GroupVersionResource{}, metav1.ObjectMeta{}, fmt.Errorf("failed to get GroupVersionResource. Reason: Unknown resource type")
 	}
@@ -361,26 +399,26 @@ func (f *Framework) waitUntilResourceDeleted(gvr schema.GroupVersionResource, ob
 	})
 }
 
-func (fi *Invocation) CleanupTestResources() error {
+func (i *Invocation) CleanupTestResources() error {
 	// delete all test resources
-	for r := range fi.testResources {
-		gvr, objMeta, err := getGVRAndObjectMeta(fi.testResources[r])
+	for r := range i.testResources {
+		gvr, objMeta, err := getGVRAndObjectMeta(i.testResources[r])
 		if err != nil {
 			return err
 		}
-		err = fi.dmClient.Resource(gvr).Namespace(objMeta.Namespace).Delete(context.TODO(), objMeta.Name, meta_util.DeleteInForeground())
+		err = i.dmClient.Resource(gvr).Namespace(objMeta.Namespace).Delete(context.TODO(), objMeta.Name, meta_util.DeleteInForeground())
 		if err != nil && !kerr.IsNotFound(err) {
 			return err
 		}
 	}
 
 	// wait until resource has been deleted
-	for r := range fi.testResources {
-		gvr, objMeta, err := getGVRAndObjectMeta(fi.testResources[r])
+	for r := range i.testResources {
+		gvr, objMeta, err := getGVRAndObjectMeta(i.testResources[r])
 		if err != nil {
 			return err
 		}
-		err = fi.waitUntilResourceDeleted(gvr, objMeta)
+		err = i.waitUntilResourceDeleted(gvr, objMeta)
 		if err != nil {
 			return err
 		}

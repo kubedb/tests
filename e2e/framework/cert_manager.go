@@ -23,9 +23,12 @@ import (
 
 	"github.com/appscode/go/crypto/rand"
 	"github.com/appscode/go/log"
+	"github.com/appscode/go/types"
 	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1beta1"
+	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kmapi "kmodules.xyz/client-go/api/v1"
 	meta_util "kmodules.xyz/client-go/meta"
 )
 
@@ -87,20 +90,36 @@ func (f *Framework) DeleteIssuer(meta metav1.ObjectMeta) error {
 	return f.certManagerClient.CertmanagerV1beta1().Issuers(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInForeground())
 }
 
-func (fi *Invocation) InsureIssuer(myMeta metav1.ObjectMeta, fqn string) (*cm_api.Issuer, error) {
+func (i *Invocation) InsureIssuer(myMeta metav1.ObjectMeta, fqn string) (*cm_api.Issuer, error) {
 	//create cert-manager ca secret
-	clientCASecret := fi.SelfSignedCASecret(myMeta, fqn)
-	secret, err := fi.CreateSecret(clientCASecret)
+	clientCASecret := i.SelfSignedCASecret(myMeta, fqn)
+	secret, err := i.CreateSecret(clientCASecret)
 	if err != nil {
 		return nil, err
 	}
-	fi.AppendToCleanupList(secret)
+	i.AppendToCleanupList(secret)
 	//create issuer
-	issuer := fi.IssuerForDB(myMeta, clientCASecret.ObjectMeta, fqn)
-	issuer, err = fi.CreateIssuer(issuer)
+	issuer := i.IssuerForDB(myMeta, clientCASecret.ObjectMeta, fqn)
+	issuer, err = i.CreateIssuer(issuer)
 	if err != nil {
 		return nil, err
 	}
-	fi.AppendToCleanupList(issuer)
+	i.AppendToCleanupList(issuer)
 	return issuer, err
+}
+
+func NewTLSConfiguration(issuer *cm_api.Issuer, transformFuncs ...func(tls *kmapi.TLSConfig)) *kmapi.TLSConfig {
+	tlsConfig := &kmapi.TLSConfig{
+		IssuerRef: &core.TypedLocalObjectReference{
+			Name:     issuer.Name,
+			Kind:     "Issuer",
+			APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
+		},
+	}
+
+	// apply test specific modification
+	for _, fn := range transformFuncs {
+		fn(tlsConfig)
+	}
+	return tlsConfig
 }

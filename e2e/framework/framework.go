@@ -56,11 +56,13 @@ var (
 	DBUpdatedVersion = "6.0.6"
 	PullInterval     = time.Second * 2
 	WaitTimeOut      = time.Minute * 5
-	StorageProvider  string
 	RootFramework    *Framework
 	SSLEnabled       bool
 	InMemory         bool
 	TestFailed       = false
+
+	StashAddonName    = ""
+	StashAddonVersion = ""
 )
 
 type Framework struct {
@@ -71,7 +73,7 @@ type Framework struct {
 	kaClient          ka.Interface
 	dmClient          dynamic.Interface
 	appCatalogClient  appcat_cs.AppcatalogV1alpha1Interface
-	stashClient       scs.Interface
+	StashClient       scs.Interface
 	topology          *core_util.Topology
 	namespace         string
 	name              string
@@ -125,7 +127,7 @@ func New(
 		kaClient:          kaClient,
 		dmClient:          dmClient,
 		appCatalogClient:  appCatalogClient,
-		stashClient:       stashClient,
+		StashClient:       stashClient,
 		name:              fmt.Sprintf("%s-operator", DBType),
 		namespace:         rand.WithUniqSuffix(strings.ToLower(DBType)),
 		StorageClass:      storageClass,

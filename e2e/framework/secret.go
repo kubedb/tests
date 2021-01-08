@@ -19,7 +19,6 @@ package framework
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"kubedb.dev/apimachinery/apis/kubedb"
@@ -32,121 +31,12 @@ import (
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	v1 "kmodules.xyz/client-go/core/v1"
 	meta_util "kmodules.xyz/client-go/meta"
-	"kmodules.xyz/constants/aws"
-	"kmodules.xyz/constants/azure"
-	"kmodules.xyz/constants/google"
-	"kmodules.xyz/constants/openstack"
-	"stash.appscode.dev/apimachinery/pkg/restic"
 )
 
 const (
-	StorageProviderGCS   = "gcs"
-	StorageProviderAzure = "azure"
-	StorageProviderS3    = "s3"
-	StorageProviderMinio = "minio"
-	StorageProviderSwift = "swift"
-	KeyMySQLPassword     = "password"
+	KeyMySQLPassword = "password"
 )
-
-func (i *Invocation) SecretForBackend() *core.Secret {
-	secret := &core.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      rand.WithUniqSuffix(i.app + "-" + StorageProvider),
-			Namespace: i.namespace,
-		},
-	}
-
-	switch StorageProvider {
-	case StorageProviderGCS:
-		secret.Data = i.gcsCredentials()
-	case StorageProviderS3:
-		secret.Data = i.s3Credentials()
-	case StorageProviderMinio:
-		secret.Data = i.minioCredentials()
-	case StorageProviderAzure:
-		secret.Data = i.azureCredentials()
-	case StorageProviderSwift:
-		secret.Data = i.swiftCredentials()
-	}
-
-	return secret
-}
-
-func (i *Invocation) s3Credentials() map[string][]byte {
-	if os.Getenv(aws.AWS_ACCESS_KEY_ID) == "" ||
-		os.Getenv(aws.AWS_SECRET_ACCESS_KEY) == "" {
-		return nil
-	}
-
-	return map[string][]byte{
-		aws.AWS_ACCESS_KEY_ID:     []byte(os.Getenv(aws.AWS_ACCESS_KEY_ID)),
-		aws.AWS_SECRET_ACCESS_KEY: []byte(os.Getenv(aws.AWS_SECRET_ACCESS_KEY)),
-	}
-}
-
-func (i *Invocation) minioCredentials() map[string][]byte {
-	return map[string][]byte{
-		aws.AWS_ACCESS_KEY_ID:     []byte(MINIO_ACCESS_KEY_ID),
-		aws.AWS_SECRET_ACCESS_KEY: []byte(MINIO_SECRET_ACCESS_KEY),
-		aws.CA_CERT_DATA:          i.CertStore.CACertBytes(),
-	}
-}
-
-func (i *Invocation) gcsCredentials() map[string][]byte {
-	jsonKey := google.ServiceAccountFromEnv()
-	if jsonKey == "" || os.Getenv(google.GOOGLE_PROJECT_ID) == "" {
-		return nil
-	}
-
-	return map[string][]byte{
-		google.GOOGLE_PROJECT_ID:               []byte(os.Getenv(google.GOOGLE_PROJECT_ID)),
-		google.GOOGLE_SERVICE_ACCOUNT_JSON_KEY: []byte(jsonKey),
-	}
-}
-
-func (i *Invocation) azureCredentials() map[string][]byte {
-	if os.Getenv(azure.AZURE_ACCOUNT_NAME) == "" ||
-		os.Getenv(azure.AZURE_ACCOUNT_KEY) == "" {
-		return nil
-	}
-
-	return map[string][]byte{
-		azure.AZURE_ACCOUNT_NAME: []byte(os.Getenv(azure.AZURE_ACCOUNT_NAME)),
-		azure.AZURE_ACCOUNT_KEY:  []byte(os.Getenv(azure.AZURE_ACCOUNT_KEY)),
-	}
-}
-
-func (i *Invocation) swiftCredentials() map[string][]byte {
-	if os.Getenv(openstack.OS_AUTH_URL) == "" ||
-		(os.Getenv(openstack.OS_TENANT_ID) == "" && os.Getenv(openstack.OS_TENANT_NAME) == "") ||
-		os.Getenv(openstack.OS_USERNAME) == "" ||
-		os.Getenv(openstack.OS_PASSWORD) == "" {
-		return nil
-	}
-
-	return map[string][]byte{
-		openstack.OS_AUTH_URL:    []byte(os.Getenv(openstack.OS_AUTH_URL)),
-		openstack.OS_TENANT_ID:   []byte(os.Getenv(openstack.OS_TENANT_ID)),
-		openstack.OS_TENANT_NAME: []byte(os.Getenv(openstack.OS_TENANT_NAME)),
-		openstack.OS_USERNAME:    []byte(os.Getenv(openstack.OS_USERNAME)),
-		openstack.OS_PASSWORD:    []byte(os.Getenv(openstack.OS_PASSWORD)),
-		openstack.OS_REGION_NAME: []byte(os.Getenv(openstack.OS_REGION_NAME)),
-	}
-}
-
-func (i *Invocation) PatchSecretForRestic(secret *core.Secret) *core.Secret {
-	if secret == nil {
-		return secret
-	}
-
-	secret.StringData = v1.UpsertMap(secret.StringData, map[string]string{
-		restic.RESTIC_PASSWORD: "RESTIC_PASSWORD",
-	})
-
-	return secret
-}
 
 func (f *Framework) CreateSecret(obj *core.Secret) (*core.Secret, error) {
 	return f.kubeClient.CoreV1().Secrets(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})

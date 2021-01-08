@@ -16,7 +16,13 @@ limitations under the License.
 
 package framework
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+
+	. "github.com/onsi/ginkgo"
+	"gomodules.xyz/x/arrays"
+)
 
 /*//go:generate enumer -type=TestProfile -json
 type TestProfile int
@@ -67,9 +73,10 @@ const (
 	RedisCommunity           = "redis_community"
 	RedisVolumeExpansion     = "redis_volume_expansion"
 
-	All        = "all"
-	Community  = "community"
-	Enterprise = "enterprise"
+	All         = "all"
+	Community   = "community"
+	Enterprise  = "enterprise"
+	StashBackup = "stash_backup"
 )
 
 type stringSlice []string
@@ -84,6 +91,12 @@ func (stringSlice *stringSlice) Set(value string) error {
 	return nil
 }
 
+func CoveredByTestProfiles(testType string) bool {
+	runningThisProfile, _ := arrays.Contains(TestProfiles, testType)
+	runningAllProfiles, _ := arrays.Contains(TestProfiles, All)
+	return runningThisProfile || runningAllProfiles
+}
+
 func RunTestCommunity(testProfile string) bool {
 	return strings.Contains(TestProfiles.String(), testProfile) ||
 		TestProfiles.String() == All ||
@@ -94,4 +107,28 @@ func RunTestEnterprise(testProfile string) bool {
 	return strings.Contains(TestProfiles.String(), testProfile) ||
 		TestProfiles.String() == All ||
 		TestProfiles.String() == Enterprise
+}
+
+func (f *Framework) DumpTestConfigurations() {
+	By(fmt.Sprintf("Using the following test configurations:\n\t"+
+		"Test Profiles: %s\n\t"+
+		"Docker Registry: %s\n\t"+
+		"StorageClass: %s\n\t"+
+		"Database Type: %s\n\t"+
+		"Database Version: %s\n\t"+
+		"Updated Database Version: %s\n\t"+
+		"SSL Enabled: %v\n\t"+
+		"Stash Addon Name: %s\n\t"+
+		"Stash Addon Version: %s\n\t",
+		TestProfiles.String(),
+		DockerRegistry,
+		f.StorageClass,
+		DBType,
+		DBVersion,
+		DBUpdatedVersion,
+		SSLEnabled,
+		StashAddonName,
+		StashAddonVersion,
+	),
+	)
 }

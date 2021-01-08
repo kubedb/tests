@@ -85,12 +85,12 @@ func (i *Invocation) GetCustomConfig(configs []string, name string) *core.Secret
 	}
 }
 
-func (f *Invocation) GetCustomConfigForMySQL(configs []string) *core.Secret {
+func (i *Invocation) GetCustomConfigForMySQL(configs []string) *core.Secret {
 	configs = append([]string{"[mysqld]"}, configs...)
 	return &core.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      f.app,
-			Namespace: f.namespace,
+			Name:      i.app,
+			Namespace: i.namespace,
 		},
 		StringData: map[string]string{
 			"my-custom.cnf": strings.Join(configs, "\n"),
@@ -115,18 +115,18 @@ func (f *Framework) DeleteConfigMap(meta metav1.ObjectMeta) error {
 	return nil
 }
 
-func (fi *Invocation) EnsureMyInitScriptConfigMap() (*core.ConfigMap, error) {
-	cm, err := fi.ConfigMapForMyInitScript()
+func (i *Invocation) EnsureMyInitScriptConfigMap() (*core.ConfigMap, error) {
+	cm, err := i.ConfigMapForMyInitScript()
 	if err != nil {
 		return nil, err
 	}
 	By("Create init Script ConfigMap: " + cm.Name + "\n" + cm.Data["init.sql"])
-	err = fi.CreateConfigMap(cm)
+	err = i.CreateConfigMap(cm)
 	if err != nil {
 		return cm, err
 	}
-	cm, err = fi.GetConfigMap(cm.ObjectMeta)
-	fi.AppendToCleanupList(cm)
+	cm, err = i.GetConfigMap(cm.ObjectMeta)
+	i.AppendToCleanupList(cm)
 
 	return cm, err
 }

@@ -48,12 +48,12 @@ var (
 	JobPvcStorageSize = "200Mi"
 )
 
-func (f *Invocation) getElasticsearchDataDir() string {
+func (i *Invocation) getElasticsearchDataDir() string {
 	return api.ElasticsearchDataDir
 }
 
-func (f *Invocation) GetElasticsearchCommonConfig() string {
-	dataPath := f.getElasticsearchDataDir()
+func (i *Invocation) GetElasticsearchCommonConfig() string {
+	dataPath := i.getElasticsearchDataDir()
 
 	commonSetting := es.Setting{
 		Path: &es.PathSetting{
@@ -65,8 +65,8 @@ func (f *Invocation) GetElasticsearchCommonConfig() string {
 	return string(data)
 }
 
-func (f *Invocation) GetElasticsearchMasterConfig() string {
-	dataPath := f.getElasticsearchDataDir()
+func (i *Invocation) GetElasticsearchMasterConfig() string {
+	dataPath := i.getElasticsearchDataDir()
 
 	masterSetting := es.Setting{
 		Path: &es.PathSetting{
@@ -78,8 +78,8 @@ func (f *Invocation) GetElasticsearchMasterConfig() string {
 	return string(data)
 }
 
-func (f *Invocation) GetElasticsearchIngestConfig() string {
-	dataPath := f.getElasticsearchDataDir()
+func (i *Invocation) GetElasticsearchIngestConfig() string {
+	dataPath := i.getElasticsearchDataDir()
 	clientSetting := es.Setting{
 		Path: &es.PathSetting{
 			Data: []string{filepath.Join(dataPath, "/elasticsearch/ingest-datadir")},
@@ -90,8 +90,8 @@ func (f *Invocation) GetElasticsearchIngestConfig() string {
 	return string(data)
 }
 
-func (f *Invocation) GetElasticsearchDataConfig() string {
-	dataPath := f.getElasticsearchDataDir()
+func (i *Invocation) GetElasticsearchDataConfig() string {
+	dataPath := i.getElasticsearchDataDir()
 	dataSetting := es.Setting{
 		Path: &es.PathSetting{
 			Data: []string{filepath.Join(dataPath, "/elasticsearch/data-datadir")},
@@ -102,22 +102,22 @@ func (f *Invocation) GetElasticsearchDataConfig() string {
 	return string(data)
 }
 
-func (f *Invocation) GetElasticsearchCustomConfig() *core.Secret {
+func (i *Invocation) GetElasticsearchCustomConfig() *core.Secret {
 	return &core.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      f.app,
-			Namespace: f.namespace,
+			Name:      i.app,
+			Namespace: i.namespace,
 		},
 		StringData: map[string]string{},
 	}
 }
 
-func (f *Invocation) IsElasticsearchUsingProvidedConfig(nodeInfo []es.NodeInfo) bool {
+func (i *Invocation) IsElasticsearchUsingProvidedConfig(nodeInfo []es.NodeInfo) bool {
 	for _, node := range nodeInfo {
 		fmt.Println("node: ", node)
 		if string_util.Contains(node.Roles, "master") || strings.HasSuffix(node.Name, "master") {
 			masterConfig := &es.Setting{}
-			err := yaml.Unmarshal([]byte(f.GetElasticsearchMasterConfig()), masterConfig)
+			err := yaml.Unmarshal([]byte(i.GetElasticsearchMasterConfig()), masterConfig)
 			Expect(err).NotTo(HaveOccurred())
 
 			if !string_util.EqualSlice(node.Settings.Path.Data, masterConfig.Path.Data) {
@@ -129,7 +129,7 @@ func (f *Invocation) IsElasticsearchUsingProvidedConfig(nodeInfo []es.NodeInfo) 
 			strings.HasSuffix(node.Name, "ingest") { // master config has higher precedence
 
 			ingestConfig := &es.Setting{}
-			err := yaml.Unmarshal([]byte(f.GetElasticsearchIngestConfig()), ingestConfig)
+			err := yaml.Unmarshal([]byte(i.GetElasticsearchIngestConfig()), ingestConfig)
 			Expect(err).NotTo(HaveOccurred())
 
 			if !string_util.EqualSlice(node.Settings.Path.Data, ingestConfig.Path.Data) {
@@ -140,7 +140,7 @@ func (f *Invocation) IsElasticsearchUsingProvidedConfig(nodeInfo []es.NodeInfo) 
 			!(string_util.Contains(node.Roles, "master") && !string_util.Contains(node.Roles, "ingest"))) ||
 			strings.HasSuffix(node.Name, "data") { //master and ingest config has higher precedence
 			dataConfig := &es.Setting{}
-			err := yaml.Unmarshal([]byte(f.GetElasticsearchDataConfig()), dataConfig)
+			err := yaml.Unmarshal([]byte(i.GetElasticsearchDataConfig()), dataConfig)
 			Expect(err).NotTo(HaveOccurred())
 			if !string_util.EqualSlice(node.Settings.Path.Data, dataConfig.Path.Data) {
 				return false
@@ -149,7 +149,7 @@ func (f *Invocation) IsElasticsearchUsingProvidedConfig(nodeInfo []es.NodeInfo) 
 
 		// check for common config
 		commonConfig := &es.Setting{}
-		err := yaml.Unmarshal([]byte(f.GetElasticsearchCommonConfig()), commonConfig)
+		err := yaml.Unmarshal([]byte(i.GetElasticsearchCommonConfig()), commonConfig)
 		Expect(err).NotTo(HaveOccurred())
 		if node.Settings.Path.Logs != commonConfig.Path.Logs {
 			return false

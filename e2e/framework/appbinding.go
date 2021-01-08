@@ -36,7 +36,7 @@ const MongoDBPort = 27017
 func (f *Framework) EventuallyAppBinding(meta metav1.ObjectMeta) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			_, err := f.appCatalogClient.AppBindings(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+			_, err := f.GetAppBinding(meta)
 			if err != nil {
 				if kerr.IsNotFound(err) {
 					return false
@@ -93,43 +93,39 @@ func (f *Framework) CheckMongoDBAppBindingSpec(meta metav1.ObjectMeta) error {
 	return nil
 }
 
-// EnsureCustomAppBinding creates custom Appbinding for mongodb. In this custom appbinding,
-// all fields are similar to actual appbinding object, except Spec.Parameters.
-func (f *Framework) EnsureCustomAppBinding(db *api.MongoDB, customAppBindingName string) error {
-	appmeta := db.AppBindingMeta()
-	// get app binding
-	appBinding, err := f.appCatalogClient.AppBindings(db.Namespace).Get(context.TODO(), appmeta.Name(), metav1.GetOptions{})
-	if err != nil {
-		return err
+func (f *Framework) CreateCustomAppBinding(oldAB *appcat.AppBinding, transfromFuncs ...func(in *appcat.AppBinding)) (*appcat.AppBinding, error) {
+	newAB := &appcat.AppBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            oldAB.Name,
+			Namespace:       oldAB.Namespace,
+			Labels:          oldAB.Labels,
+			Annotations:     oldAB.Annotations,
+			OwnerReferences: oldAB.OwnerReferences,
+		},
+		Spec: appcat.AppBindingSpec{
+			Type:         oldAB.Spec.Type,
+			Version:      oldAB.Spec.Version,
+			ClientConfig: oldAB.Spec.ClientConfig,
+			Secret:       oldAB.Spec.Secret,
+		},
 	}
-
-	meta := metav1.ObjectMeta{
-		Name:      customAppBindingName,
-		Namespace: db.Namespace,
+	newAB.Name = fmt.Sprintf("%s-custom", newAB.Name)
+	// apply test specific modification
+	for _, fn := range transfromFuncs {
+		fn(newAB)
 	}
-
-	if _, _, err := appcat_util.CreateOrPatchAppBinding(
+	// create new AppBinding
+	createdAB, _, err := appcat_util.CreateOrPatchAppBinding(
 		context.TODO(),
 		f.appCatalogClient,
-		meta,
+		newAB.ObjectMeta,
 		func(in *appcat.AppBinding) *appcat.AppBinding {
-			in.Labels = appBinding.Labels
-			in.Annotations = appBinding.Annotations
-
-			in.Spec.Type = appBinding.Spec.Type
-			in.Spec.ClientConfig.Service = appBinding.Spec.ClientConfig.Service
-			in.Spec.ClientConfig.InsecureSkipTLSVerify = appBinding.Spec.ClientConfig.InsecureSkipTLSVerify
-			in.Spec.Secret = appBinding.Spec.Secret
-			// ignore appBinding.Spec.Parameters
-
+			in.Spec = newAB.Spec
 			return in
 		},
 		metav1.PatchOptions{},
-	); err != nil {
-		return err
-	}
-
-	return nil
+	)
+	return createdAB, err
 }
 
 func (f *Framework) CheckRedisAppBindingSpec(meta metav1.ObjectMeta) error {
@@ -154,11 +150,11 @@ func (f *Framework) DeleteAppBinding(meta metav1.ObjectMeta) error {
 	return f.appCatalogClient.AppBindings(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInForeground())
 }
 
-func (f *Framework) CheckMySQLAppBindingSpec(meta metav1.ObjectMeta) error {
-	mysql, err := f.GetMySQL(meta)
+func (i *Invocation) CheckMySQLAppBindingSpec(meta metav1.ObjectMeta) error {
+	mysql, err := i.GetMySQL(meta)
 	Expect(err).NotTo(HaveOccurred())
 
-	appBinding, err := f.appCatalogClient.AppBindings(mysql.Namespace).Get(context.TODO(), mysql.Name, metav1.GetOptions{})
+	appBinding, err := i.appCatalogClient.AppBindings(mysql.Namespace).Get(context.TODO(), mysql.Name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -173,4 +169,8 @@ func (f *Framework) CheckMySQLAppBindingSpec(meta metav1.ObjectMeta) error {
 		return fmt.Errorf("appbinding %v/%v contains invalid data", appBinding.Namespace, appBinding.Name)
 	}
 	return nil
+}
+
+func (f *Framework) GetAppBinding(meta metav1.ObjectMeta) (*appcat.AppBinding, error) {
+	return f.appCatalogClient.AppBindings(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 }

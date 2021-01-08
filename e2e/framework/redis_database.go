@@ -76,11 +76,11 @@ func (f *Framework) EventuallyGetItem(redis *api.Redis, key string) GomegaAsyncA
 	)
 }
 
-func (fi *Invocation) GetCustomConfigRedis(configs []string) *core.Secret {
+func (i *Invocation) GetCustomConfigRedis(configs []string) *core.Secret {
 	return &core.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fi.app,
-			Namespace: fi.namespace,
+			Name:      i.app,
+			Namespace: i.namespace,
 		},
 		StringData: map[string]string{
 			"redis.conf": strings.Join(configs, "\n"),

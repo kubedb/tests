@@ -31,6 +31,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"gomodules.xyz/x/arrays"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kmodules.xyz/client-go/tools/portforward"
@@ -42,6 +43,46 @@ type KubedbTable struct {
 	// for MySQL
 	Id   int64
 	Name string `xorm:"varchar(25) not null unique 'usr_name' comment('NickName')"`
+}
+
+const (
+	SampleDB       = "sampleDB"
+	AnotherDB      = "anotherDB"
+	SampleDocument = "sampleDoc"
+)
+
+type Collection struct {
+	Name     string
+	Document Document
+}
+
+type Document struct {
+	Name  string
+	State string
+}
+
+var SampleCollection = Collection{
+	Name: "sampleCollection",
+	Document: Document{
+		Name:  SampleDocument,
+		State: "initial",
+	},
+}
+
+var AnotherCollection = Collection{
+	Name: "anotherCollection",
+	Document: Document{
+		Name:  SampleDocument,
+		State: "initial",
+	},
+}
+
+var UpdatedCollection = Collection{
+	Name: "sampleCollection",
+	Document: Document{
+		Name:  SampleDocument,
+		State: "updated",
+	},
 }
 
 func (f *Framework) ForwardPort(meta metav1.ObjectMeta, resource, name string, remotePort int) (*portforward.Tunnel, error) {
@@ -158,23 +199,6 @@ func (f *Framework) GetReplicaMasterNode(meta metav1.ObjectMeta, nodeName string
 	return "", fmt.Errorf("no primary node")
 }
 
-func (f *Framework) GetPrimaryInstance(meta metav1.ObjectMeta) (string, error) {
-	mongodb, err := f.GetMongoDB(meta)
-	if err != nil {
-		return "", err
-	}
-
-	if mongodb.Spec.ReplicaSet == nil && mongodb.Spec.ShardTopology == nil {
-		return fmt.Sprintf("%v-0", mongodb.Name), nil
-	}
-
-	if mongodb.Spec.ShardTopology != nil {
-		return f.GetMongosPodName(meta)
-	}
-
-	return f.GetReplicaMasterNode(meta, mongodb.RepSetName(), mongodb.Spec.Replicas)
-}
-
 func (f *Framework) GetPrimaryService(meta metav1.ObjectMeta) string {
 	// MongoDB creates primary Service with the same name as the database.
 	return meta.Name
@@ -279,6 +303,115 @@ func (f *Framework) EventuallyDocumentExists(meta metav1.ObjectMeta, dbName stri
 		time.Minute*5,
 		time.Second*5,
 	)
+}
+
+func (f *Framework) EventuallyInsertCollection(meta metav1.ObjectMeta, dbName string, collections ...Collection) GomegaAsyncAssertion {
+	return Eventually(
+		func() (bool, error) {
+			svcName := f.GetPrimaryService(meta)
+			client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName)
+			if err != nil {
+				log.Errorln("Failed to ConnectAndPing. Reason: ", err)
+				return false, err
+			}
+			defer tunnel.Close()
+
+			for idx := range collections {
+				if _, err := client.Database(dbName).Collection(collections[idx].Name).InsertOne(context.Background(), collections[idx].Document); err != nil {
+					log.Errorln("creation error:", err)
+					return false, err
+				}
+			}
+			return true, nil
+		},
+		time.Minute*5,
+		time.Second*5,
+	)
+}
+
+func (f *Framework) EventuallyUpdateCollection(meta metav1.ObjectMeta, dbName string, collections ...Collection) GomegaAsyncAssertion {
+	return Eventually(
+		func() (bool, error) {
+			svcName := f.GetPrimaryService(meta)
+			client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName)
+			if err != nil {
+				log.Errorln("Failed to ConnectAndPing. Reason: ", err)
+				return false, err
+			}
+			defer tunnel.Close()
+
+			for idx := range collections {
+				updateResult, err := client.Database(dbName).Collection(collections[idx].Name).ReplaceOne(context.Background(), bson.M{"name": SampleDocument}, collections[idx].Document)
+				if err != nil {
+					log.Errorln("update error:", err)
+					return false, err
+				}
+				if updateResult.MatchedCount == 0 {
+					return false, fmt.Errorf("no matching document found for the collection: %s", collections[idx].Name)
+				}
+			}
+			return true, nil
+		},
+		time.Minute*5,
+		time.Second*5,
+	)
+}
+
+func (f *Framework) GetDocument(meta metav1.ObjectMeta, dbName, collectionName string) (*Document, error) {
+	svcName := f.GetPrimaryService(meta)
+	client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName)
+	if err != nil {
+		log.Errorln("Failed to ConnectAndPing. Reason: ", err)
+		return nil, err
+	}
+	defer tunnel.Close()
+
+	var resp *Document
+	if err := client.Database(dbName).Collection(collectionName).FindOne(context.Background(), bson.M{"name": SampleDocument}).Decode(&resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (f *Framework) EventuallyDropDatabase(meta metav1.ObjectMeta, dbName string) GomegaAsyncAssertion {
+	return Eventually(
+		func() (bool, error) {
+			svcName := f.GetPrimaryService(meta)
+			client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName)
+			if err != nil {
+				log.Errorln("Failed to ConnectAndPing. Reason: ", err)
+				return false, err
+			}
+			defer tunnel.Close()
+
+			if err := client.Database(dbName).Drop(context.Background()); err != nil {
+				log.Errorln("creation error:", err)
+				return false, err
+			}
+			return true, nil
+		},
+		time.Minute*5,
+		time.Second*5,
+	)
+}
+
+func (f *Framework) DatabaseExists(meta metav1.ObjectMeta, dbName string) (bool, error) {
+	svcName := f.GetPrimaryService(meta)
+	client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName)
+	if err != nil {
+		return false, err
+	}
+	defer tunnel.Close()
+
+	databases, err := client.ListDatabaseNames(context.Background(), bson.D{})
+	if err != nil {
+		return false, err
+	}
+
+	if exist, _ := arrays.Contains(databases, dbName); exist {
+		return true, nil
+	}
+	return false, nil
 }
 
 // EventuallyEnableSharding enables sharding of a database. Call this only when spec.shardTopology is set.
