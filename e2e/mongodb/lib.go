@@ -19,6 +19,7 @@ package e2e_test
 import (
 	"fmt"
 
+	"kubedb.dev/apimachinery/apis/autoscaling/v1alpha1"
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
@@ -56,6 +57,7 @@ type testOptions struct {
 	*framework.Invocation
 	mongodb          *api.MongoDB
 	mongoOpsReq      *dbaapi.MongoDBOpsRequest
+	mgAutoscaler     *v1alpha1.MongoDBAutoscaler
 	skipMessage      string
 	garbageMongoDB   *api.MongoDBList
 	snapshotPVC      *core.PersistentVolumeClaim
@@ -80,7 +82,7 @@ func (to *testOptions) addIssuerRef() {
 	}
 }
 
-func (to *testOptions) createAndWaitForRunning(ignoreSSL ...bool) {
+func (to *testOptions) createAndWaitForReady(ignoreSSL ...bool) {
 	if to.skipMessage != "" {
 		Skip(to.skipMessage)
 	}
@@ -94,8 +96,8 @@ func (to *testOptions) createAndWaitForRunning(ignoreSSL ...bool) {
 	err := to.CreateMongoDB(to.mongodb)
 	Expect(err).NotTo(HaveOccurred())
 
-	By("Wait for Running mongodb")
-	to.EventuallyMongoDBRunning(to.mongodb.ObjectMeta).Should(BeTrue())
+	By("Wait for Ready mongodb")
+	to.EventuallyMongoDBReady(to.mongodb.ObjectMeta).Should(BeTrue())
 
 	By("Wait for AppBinding to create")
 	to.EventuallyAppBinding(to.mongodb.ObjectMeta).Should(BeTrue())
@@ -110,7 +112,7 @@ func (to *testOptions) createAndWaitForRunning(ignoreSSL ...bool) {
 
 func (to *testOptions) createAndInsertData() {
 	// Create MongoDB
-	to.createAndWaitForRunning()
+	to.createAndWaitForReady()
 
 	By("Insert Document Inside DB")
 	to.EventuallyInsertDocument(to.mongodb.ObjectMeta, dbName, 1).Should(BeTrue())
@@ -121,7 +123,7 @@ func (to *testOptions) createAndInsertData() {
 
 func (to *testOptions) shouldTestOpsRequest() {
 	// Create MongoDB
-	to.createAndWaitForRunning()
+	to.createAndWaitForReady()
 
 	// Insert Data
 	By("Insert Document Inside DB")
@@ -140,6 +142,64 @@ func (to *testOptions) shouldTestOpsRequest() {
 
 	// Retrieve Inserted Data
 	By("Checking Inserted Document after update")
+	to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
+
+	By("Checking DB is Resumed")
+	to.EventuallyDatabaseResumed(to.mongodb).Should(BeTrue())
+}
+
+func (to *testOptions) shouldTestComputeAutoscaler() {
+	// Create MongoDB
+	to.createAndWaitForReady()
+
+	// Insert Data
+	By("Insert Document Inside DB")
+	to.EventuallyInsertDocument(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
+
+	By("Checking Inserted Document")
+	to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
+
+	// Update Database
+	By("Creating MongoDB Autoscaler")
+	err := to.CreateMongoDBAutoscaler(to.mgAutoscaler)
+	Expect(err).NotTo(HaveOccurred())
+
+	By("Wait for Vertical Scaling")
+	to.EventuallyVerticallyScaled(to.mongodb.ObjectMeta, to.mgAutoscaler.Spec.Compute).Should(BeTrue())
+
+	// Retrieve Inserted Data
+	By("Checking Inserted Document after scaling")
+	to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
+}
+
+func (to *testOptions) shouldTestStorageAutoscaler() {
+	// Create MongoDB
+	to.createAndWaitForReady()
+
+	// Insert Data
+	By("Insert Document Inside DB")
+	to.EventuallyInsertDocument(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
+
+	By("Checking Inserted Document")
+	to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
+
+	// Update Database
+	By("Creating MongoDB Autoscaler")
+	err := to.CreateMongoDBAutoscaler(to.mgAutoscaler)
+	Expect(err).NotTo(HaveOccurred())
+
+	By("Fill Persistent Volume")
+	err = to.FillDisk(to.mongodb, to.mgAutoscaler.Spec.Storage)
+	Expect(err).NotTo(HaveOccurred())
+
+	By("Wait for Volume Expansion")
+	to.EventuallyVolumeExpanded(to.mongodb, to.mgAutoscaler.Spec.Storage).Should(BeTrue())
+
+	By("Wait for Ready mongodb")
+	to.EventuallyMongoDBReady(to.mongodb.ObjectMeta).Should(BeTrue())
+
+	// Retrieve Inserted Data
+	By("Checking Inserted Document after scaling")
 	to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
 }
 
@@ -195,7 +255,7 @@ func (to *testOptions) runWithUserProvidedConfig(userConfig, newUserConfig *core
 		Expect(err).NotTo(HaveOccurred())
 	}
 
-	to.createAndWaitForRunning()
+	to.createAndWaitForReady()
 
 	By("Checking maxIncomingConnections from mongodb config")
 	to.EventuallyMaxIncomingConnections(to.mongodb.ObjectMeta).Should(Equal(prevMaxIncomingConnections))

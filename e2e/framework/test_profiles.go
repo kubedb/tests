@@ -57,6 +57,7 @@ const (
 	HorizontalScaling = "horizontal_scaling"
 	Reconfigure       = "reconfigure"
 	VolumeExpansion   = "volume_expansion"
+	Autoscaling       = "autoscaling"
 
 	RedisHorizontalScaling   = "redis_horizontal"
 	RedisVerticalScaling     = "redis_vertical"

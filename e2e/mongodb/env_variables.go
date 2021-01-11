@@ -142,7 +142,7 @@ var _ = Describe("Environment Variables", func() {
 			}
 
 			// Create MongoDB
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 
 			By("Checking Inserted Document")
 			to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 1).Should(BeTrue())
@@ -302,7 +302,7 @@ var _ = Describe("Environment Variables", func() {
 			}
 
 			// Create MongoDB
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 
 			By("Checking Inserted Document")
 			to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 1).Should(BeTrue())

@@ -184,6 +184,7 @@ var _ = Describe("Vertical Scaling", func() {
 			Context("Standalone MongoDB", func() {
 				BeforeEach(func() {
 					to.mongodb = to.MongoDBStandalone()
+					to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					to.mongodb.Spec.ConfigSecret = configSecret
 					to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, resource, nil, nil, nil, nil, nil)
@@ -200,6 +201,7 @@ var _ = Describe("Vertical Scaling", func() {
 			Context("With ReplicaSet", func() {
 				BeforeEach(func() {
 					to.mongodb = to.MongoDBRS()
+					to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					to.mongodb.Spec.ConfigSecret = configSecret
 					to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, resource, nil, nil, nil, nil)
@@ -216,6 +218,7 @@ var _ = Describe("Vertical Scaling", func() {
 			Context("With Sharding", func() {
 				BeforeEach(func() {
 					to.mongodb = to.MongoDBShard()
+					to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					to.mongodb.Spec.ShardTopology.Shard.ConfigSecret = configSecret
 					to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSecret = configSecret
 					to.mongodb.Spec.ShardTopology.Mongos.ConfigSecret = configSecret
@@ -264,6 +267,7 @@ var _ = Describe("Vertical Scaling", func() {
 			Context("Standalone MongoDB", func() {
 				BeforeEach(func() {
 					to.mongodb = to.MongoDBStandalone()
+					to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					to.mongodb.Spec.ConfigSecret = configSecret
 					to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, resource, nil, nil, nil, nil, nil)
@@ -280,6 +284,7 @@ var _ = Describe("Vertical Scaling", func() {
 			Context("With Replica Set", func() {
 				BeforeEach(func() {
 					to.mongodb = to.MongoDBRS()
+					to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					to.mongodb.Spec.ConfigSecret = configSecret
 					to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, resource, nil, nil, nil, nil)
@@ -296,6 +301,7 @@ var _ = Describe("Vertical Scaling", func() {
 			Context("With Sharding", func() {
 				BeforeEach(func() {
 					to.mongodb = to.MongoDBShard()
+					to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					to.mongodb.Spec.ShardTopology.Shard.ConfigSecret = configSecret
 					to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSecret = configSecret
 					to.mongodb.Spec.ShardTopology.Mongos.ConfigSecret = configSecret

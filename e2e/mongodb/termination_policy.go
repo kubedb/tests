@@ -97,7 +97,7 @@ var _ = Describe("Termination Policy", func() {
 
 		var shouldWorkDoNotTerminate = func() {
 			// Create and wait for running MongoDB
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 
 			By("Delete mongodb")
 			err = to.DeleteMongoDB(to.mongodb.ObjectMeta)
@@ -107,7 +107,7 @@ var _ = Describe("Termination Policy", func() {
 			to.EventuallyMongoDB(to.mongodb.ObjectMeta).Should(BeTrue())
 
 			By("Check for Running mongodb")
-			to.EventuallyMongoDBRunning(to.mongodb.ObjectMeta).Should(BeTrue())
+			to.EventuallyMongoDBReady(to.mongodb.ObjectMeta).Should(BeTrue())
 
 			By("Update mongodb to set spec.terminationPolicy = Pause")
 			_, err := to.PatchMongoDB(to.mongodb.ObjectMeta, func(in *api.MongoDB) *api.MongoDB {
@@ -160,7 +160,7 @@ var _ = Describe("Termination Policy", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			By("Wait for Running mongodb")
-			to.EventuallyMongoDBRunning(to.mongodb.ObjectMeta).Should(BeTrue())
+			to.EventuallyMongoDBReady(to.mongodb.ObjectMeta).Should(BeTrue())
 
 			By("Ping mongodb database")
 			to.EventuallyPingMongo(to.mongodb.ObjectMeta)
@@ -181,7 +181,7 @@ var _ = Describe("Termination Policy", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			By("Wait for Running mongodb")
-			to.EventuallyMongoDBRunning(to.mongodb.ObjectMeta).Should(BeTrue())
+			to.EventuallyMongoDBReady(to.mongodb.ObjectMeta).Should(BeTrue())
 
 			By("Ping mongodb database")
 			to.EventuallyPingMongo(to.mongodb.ObjectMeta)

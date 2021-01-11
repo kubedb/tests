@@ -101,7 +101,7 @@ var _ = Describe("Storage Engine inMemory", func() {
 			to.mongodb.Spec.StorageEngine = api.StorageEngineInMemory
 		})
 		It("should run successfully", func() {
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 
 			By("Verifying inMemory Storage Engine")
 			err = to.VerifyInMemory(to.mongodb.ObjectMeta)
@@ -118,7 +118,7 @@ var _ = Describe("Storage Engine inMemory", func() {
 			to.mongodb.Spec.StorageEngine = api.StorageEngineInMemory
 		})
 		It("should run successfully", func() {
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 
 			By("Verifying inMemory Storage Engine")
 			err = to.VerifyInMemory(to.mongodb.ObjectMeta)

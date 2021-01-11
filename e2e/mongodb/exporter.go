@@ -98,7 +98,7 @@ var _ = Describe("Exporter", func() {
 			By("Add monitoring configurations to mongodb")
 			to.AddMonitor(to.mongodb)
 			// Create MongoDB
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 			By("Verify exporter")
 			err = to.VerifyMongoDBExporter(to.mongodb.ObjectMeta)
 			Expect(err).NotTo(HaveOccurred())
@@ -114,7 +114,7 @@ var _ = Describe("Exporter", func() {
 			By("Add monitoring configurations to mongodb")
 			to.AddMonitor(to.mongodb)
 			// Create MongoDB
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 			By("Verify exporter")
 			err = to.VerifyMongoDBExporter(to.mongodb.ObjectMeta)
 			Expect(err).NotTo(HaveOccurred())
@@ -130,7 +130,7 @@ var _ = Describe("Exporter", func() {
 			By("Add monitoring configurations to mongodb")
 			to.AddMonitor(to.mongodb)
 			// Create MongoDB
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 			By("Verify exporter")
 			err = to.VerifyShardExporters(to.mongodb.ObjectMeta)
 			Expect(err).NotTo(HaveOccurred())

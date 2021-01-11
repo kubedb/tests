@@ -377,7 +377,7 @@ func (f *Framework) EventuallyMongoDBPhase(meta metav1.ObjectMeta) GomegaAsyncAs
 	)
 }
 
-func (f *Framework) EventuallyMongoDBRunning(meta metav1.ObjectMeta) GomegaAsyncAssertion {
+func (f *Framework) EventuallyMongoDBReady(meta metav1.ObjectMeta) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
 			mongodb, err := f.dbClient.KubedbV1alpha2().MongoDBs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
@@ -513,7 +513,7 @@ func (fi *Invocation) DeployMongoDB(transformFuncs ...func(in *api.MongoDB)) *ap
 		fi.EventuallyPingMongo(createdMongo.ObjectMeta).Should(BeTrue())
 	} else {
 		By("Waiting for MongoDB: " + createdMongo.Name + " to be ready")
-		fi.EventuallyMongoDBRunning(mg.ObjectMeta).Should(BeTrue())
+		fi.EventuallyMongoDBReady(mg.ObjectMeta).Should(BeTrue())
 	}
 
 	// if SSL is being used, verify SSL settings
@@ -568,7 +568,7 @@ func (fi *Invocation) SimulateMongoDBDisaster(meta metav1.ObjectMeta, databases 
 
 func (fi *Invocation) VerifyMongoDBRestore(meta metav1.ObjectMeta, databases ...string) {
 	By("Verify that database is healthy after restore")
-	fi.EventuallyMongoDBRunning(meta).Should(BeTrue())
+	fi.EventuallyMongoDBReady(meta).Should(BeTrue())
 
 	for i := range databases {
 		By("Verifying that db: " + databases[i] + " has been restored")

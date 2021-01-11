@@ -32,9 +32,6 @@ var _ = Describe("Volume Expansion", func() {
 	testName := framework.VolumeExpansion
 	BeforeEach(func() {
 		to.Invocation = framework.NewInvocation()
-		if !to.IsGKE() {
-			to.skipMessage = "volume expansion testing is only supported in GKE"
-		}
 		if !framework.RunTestEnterprise(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", testName))
 		}
@@ -61,7 +58,7 @@ var _ = Describe("Volume Expansion", func() {
 			to.mongodb = to.MongoDBStandalone()
 			to.mongodb.Spec.Version = framework.DBVersion
 			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-			standalone := resource.MustParse("2Gi")
+			standalone := resource.MustParse("20Gi")
 			to.mongoOpsReq = to.MongoDBOpsRequestVolumeExpansion(to.mongodb.Name, to.mongodb.Namespace, &standalone, nil, nil, nil)
 		})
 
@@ -75,7 +72,7 @@ var _ = Describe("Volume Expansion", func() {
 			to.mongodb = to.MongoDBRS()
 			to.mongodb.Spec.Version = framework.DBVersion
 			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-			replicaset := resource.MustParse("2Gi")
+			replicaset := resource.MustParse("20Gi")
 			to.mongoOpsReq = to.MongoDBOpsRequestVolumeExpansion(to.mongodb.Name, to.mongodb.Namespace, nil, &replicaset, nil, nil)
 		})
 
@@ -89,7 +86,7 @@ var _ = Describe("Volume Expansion", func() {
 			to.mongodb = to.MongoDBShard()
 			to.mongodb.Spec.Version = framework.DBVersion
 			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-			configServer := resource.MustParse("2Gi")
+			configServer := resource.MustParse("20Gi")
 			to.mongoOpsReq = to.MongoDBOpsRequestVolumeExpansion(to.mongodb.Name, to.mongodb.Namespace, nil, nil, nil, &configServer)
 		})
 
@@ -103,7 +100,7 @@ var _ = Describe("Volume Expansion", func() {
 			to.mongodb = to.MongoDBShard()
 			to.mongodb.Spec.Version = framework.DBVersion
 			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-			shard := resource.MustParse("2Gi")
+			shard := resource.MustParse("20Gi")
 			to.mongoOpsReq = to.MongoDBOpsRequestVolumeExpansion(to.mongodb.Name, to.mongodb.Namespace, nil, nil, &shard, nil)
 		})
 
@@ -116,7 +113,7 @@ var _ = Describe("Volume Expansion", func() {
 			to.mongodb = to.MongoDBShard()
 			to.mongodb.Spec.Version = framework.DBVersion
 			to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-			streq := resource.MustParse("2Gi")
+			streq := resource.MustParse("20Gi")
 			to.mongoOpsReq = to.MongoDBOpsRequestVolumeExpansion(to.mongodb.Name, to.mongodb.Namespace, nil, nil, &streq, &streq)
 
 		})

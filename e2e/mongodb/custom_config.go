@@ -118,7 +118,7 @@ var _ = Describe("Custom config", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// Create MySQL
-			to.createAndWaitForRunning()
+			to.createAndWaitForReady()
 
 			By("Checking maxIncomingConnections from mongodb config")
 			to.EventuallyMaxIncomingConnections(to.mongodb.ObjectMeta).Should(Equal(maxIncomingConnections))
