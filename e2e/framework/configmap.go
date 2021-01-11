@@ -58,11 +58,11 @@ func (f *Framework) ConfigMapForMyInitScript() (*core.ConfigMap, error) {
 	}, nil
 }
 
-func (i *Invocation) ConfigMapForInitialization() *core.ConfigMap {
+func (fi *Invocation) ConfigMapForInitialization() *core.ConfigMap {
 	return &core.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      rand.WithUniqSuffix(i.app + "-local"),
-			Namespace: i.namespace,
+			Name:      rand.WithUniqSuffix(fi.app + "-local"),
+			Namespace: fi.namespace,
 		},
 		Data: map[string]string{
 			"init.js": `db = db.getSiblingDB('kubedb');
@@ -72,12 +72,12 @@ db.people.insert({"firstname" : "kubernetes", "lastname" : "database" }); `,
 	}
 }
 
-func (i *Invocation) GetCustomConfig(configs []string, name string) *core.Secret {
+func (fi *Invocation) GetCustomConfig(configs []string, name string) *core.Secret {
 	configs = append([]string{"net:"}, configs...)
 	return &core.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: i.namespace,
+			Namespace: fi.namespace,
 		},
 		StringData: map[string]string{
 			"mongod.conf": strings.Join(configs, "\n"),
@@ -85,12 +85,12 @@ func (i *Invocation) GetCustomConfig(configs []string, name string) *core.Secret
 	}
 }
 
-func (f *Invocation) GetCustomConfigForMySQL(configs []string) *core.Secret {
+func (fi *Invocation) GetCustomConfigForMySQL(configs []string) *core.Secret {
 	configs = append([]string{"[mysqld]"}, configs...)
 	return &core.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      f.app,
-			Namespace: f.namespace,
+			Name:      fi.app,
+			Namespace: fi.namespace,
 		},
 		StringData: map[string]string{
 			"my-custom.cnf": strings.Join(configs, "\n"),
@@ -98,13 +98,13 @@ func (f *Invocation) GetCustomConfigForMySQL(configs []string) *core.Secret {
 	}
 }
 
-func (i *Invocation) CreateConfigMap(obj *core.ConfigMap) error {
-	_, err := i.kubeClient.CoreV1().ConfigMaps(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
+func (fi *Invocation) CreateConfigMap(obj *core.ConfigMap) error {
+	_, err := fi.kubeClient.CoreV1().ConfigMaps(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
 	return err
 }
 
-func (i *Invocation) GetConfigMap(objMeta metav1.ObjectMeta) (*core.ConfigMap, error) {
-	return i.kubeClient.CoreV1().ConfigMaps(objMeta.Namespace).Get(context.TODO(), objMeta.Name, metav1.GetOptions{})
+func (fi *Invocation) GetConfigMap(objMeta metav1.ObjectMeta) (*core.ConfigMap, error) {
+	return fi.kubeClient.CoreV1().ConfigMaps(objMeta.Namespace).Get(context.TODO(), objMeta.Name, metav1.GetOptions{})
 }
 
 func (f *Framework) DeleteConfigMap(meta metav1.ObjectMeta) error {

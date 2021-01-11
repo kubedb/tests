@@ -31,6 +31,7 @@ import (
 	"github.com/appscode/go/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gomodules.xyz/pointer"
 	core "k8s.io/api/core/v1"
 	policy "k8s.io/api/policy/v1beta1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
@@ -38,6 +39,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	meta_util "kmodules.xyz/client-go/meta"
+	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
 
 var (
@@ -48,7 +50,7 @@ const (
 	kindEviction = "Eviction"
 )
 
-func (i *Invocation) MongoDBStandalone() *api.MongoDB {
+func (fi *Invocation) MongoDBStandalone() *api.MongoDB {
 	if InMemory {
 		Skip("standalone doesn't support inmemory")
 		return nil
@@ -57,9 +59,9 @@ func (i *Invocation) MongoDBStandalone() *api.MongoDB {
 	return &api.MongoDB{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mongodb"),
-			Namespace: i.namespace,
+			Namespace: fi.namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 		Spec: api.MongoDBSpec{
@@ -70,7 +72,7 @@ func (i *Invocation) MongoDBStandalone() *api.MongoDB {
 						core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
 					},
 				},
-				StorageClassName: types.StringP(i.StorageClass),
+				StorageClassName: pointer.StringP(fi.StorageClass),
 			},
 			SSLMode: api.SSLModeDisabled,
 
@@ -79,7 +81,7 @@ func (i *Invocation) MongoDBStandalone() *api.MongoDB {
 	}
 }
 
-func (i *Invocation) MongoDBRS() *api.MongoDB {
+func (fi *Invocation) MongoDBRS() *api.MongoDB {
 	dbName := rand.WithUniqSuffix("mongo-rs")
 	storageType := api.StorageTypeDurable
 	storageEngine := api.StorageEngineWiredTiger
@@ -89,7 +91,7 @@ func (i *Invocation) MongoDBRS() *api.MongoDB {
 				core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
 			},
 		},
-		StorageClassName: types.StringP(i.StorageClass),
+		StorageClassName: types.StringP(fi.StorageClass),
 	}
 
 	if InMemory {
@@ -101,9 +103,9 @@ func (i *Invocation) MongoDBRS() *api.MongoDB {
 	return &api.MongoDB{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      dbName,
-			Namespace: i.namespace,
+			Namespace: fi.namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 		Spec: api.MongoDBSpec{
@@ -120,7 +122,7 @@ func (i *Invocation) MongoDBRS() *api.MongoDB {
 	}
 }
 
-func (i *Invocation) MongoDBShard() *api.MongoDB {
+func (fi *Invocation) MongoDBShard() *api.MongoDB {
 	storageType := api.StorageTypeDurable
 	storageEngine := api.StorageEngineWiredTiger
 	storage := &core.PersistentVolumeClaimSpec{
@@ -129,7 +131,7 @@ func (i *Invocation) MongoDBShard() *api.MongoDB {
 				core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
 			},
 		},
-		StorageClassName: types.StringP(i.StorageClass),
+		StorageClassName: types.StringP(fi.StorageClass),
 	}
 
 	if InMemory {
@@ -141,9 +143,9 @@ func (i *Invocation) MongoDBShard() *api.MongoDB {
 	return &api.MongoDB{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mongo-sh"),
-			Namespace: i.namespace,
+			Namespace: fi.namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 		Spec: api.MongoDBSpec{
@@ -175,10 +177,10 @@ func (i *Invocation) MongoDBShard() *api.MongoDB {
 	}
 }
 
-func (i *Invocation) MongoDBWithFlexibleProbeTimeout(db *api.MongoDB) *api.MongoDB {
-	dbVersion, err := i.GetMongoDBVersion(DBVersion)
+func (fi *Invocation) MongoDBWithFlexibleProbeTimeout(db *api.MongoDB) *api.MongoDB {
+	dbVersion, err := fi.GetMongoDBVersion(DBVersion)
 	Expect(err).NotTo(HaveOccurred())
-	db.SetDefaults(dbVersion, i.topology)
+	db.SetDefaults(dbVersion, fi.topology)
 
 	if db.Spec.ShardTopology != nil {
 		db.Spec.ShardTopology.Mongos.PodTemplate.Spec.ReadinessProbe = &core.Probe{}
@@ -208,8 +210,8 @@ func SSLModeP(v api.SSLMode) *api.SSLMode {
 	return &v
 }
 
-func (i *Invocation) CreateMongoDB(obj *api.MongoDB) error {
-	_, err := i.dbClient.KubedbV1alpha2().MongoDBs(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
+func (fi *Invocation) CreateMongoDB(obj *api.MongoDB) error {
+	_, err := fi.dbClient.KubedbV1alpha2().MongoDBs(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
 	return err
 }
 
@@ -465,4 +467,259 @@ func (f *Framework) EventuallyWipedOut(meta metav1.ObjectMeta, fqn string) Gomeg
 		WaitTimeOut,
 		PullInterval,
 	)
+}
+
+// DeployMongoDB creates a MongoDB object. It accepts an array of functions
+// called transform function. The transform functions make test specific modification on
+// a generic MongoDB definition.
+func (fi *Invocation) DeployMongoDB(transformFuncs ...func(in *api.MongoDB)) *api.MongoDB {
+	// A generic MongoDB definition
+	mg := &api.MongoDB{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      meta_util.NameWithSuffix("mongodb", fi.app),
+			Namespace: fi.namespace,
+			Labels: map[string]string{
+				labelApp: fi.app,
+			},
+		},
+		Spec: api.MongoDBSpec{
+			Version: DBVersion,
+			Storage: &core.PersistentVolumeClaimSpec{
+				Resources: core.ResourceRequirements{
+					Requests: core.ResourceList{
+						core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
+					},
+				},
+				StorageClassName: pointer.StringP(fi.StorageClass),
+			},
+			SSLMode:           api.SSLModeDisabled,
+			TerminationPolicy: api.TerminationPolicyDelete,
+		},
+	}
+
+	// apply the transform functions to obtain the desired MongoDB from the generic definition.
+	for _, fn := range transformFuncs {
+		fn(mg)
+	}
+
+	By("Deploying MongoDB: " + mg.Name)
+	createdMongo, err := fi.dbClient.KubedbV1alpha2().MongoDBs(mg.Namespace).Create(context.TODO(), mg, metav1.CreateOptions{})
+	Expect(err).NotTo(HaveOccurred())
+	fi.AppendToCleanupList(createdMongo)
+
+	// If "spec.Init.WaitForInitialRestore" is set to "true", database will stuck in "Provisioning" state until initial restore done.
+	if shouldWaitForInitialRestore(createdMongo) {
+		By("Waiting for MongoDB: " + createdMongo.Name + " to accept connection")
+		fi.EventuallyPingMongo(createdMongo.ObjectMeta).Should(BeTrue())
+	} else {
+		By("Waiting for MongoDB: " + createdMongo.Name + " to be ready")
+		fi.EventuallyMongoDBRunning(mg.ObjectMeta).Should(BeTrue())
+	}
+
+	// if SSL is being used, verify SSL settings
+	if sslEnabledMongo(mg) {
+		By("Verifying SSL settings")
+		fi.EventuallyUserSSLSettings(mg.ObjectMeta, &mg.Spec.ClusterAuthMode, &mg.Spec.SSLMode).Should(BeTrue())
+	}
+	return createdMongo
+}
+
+// PopulateMongoDB insert some sample data into the MongoDB when it is ready.
+func (fi *Invocation) PopulateMongoDB(mg *api.MongoDB, databases ...string) {
+	// If sharding is being used, then enable sharding in the database
+	if shardedMongo(mg) {
+		for i := range databases {
+			By("Enabling sharding for db:" + databases[i])
+			fi.EventuallyEnableSharding(mg.ObjectMeta, databases[i]).Should(BeTrue())
+
+			By("Checking if db " + databases[i] + " is set to partitioned")
+			fi.EventuallyCollectionPartitioned(mg.ObjectMeta, databases[i]).Should(BeTrue())
+		}
+	}
+	// Insert sample data
+	for i := range databases {
+		By("Inserting sample data in db: " + databases[i])
+		fi.EventuallyInsertCollection(mg.ObjectMeta, databases[i], SampleCollection, AnotherCollection).Should(BeTrue())
+	}
+}
+
+func (fi *Invocation) UpdateCollection(meta metav1.ObjectMeta, dbName string, collection Collection) {
+	By("Updating collection: " + collection.Name + " of db: " + dbName)
+	fi.EventuallyUpdateCollection(meta, dbName, collection).Should(BeTrue())
+
+	By("Verifying that the collection has been updated")
+	resp, err := fi.GetDocument(meta, dbName, collection.Name)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(resp.State).Should(Equal(collection.Document.State))
+}
+
+// SimulateMongoDBDisaster simulates accidental database deletion. It drops the database specified by "dbName" variable.
+func (fi *Invocation) SimulateMongoDBDisaster(meta metav1.ObjectMeta, databases ...string) {
+	for i := range databases {
+		By("Deleting database: " + databases[i])
+		fi.EventuallyDropDatabase(meta, databases[i]).Should(BeTrue())
+
+		By("Verifying that database: " + databases[i] + " has been removed")
+		dbExist, err := fi.DatabaseExists(meta, databases[i])
+		Expect(err).NotTo(HaveOccurred())
+		Expect(dbExist).To(BeFalse())
+	}
+}
+
+func (fi *Invocation) VerifyMongoDBRestore(meta metav1.ObjectMeta, databases ...string) {
+	By("Verify that database is healthy after restore")
+	fi.EventuallyMongoDBRunning(meta).Should(BeTrue())
+
+	for i := range databases {
+		By("Verifying that db: " + databases[i] + " has been restored")
+		// Verify that "sampleCollection" has been restored
+		document, err := fi.GetDocument(meta, databases[i], SampleCollection.Name)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(documentMatches(*document, SampleCollection.Document)).Should(BeTrue())
+
+		// Verify that "anotherCollection" has been restored
+		document, err = fi.GetDocument(meta, databases[i], SampleCollection.Name)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(documentMatches(*document, SampleCollection.Document)).Should(BeTrue())
+	}
+}
+
+func (fi *Invocation) EnableMongoSSL(mg *api.MongoDB, sslMode api.SSLMode, transformFuncs ...func(in *api.MongoDB)) {
+	// Create Issuer
+	issuer, err := fi.InsureIssuer(mg.ObjectMeta, api.ResourceKindMongoDB)
+	Expect(err).NotTo(HaveOccurred())
+
+	// Enable SSL in the MongoDB
+	mg.Spec.SSLMode = sslMode
+	mg.Spec.TLS = NewTLSConfiguration(issuer)
+
+	// apply test specific modification
+	for _, fn := range transformFuncs {
+		fn(mg)
+	}
+}
+
+func (fi *Invocation) EnableMongoReplication(mg *api.MongoDB, transformFuncs ...func(in *api.MongoDB)) {
+	mg.Spec.Replicas = pointer.Int32P(2)
+	mg.Spec.ReplicaSet = &api.MongoDBReplicaSet{
+		Name: fi.app,
+	}
+	// apply test specific modification
+	for _, fn := range transformFuncs {
+		fn(mg)
+	}
+}
+
+func (fi *Invocation) EnableMongoSharding(mg *api.MongoDB, transformFuncs ...func(in *api.MongoDB)) {
+	// remove the generic storage section
+	mg.Spec.Storage = nil
+	// add shard topology
+	mg.Spec.ShardTopology = &api.MongoDBShardingTopology{
+		Shard: api.MongoDBShardNode{
+			Shards: 2,
+			MongoDBNode: api.MongoDBNode{
+				Replicas: 2,
+				PodTemplate: ofst.PodTemplateSpec{
+					Spec: ofst.PodSpec{
+						Resources: core.ResourceRequirements{
+							Limits: core.ResourceList{
+								core.ResourceCPU:    resource.MustParse("300m"),
+								core.ResourceMemory: resource.MustParse("512Mi"),
+							},
+							Requests: core.ResourceList{
+								core.ResourceCPU:    resource.MustParse("300m"),
+								core.ResourceMemory: resource.MustParse("512Mi"),
+							},
+						},
+					},
+				},
+			},
+			Storage: &core.PersistentVolumeClaimSpec{
+				Resources: core.ResourceRequirements{
+					Requests: core.ResourceList{
+						core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
+					},
+				},
+				StorageClassName: pointer.StringP(fi.StorageClass),
+			},
+		},
+		ConfigServer: api.MongoDBConfigNode{
+			MongoDBNode: api.MongoDBNode{
+				Replicas: 2,
+				PodTemplate: ofst.PodTemplateSpec{
+					Spec: ofst.PodSpec{
+						Resources: core.ResourceRequirements{
+							Limits: core.ResourceList{
+								core.ResourceCPU:    resource.MustParse("300m"),
+								core.ResourceMemory: resource.MustParse("512Mi"),
+							},
+							Requests: core.ResourceList{
+								core.ResourceCPU:    resource.MustParse("300m"),
+								core.ResourceMemory: resource.MustParse("512Mi"),
+							},
+						},
+					},
+				},
+			},
+			Storage: &core.PersistentVolumeClaimSpec{
+				Resources: core.ResourceRequirements{
+					Requests: core.ResourceList{
+						core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
+					},
+				},
+				StorageClassName: pointer.StringP(fi.StorageClass),
+			},
+		},
+		Mongos: api.MongoDBMongosNode{
+			MongoDBNode: api.MongoDBNode{
+				Replicas: 2,
+				PodTemplate: ofst.PodTemplateSpec{
+					Spec: ofst.PodSpec{
+						Resources: core.ResourceRequirements{
+							Limits: core.ResourceList{
+								core.ResourceCPU:    resource.MustParse("300m"),
+								core.ResourceMemory: resource.MustParse("512Mi"),
+							},
+							Requests: core.ResourceList{
+								core.ResourceCPU:    resource.MustParse("300m"),
+								core.ResourceMemory: resource.MustParse("512Mi"),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	// apply test specific modification
+	for _, fn := range transformFuncs {
+		fn(mg)
+	}
+}
+
+func (fi *Invocation) WaitForInitialRestore(init *api.InitSpec) *api.InitSpec {
+	if init == nil {
+		init = &api.InitSpec{}
+	}
+	init.WaitForInitialRestore = true
+	return init
+}
+
+func shardedMongo(mg *api.MongoDB) bool {
+	if mg.Spec.ShardTopology != nil {
+		return mg.Spec.ShardTopology != nil
+	}
+	return false
+}
+
+func sslEnabledMongo(mg *api.MongoDB) bool {
+	return mg.Spec.TLS != nil
+}
+
+func documentMatches(actual, expected Document) bool {
+	return actual.Name == expected.Name &&
+		actual.State == expected.State
+}
+
+func shouldWaitForInitialRestore(mg *api.MongoDB) bool {
+	return mg != nil && mg.Spec.Init != nil && mg.Spec.Init.WaitForInitialRestore
 }

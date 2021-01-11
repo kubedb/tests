@@ -16,116 +16,116 @@ limitations under the License.
 
 package mysql
 
-import (
-	"fmt"
-
-	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
-	"kubedb.dev/tests/e2e/framework"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	stashV1beta1 "stash.appscode.dev/apimachinery/apis/stash/v1beta1"
-)
-
-var _ = Describe("MySQL", func() {
-	var fi *framework.Invocation
-
-	BeforeEach(func() {
-		fi = framework.NewInvocation()
-
-		if !runTestDatabaseType() {
-			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
-		}
-		if !runTestCommunity(framework.Initialize) {
-			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.Initialize))
-		}
-	})
-
-	JustAfterEach(func() {
-		fi.PrintDebugInfoOnFailure()
-	})
-
-	AfterEach(func() {
-		err := fi.CleanupTestResources()
-		Expect(err).NotTo(HaveOccurred())
-
-	})
-
-	Describe("General Test", func() {
-		// To run this test,
-		// 1st: Deploy stash latest operator
-		// 2nd: create mysql related tasks and functions either
-		// 		from `kubedb.dev/mysql/hack/dev/examples/stash01_config.yaml`
-		//	 or	from helm chart in `stash.appscode.dev/mysql/chart/mysql-stash`
-		Context("With Stash/Restic", func() {
-
-			BeforeEach(func() {
-				if !fi.FoundStashCRDs() {
-					Skip("Skipping tests for stash integration. reason: stash operator is not running.")
-				}
-			})
-
-			Context("From GCS backend", func() {
-
-				It("should run successfully", func() {
-					// Create MySQL standalone and wait for running
-					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						// Set termination policy WipeOut to delete all mysql resources permanently
-						in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-					})
-					Expect(err).NotTo(HaveOccurred())
-					// Database connection information
-					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              "",
-					}
-					fi.EventuallyDBReady(my, dbInfo)
-
-					By("Creating Table")
-					fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
-
-					By("Inserting Rows")
-					fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
-
-					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
-
-					// take schedule backup to GCS bucket
-					repository, err := fi.BackupDataIntoGCSBucket(my.ObjectMeta)
-					Expect(err).NotTo(HaveOccurred())
-
-					By("Initialize mysql from stash backup")
-					rs := fi.RestoreSession(my.ObjectMeta, repository)
-					my, err = fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Spec.AuthSecret = my.Spec.AuthSecret
-						in.Spec.Init = &api.InitSpec{
-							WaitForInitialRestore: true,
-						}
-					})
-					Expect(err).NotTo(HaveOccurred())
-
-					By("Create RestoreSession")
-					rs, err = fi.CreateRestoreSession(rs)
-					fi.AppendToCleanupList(rs)
-					Expect(err).NotTo(HaveOccurred())
-
-					// eventually RestoreSession succeeded
-					By("Check for Succeeded restoreSession")
-					fi.EventuallyRestoreSessionPhase(rs.ObjectMeta).Should(Equal(stashV1beta1.RestoreSucceeded))
-
-					By("Wait for Running mysql")
-					fi.EventuallyMySQLReady(my.ObjectMeta).Should(BeTrue())
-
-					fi.EventuallyDBReady(my, dbInfo)
-
-					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
-				})
-			})
-
-		})
-	})
-})
+//import (
+//	"fmt"
+//
+//	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
+//	"kubedb.dev/tests/e2e/framework"
+//
+//	. "github.com/onsi/ginkgo"
+//	. "github.com/onsi/gomega"
+//	stashV1beta1 "stash.appscode.dev/apimachinery/apis/stash/v1beta1"
+//)
+//
+//var _ = Describe("MySQL", func() {
+//	var fi *framework.Invocation
+//
+//	BeforeEach(func() {
+//		fi = framework.NewInvocation()
+//
+//		if !runTestDatabaseType() {
+//			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
+//		}
+//		if !runTestCommunity(framework.Initialize) {
+//			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.Initialize))
+//		}
+//	})
+//
+//	JustAfterEach(func() {
+//		fi.PrintDebugInfoOnFailure()
+//	})
+//
+//	AfterEach(func() {
+//		err := fi.CleanupTestResources()
+//		Expect(err).NotTo(HaveOccurred())
+//
+//	})
+//
+//	Describe("General Test", func() {
+//		// To run this test,
+//		// 1st: Deploy stash latest operator
+//		// 2nd: create mysql related tasks and functions either
+//		// 		from `kubedb.dev/mysql/hack/dev/examples/stash01_config.yaml`
+//		//	 or	from helm chart in `stash.appscode.dev/mysql/chart/mysql-stash`
+//		Context("With Stash/Restic", func() {
+//
+//			BeforeEach(func() {
+//				if !fi.StashInstalled() {
+//					Skip("Skipping tests for stash integration. reason: stash operator is not running.")
+//				}
+//			})
+//
+//			Context("From GCS backend", func() {
+//
+//				It("should run successfully", func() {
+//					// Create MySQL standalone and wait for running
+//					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
+//						// Set termination policy WipeOut to delete all mysql resources permanently
+//						in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+//					})
+//					Expect(err).NotTo(HaveOccurred())
+//					// Database connection information
+//					dbInfo := framework.DatabaseConnectionInfo{
+//						StatefulSetOrdinal: 0,
+//						ClientPodIndex:     0,
+//						DatabaseName:       framework.DBMySQL,
+//						User:               framework.MySQLRootUser,
+//						Param:              "",
+//					}
+//					fi.EventuallyDBReady(my, dbInfo)
+//
+//					By("Creating Table")
+//					fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
+//
+//					By("Inserting Rows")
+//					fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
+//
+//					By("Checking Row Count of Table")
+//					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+//
+//					// take schedule backup to GCS bucket
+//					repository, err := fi.BackupDataIntoGCSBucket(my.ObjectMeta)
+//					Expect(err).NotTo(HaveOccurred())
+//
+//					By("Initialize mysql from stash backup")
+//					rs := fi.RestoreSession(my.ObjectMeta, repository)
+//					my, err = fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
+//						in.Spec.AuthSecret = my.Spec.AuthSecret
+//						in.Spec.Init = &api.InitSpec{
+//							WaitForInitialRestore: true,
+//						}
+//					})
+//					Expect(err).NotTo(HaveOccurred())
+//
+//					By("Create RestoreSession")
+//					rs, err = fi.CreateRestoreSession(rs)
+//					fi.AppendToCleanupList(rs)
+//					Expect(err).NotTo(HaveOccurred())
+//
+//					// eventually RestoreSession succeeded
+//					By("Check for Succeeded restoreSession")
+//					fi.EventuallyRestoreSessionPhase(rs.ObjectMeta).Should(Equal(stashV1beta1.RestoreSucceeded))
+//
+//					By("Wait for Running mysql")
+//					fi.EventuallyMySQLReady(my.ObjectMeta).Should(BeTrue())
+//
+//					fi.EventuallyDBReady(my, dbInfo)
+//
+//					By("Checking Row Count of Table")
+//					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+//				})
+//			})
+//
+//		})
+//	})
+//})

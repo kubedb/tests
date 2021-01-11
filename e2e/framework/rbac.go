@@ -43,20 +43,20 @@ const (
 	mongodbUser         = "root"
 )
 
-func (i *Invocation) ServiceAccount() *core.ServiceAccount {
+func (fi *Invocation) ServiceAccount() *core.ServiceAccount {
 	return &core.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      rand.WithUniqSuffix(i.app + "-mg"),
-			Namespace: i.namespace,
+			Name:      rand.WithUniqSuffix(fi.app + "-mg"),
+			Namespace: fi.namespace,
 		},
 	}
 }
 
-func (i *Invocation) RoleForMongoDB(meta metav1.ObjectMeta) *rbac.Role {
+func (fi *Invocation) RoleForMongoDB(meta metav1.ObjectMeta) *rbac.Role {
 	return &rbac.Role{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      rand.WithUniqSuffix(i.app + "-mg"),
-			Namespace: i.namespace,
+			Name:      rand.WithUniqSuffix(fi.app + "-mg"),
+			Namespace: fi.namespace,
 		},
 		Rules: []rbac.PolicyRule{
 			{
@@ -76,11 +76,11 @@ func (i *Invocation) RoleForMongoDB(meta metav1.ObjectMeta) *rbac.Role {
 		},
 	}
 }
-func (i *Invocation) RoleForSnapshot(meta metav1.ObjectMeta) *rbac.Role {
+func (fi *Invocation) RoleForSnapshot(meta metav1.ObjectMeta) *rbac.Role {
 	return &rbac.Role{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      rand.WithUniqSuffix(i.app + "-mg"),
-			Namespace: i.namespace,
+			Name:      rand.WithUniqSuffix(fi.app + "-mg"),
+			Namespace: fi.namespace,
 		},
 		Rules: []rbac.PolicyRule{
 			{
@@ -101,11 +101,11 @@ func (i *Invocation) RoleForSnapshot(meta metav1.ObjectMeta) *rbac.Role {
 	}
 }
 
-func (i *Invocation) RoleBinding(saName string, roleName string) *rbac.RoleBinding {
+func (fi *Invocation) RoleBinding(saName string, roleName string) *rbac.RoleBinding {
 	return &rbac.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      rand.WithUniqSuffix(i.app + "-mg"),
-			Namespace: i.namespace,
+			Name:      rand.WithUniqSuffix(fi.app + "-mg"),
+			Namespace: fi.namespace,
 		},
 		RoleRef: rbac.RoleRef{
 			APIGroup: rbacApiGroup,
@@ -115,7 +115,7 @@ func (i *Invocation) RoleBinding(saName string, roleName string) *rbac.RoleBindi
 		Subjects: []rbac.Subject{
 			{
 				Kind:      ServiceAccount,
-				Namespace: i.namespace,
+				Namespace: fi.namespace,
 				Name:      saName,
 			},
 		},

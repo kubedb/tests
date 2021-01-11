@@ -56,11 +56,13 @@ var (
 	DBUpdatedVersion = "6.0.6"
 	PullInterval     = time.Second * 2
 	WaitTimeOut      = time.Minute * 5
-	StorageProvider  string
 	RootFramework    *Framework
 	SSLEnabled       bool
 	InMemory         bool
 	TestFailed       = false
+
+	StashAddonName    = ""
+	StashAddonVersion = ""
 )
 
 type Framework struct {
@@ -71,7 +73,7 @@ type Framework struct {
 	kaClient          ka.Interface
 	dmClient          dynamic.Interface
 	appCatalogClient  appcat_cs.AppcatalogV1alpha1Interface
-	stashClient       scs.Interface
+	StashClient       scs.Interface
 	topology          *core_util.Topology
 	namespace         string
 	name              string
@@ -125,7 +127,7 @@ func New(
 		kaClient:          kaClient,
 		dmClient:          dmClient,
 		appCatalogClient:  appCatalogClient,
-		stashClient:       stashClient,
+		StashClient:       stashClient,
 		name:              fmt.Sprintf("%s-operator", DBType),
 		namespace:         rand.WithUniqSuffix(strings.ToLower(DBType)),
 		StorageClass:      storageClass,
@@ -147,16 +149,16 @@ func (f *Framework) Invoke() *Invocation {
 	}
 }
 
-func (i *Invocation) DBClient() cs.Interface {
-	return i.dbClient
+func (fi *Invocation) DBClient() cs.Interface {
+	return fi.dbClient
 }
 
-func (i *Invocation) KubeClient() kubernetes.Interface {
-	return i.kubeClient
+func (fi *Invocation) KubeClient() kubernetes.Interface {
+	return fi.kubeClient
 }
 
-func (i *Invocation) App() string {
-	return i.app
+func (fi *Invocation) App() string {
+	return fi.app
 }
 
 type Invocation struct {
@@ -165,10 +167,10 @@ type Invocation struct {
 	testResources []interface{}
 }
 
-func (i *Invocation) TestConfig() *test_util.TestConfig {
-	return i.testConfig
+func (fi *Invocation) TestConfig() *test_util.TestConfig {
+	return fi.testConfig
 }
 
-func (i *Invocation) RestConfig() *rest.Config {
-	return i.restConfig
+func (fi *Invocation) RestConfig() *rest.Config {
+	return fi.restConfig
 }

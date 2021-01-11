@@ -30,6 +30,8 @@ import (
 	_ "kubedb.dev/tests/e2e/elasticsearch"
 	"kubedb.dev/tests/e2e/framework"
 	_ "kubedb.dev/tests/e2e/mongodb"
+	_ "kubedb.dev/tests/e2e/mongodb/backup"
+	_ "kubedb.dev/tests/e2e/mongodb/initialization"
 	_ "kubedb.dev/tests/e2e/mysql"
 	_ "kubedb.dev/tests/e2e/redis"
 
@@ -77,11 +79,12 @@ func init() {
 	flag.StringVar(&framework.DockerRegistry, "docker-registry", framework.DockerRegistry, "User provided docker repository")
 	flag.StringVar(&framework.DBVersion, "db-version", framework.DBVersion, "Database version")
 	flag.StringVar(&framework.DBUpdatedVersion, "db-updated-version", framework.DBUpdatedVersion, "Upgraded database version")
-	flag.StringVar(&framework.StorageProvider, "storage-provider", framework.StorageProviderMinio, "Backend Storage Provider")
 	flag.StringVar(&framework.DBType, "db-type", api.ResourceSingularMongoDB, "Database type test")
 	flag.BoolVar(&framework.SSLEnabled, "ssl", framework.SSLEnabled, "enable ssl")
 	flag.BoolVar(&framework.InMemory, "inmemory", framework.SSLEnabled, "test percona inmemory")
 	flag.Var(&framework.TestProfiles, "test-profiles", "Test Profiles to test")
+	flag.StringVar(&framework.StashAddonName, "stash-addon-name", "", "Name of the Stash addon to use for testing database backup")
+	flag.StringVar(&framework.StashAddonVersion, "stash-addon-version", "", "Version of the Stash addon to use for testing database backup")
 }
 
 const (
@@ -127,11 +130,13 @@ var _ = BeforeSuite(func() {
 
 	//framework.RootFramework.EventuallyCRD().Should(Succeed())
 
-	if framework.StorageProvider == framework.StorageProviderMinio {
-		By("Deploy TLS secured Minio Server")
-		_, err = framework.RootFramework.CreateMinioServer(true, []net.IP{net.ParseIP(framework.LocalHostIP)})
-		Expect(err).NotTo(HaveOccurred())
-	}
+	// Deploy Minio Server for Stash backup tests
+	By("Deploy TLS secured Minio Server")
+	_, err = framework.RootFramework.CreateMinioServer(true, []net.IP{net.ParseIP(framework.LocalHostIP)})
+	Expect(err).NotTo(HaveOccurred())
+
+	// Show current test configuration
+	framework.RootFramework.DumpTestConfigurations()
 })
 
 var _ = AfterSuite(func() {
@@ -141,13 +146,10 @@ var _ = AfterSuite(func() {
 	By("Delete left over workloads if exists any")
 	framework.RootFramework.CleanWorkloadLeftOvers(api.MongoDB{}.ResourceFQN())
 
-	if framework.StorageProvider == framework.StorageProviderMinio {
-		By("Deleting Minio server")
-		err := framework.RootFramework.DeleteMinioServer()
-		Expect(err).NotTo(HaveOccurred())
-	}
+	err := framework.RootFramework.DeleteMinioServer()
+	Expect(err).NotTo(HaveOccurred())
 
 	By("Delete Namespace")
-	err := framework.RootFramework.DeleteNamespace()
+	err = framework.RootFramework.DeleteNamespace()
 	Expect(err).NotTo(HaveOccurred())
 })

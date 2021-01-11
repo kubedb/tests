@@ -61,7 +61,7 @@ type DatabaseConnectionInfo struct {
 	Param              string
 }
 
-func (f *Framework) forwardPort(meta metav1.ObjectMeta, stsOrdinal, clientPodIndex int) (*portforward.Tunnel, error) {
+func (fi *Invocation) forwardPort(meta metav1.ObjectMeta, stsOrdinal, clientPodIndex int) (*portforward.Tunnel, error) {
 	var clientPodName string
 	if stsOrdinal == 0 {
 		clientPodName = fmt.Sprintf("%v-%d", meta.Name, clientPodIndex)
@@ -71,8 +71,8 @@ func (f *Framework) forwardPort(meta metav1.ObjectMeta, stsOrdinal, clientPodInd
 
 	tunnel := portforward.NewTunnel(
 		portforward.TunnelOptions{
-			Client:    f.kubeClient.CoreV1().RESTClient(),
-			Config:    f.restConfig,
+			Client:    fi.kubeClient.CoreV1().RESTClient(),
+			Config:    fi.restConfig,
 			Resource:  string(core.ResourcePods),
 			Namespace: meta.Namespace,
 			Name:      clientPodName,
@@ -85,19 +85,19 @@ func (f *Framework) forwardPort(meta metav1.ObjectMeta, stsOrdinal, clientPodInd
 	return tunnel, nil
 }
 
-func (f *Framework) getMySQLClient(meta metav1.ObjectMeta, tunnel *portforward.Tunnel, dbInfo DatabaseConnectionInfo) (*xorm.Engine, error) {
-	mysql, err := f.GetMySQL(meta)
+func (fi *Invocation) getMySQLClient(meta metav1.ObjectMeta, tunnel *portforward.Tunnel, dbInfo DatabaseConnectionInfo) (*xorm.Engine, error) {
+	mysql, err := fi.GetMySQL(meta)
 	if err != nil {
 		return nil, err
 	}
 
-	pass, err := f.GetMySQLRootPassword(mysql)
+	pass, err := fi.GetMySQLRootPassword(mysql)
 	if err != nil {
 		return nil, err
 	}
 
 	if strings.Contains(dbInfo.Param, "tls") {
-		serverSecret, err := f.kubeClient.CoreV1().Secrets(f.Namespace()).Get(context.TODO(), mysql.MustCertSecretName(api.MySQLServerCert), metav1.GetOptions{})
+		serverSecret, err := fi.kubeClient.CoreV1().Secrets(fi.Namespace()).Get(context.TODO(), mysql.MustCertSecretName(api.MySQLServerCert), metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -105,7 +105,7 @@ func (f *Framework) getMySQLClient(meta metav1.ObjectMeta, tunnel *portforward.T
 		certPool := x509.NewCertPool()
 		certPool.AppendCertsFromPEM(cacrt)
 		// get client-secret
-		clientSecret, err := f.kubeClient.CoreV1().Secrets(f.Namespace()).Get(context.TODO(), mysql.MustCertSecretName(api.MySQLClientCert), metav1.GetOptions{})
+		clientSecret, err := fi.kubeClient.CoreV1().Secrets(fi.Namespace()).Get(context.TODO(), mysql.MustCertSecretName(api.MySQLClientCert), metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -147,19 +147,19 @@ func (f *Framework) getMySQLClient(meta metav1.ObjectMeta, tunnel *portforward.T
 
 }
 
-func (f *Framework) EventuallyCreateUserWithRequiredSSL(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyCreateUserWithRequiredSSL(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) GomegaAsyncAssertion {
 	sql := fmt.Sprintf("CREATE USER '%s'@'%s' IDENTIFIED BY '%s' REQUIRE SSL;", MySQLRequiredSSLUser, "%", MySQLRequiredSSLPassword)
 	privilege := fmt.Sprintf("GRANT ALL ON mysql.* TO '%s'@'%s';", MySQLRequiredSSLUser, "%")
 	flush := "FLUSH PRIVILEGES;"
 	return Eventually(
 		func() bool {
-			tunnel, err := f.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
+			tunnel, err := fi.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
 			if err != nil {
 				return false
 			}
 			defer tunnel.Close()
 
-			en, err := f.getMySQLClient(meta, tunnel, dbInfo)
+			en, err := fi.getMySQLClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return false
 			}
@@ -189,18 +189,18 @@ func (f *Framework) EventuallyCreateUserWithRequiredSSL(meta metav1.ObjectMeta, 
 	)
 }
 
-func (f *Framework) EventuallyCheckSSLSettings(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo, config string) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyCheckSSLSettings(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo, config string) GomegaAsyncAssertion {
 	sslConfigVarPair := strings.Split(config, "=")
 	sql := fmt.Sprintf("SHOW VARIABLES LIKE '%s';", sslConfigVarPair[0])
 	return Eventually(
 		func() []map[string][]byte {
-			tunnel, err := f.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
+			tunnel, err := fi.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
 			if err != nil {
 				return nil
 			}
 			defer tunnel.Close()
 
-			en, err := f.getMySQLClient(meta, tunnel, dbInfo)
+			en, err := fi.getMySQLClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return nil
 			}
@@ -217,16 +217,16 @@ func (f *Framework) EventuallyCheckSSLSettings(meta metav1.ObjectMeta, dbInfo Da
 	)
 }
 
-func (f *Framework) EventuallyDBConnection(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyDBConnection(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			tunnel, err := f.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
+			tunnel, err := fi.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
 			if err != nil {
 				return false
 			}
 			defer tunnel.Close()
 
-			en, err := f.getMySQLClient(meta, tunnel, dbInfo)
+			en, err := fi.getMySQLClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return false
 			}
@@ -242,16 +242,16 @@ func (f *Framework) EventuallyDBConnection(meta metav1.ObjectMeta, dbInfo Databa
 	)
 }
 
-func (f *Framework) EventuallyCreateTable(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyCreateTable(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			tunnel, err := f.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
+			tunnel, err := fi.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
 			if err != nil {
 				return false
 			}
 			defer tunnel.Close()
 
-			en, err := f.getMySQLClient(meta, tunnel, dbInfo)
+			en, err := fi.getMySQLClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return false
 			}
@@ -267,17 +267,17 @@ func (f *Framework) EventuallyCreateTable(meta metav1.ObjectMeta, dbInfo Databas
 	)
 }
 
-func (f *Framework) EventuallyInsertRow(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo, total int) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyInsertRow(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo, total int) GomegaAsyncAssertion {
 	count := 0
 	return Eventually(
 		func() bool {
-			tunnel, err := f.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
+			tunnel, err := fi.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
 			if err != nil {
 				return false
 			}
 			defer tunnel.Close()
 
-			en, err := f.getMySQLClient(meta, tunnel, dbInfo)
+			en, err := fi.getMySQLClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return false
 			}
@@ -289,7 +289,7 @@ func (f *Framework) EventuallyInsertRow(meta metav1.ObjectMeta, dbInfo DatabaseC
 
 			for i := count; i < total; i++ {
 				if _, err := en.Insert(&KubedbTable{
-					//Id:   int64(i),
+					//Id:   int64(fi),
 					Name: fmt.Sprintf("KubedbName-%v", i),
 				}); err != nil {
 					return false
@@ -303,16 +303,16 @@ func (f *Framework) EventuallyInsertRow(meta metav1.ObjectMeta, dbInfo DatabaseC
 	)
 }
 
-func (f *Framework) EventuallyCountRow(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyCountRow(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) GomegaAsyncAssertion {
 	return Eventually(
 		func() int {
-			tunnel, err := f.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
+			tunnel, err := fi.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
 			if err != nil {
 				return -1
 			}
 			defer tunnel.Close()
 
-			en, err := f.getMySQLClient(meta, tunnel, dbInfo)
+			en, err := fi.getMySQLClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return -1
 			}
@@ -334,16 +334,16 @@ func (f *Framework) EventuallyCountRow(meta metav1.ObjectMeta, dbInfo DatabaseCo
 	)
 }
 
-func (f *Framework) EventuallyONLINEMembersCount(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyONLINEMembersCount(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) GomegaAsyncAssertion {
 	return Eventually(
 		func() int {
-			tunnel, err := f.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
+			tunnel, err := fi.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
 			if err != nil {
 				return -1
 			}
 			defer tunnel.Close()
 
-			en, err := f.getMySQLClient(meta, tunnel, dbInfo)
+			en, err := fi.getMySQLClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return -1
 			}
@@ -365,17 +365,17 @@ func (f *Framework) EventuallyONLINEMembersCount(meta metav1.ObjectMeta, dbInfo 
 	)
 }
 
-func (f *Framework) EventuallyDatabaseVersionUpdated(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo, targetedVersion string) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyDatabaseVersionUpdated(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo, targetedVersion string) GomegaAsyncAssertion {
 	query := `SHOW VARIABLES LIKE "version";`
 	return Eventually(
 		func() bool {
-			tunnel, err := f.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
+			tunnel, err := fi.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
 			if err != nil {
 				return false
 			}
 			defer tunnel.Close()
 
-			en, err := f.getMySQLClient(meta, tunnel, dbInfo)
+			en, err := fi.getMySQLClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return false
 			}
@@ -400,18 +400,18 @@ func (f *Framework) EventuallyDatabaseVersionUpdated(meta metav1.ObjectMeta, dbI
 	)
 }
 
-func (f *Framework) EventuallyMySQLVariable(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo, config string) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyMySQLVariable(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo, config string) GomegaAsyncAssertion {
 	configPair := strings.Split(config, "=")
 	sql := fmt.Sprintf("SHOW VARIABLES LIKE '%s';", configPair[0])
 	return Eventually(
 		func() []map[string][]byte {
-			tunnel, err := f.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
+			tunnel, err := fi.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
 			if err != nil {
 				return nil
 			}
 			defer tunnel.Close()
 
-			en, err := f.getMySQLClient(meta, tunnel, dbInfo)
+			en, err := fi.getMySQLClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return nil
 			}

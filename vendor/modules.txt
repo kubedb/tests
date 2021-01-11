@@ -427,7 +427,10 @@ gomodules.xyz/pointer
 # gomodules.xyz/version v0.1.0
 gomodules.xyz/version
 # gomodules.xyz/x v0.0.0-20201105065653-91c568df6331
+## explicit
+gomodules.xyz/x/arrays
 gomodules.xyz/x/context
+gomodules.xyz/x/crypto/rand
 gomodules.xyz/x/log
 # google.golang.org/appengine v1.6.6
 google.golang.org/appengine
@@ -688,6 +691,7 @@ k8s.io/client-go/tools/pager
 k8s.io/client-go/tools/portforward
 k8s.io/client-go/tools/reference
 k8s.io/client-go/tools/remotecommand
+k8s.io/client-go/tools/watch
 k8s.io/client-go/transport
 k8s.io/client-go/transport/spdy
 k8s.io/client-go/util/cert
@@ -730,17 +734,12 @@ kmodules.xyz/client-go/apiextensions/v1beta1
 kmodules.xyz/client-go/apps/v1
 kmodules.xyz/client-go/core/v1
 kmodules.xyz/client-go/discovery
+kmodules.xyz/client-go/dynamic
 kmodules.xyz/client-go/logs
 kmodules.xyz/client-go/meta
 kmodules.xyz/client-go/tools/clientcmd
 kmodules.xyz/client-go/tools/exec
 kmodules.xyz/client-go/tools/portforward
-# kmodules.xyz/constants v0.0.0-20200923054614-6b87dbbae4d6
-## explicit
-kmodules.xyz/constants/aws
-kmodules.xyz/constants/azure
-kmodules.xyz/constants/google
-kmodules.xyz/constants/openstack
 # kmodules.xyz/custom-resources v0.0.0-20201124062543-bd8d35c21b0c
 ## explicit
 kmodules.xyz/custom-resources/apis/appcatalog
