@@ -101,7 +101,7 @@ var _ = Describe("Version Upgrade", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 		})
 
-		FIt("Should be successfully upgraded", func() {
+		It("Should be successfully upgraded", func() {
 			to.createElasticsearchAndWaitForBeingReady()
 			indicesCount := to.insertData()
 			to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
