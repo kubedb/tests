@@ -158,3 +158,12 @@ func (f *Framework) GetMySQLRootPassword(my *api.MySQL) (string, error) {
 	password := string(secret.Data[KeyMySQLPassword])
 	return password, nil
 }
+
+func (f *Framework) GetMariaDBRootPassword(md *api.MariaDB) (string, error) {
+	secret, err := f.kubeClient.CoreV1().Secrets(md.Namespace).Get(context.TODO(), md.Spec.AuthSecret.Name, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+	password := string(secret.Data[KeyMySQLPassword])
+	return password, nil
+}

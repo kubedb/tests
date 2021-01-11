@@ -370,11 +370,12 @@ install:
 		--set catalog.memcached=false \
 		--set catalog.mongo=false \
 		--set catalog.mysql=false \
+		--set catalog.mariadb=true \
 		--set catalog.perconaxtradb=false \
 		--set catalog.pgbouncer=false \
 		--set catalog.postgres=false \
 		--set catalog.proxysql=false \
-		--set catalog.redis=true; \
+		--set catalog.redis=false; \
 	helm install kubedb-enterprise charts/kubedb-enterprise --wait \
 		--namespace=$(KUBE_NAMESPACE) \
 		--set operator.registry=$(REGISTRY) \
