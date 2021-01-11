@@ -19,6 +19,7 @@ package e2e_test
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha2/util"
@@ -52,6 +53,9 @@ var _ = Describe("Environment Variables", func() {
 		}
 		if to.StorageClass == "" {
 			Skip("Missing StorageClassName. Provide as flag to test this.")
+		}
+		if strings.ToLower(framework.DBType) != api.ResourceSingularMongoDB {
+			Skip(fmt.Sprintf("Skipping MongoDB: %s tests...", testName))
 		}
 		if !framework.RunTestCommunity(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` to test this.", testName))
