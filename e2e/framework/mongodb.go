@@ -83,23 +83,6 @@ func (fi *Invocation) MongoDBStandalone() *api.MongoDB {
 
 func (fi *Invocation) MongoDBRS() *api.MongoDB {
 	dbName := rand.WithUniqSuffix("mongo-rs")
-	storageType := api.StorageTypeDurable
-	storageEngine := api.StorageEngineWiredTiger
-	storage := &core.PersistentVolumeClaimSpec{
-		Resources: core.ResourceRequirements{
-			Requests: core.ResourceList{
-				core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
-			},
-		},
-		StorageClassName: types.StringP(fi.StorageClass),
-	}
-
-	if InMemory {
-		storageType = api.StorageTypeEphemeral
-		storageEngine = api.StorageEngineInMemory
-		storage = nil
-	}
-
 	return &api.MongoDB{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      dbName,
@@ -114,32 +97,15 @@ func (fi *Invocation) MongoDBRS() *api.MongoDB {
 			ReplicaSet: &api.MongoDBReplicaSet{
 				Name: dbName,
 			},
-			StorageEngine:     storageEngine,
-			StorageType:       storageType,
-			Storage:           storage,
+			StorageEngine:     fi.getMongoStorageEngine(),
+			StorageType:       fi.getStorageType(),
+			Storage:           fi.getStorage(),
 			TerminationPolicy: api.TerminationPolicyHalt,
 		},
 	}
 }
 
 func (fi *Invocation) MongoDBShard() *api.MongoDB {
-	storageType := api.StorageTypeDurable
-	storageEngine := api.StorageEngineWiredTiger
-	storage := &core.PersistentVolumeClaimSpec{
-		Resources: core.ResourceRequirements{
-			Requests: core.ResourceList{
-				core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
-			},
-		},
-		StorageClassName: types.StringP(fi.StorageClass),
-	}
-
-	if InMemory {
-		storageType = api.StorageTypeEphemeral
-		storageEngine = api.StorageEngineInMemory
-		storage = nil
-	}
-
 	return &api.MongoDB{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mongo-sh"),
@@ -150,21 +116,21 @@ func (fi *Invocation) MongoDBShard() *api.MongoDB {
 		},
 		Spec: api.MongoDBSpec{
 			Version:       DBVersion,
-			StorageEngine: storageEngine,
-			StorageType:   storageType,
+			StorageEngine: fi.getMongoStorageEngine(),
+			StorageType:   fi.getStorageType(),
 			ShardTopology: &api.MongoDBShardingTopology{
 				Shard: api.MongoDBShardNode{
 					Shards: 2,
 					MongoDBNode: api.MongoDBNode{
 						Replicas: 3,
 					},
-					Storage: storage,
+					Storage: fi.getStorage(),
 				},
 				ConfigServer: api.MongoDBConfigNode{
 					MongoDBNode: api.MongoDBNode{
 						Replicas: 3,
 					},
-					Storage: storage,
+					Storage: fi.getStorage(),
 				},
 				Mongos: api.MongoDBMongosNode{
 					MongoDBNode: api.MongoDBNode{
@@ -600,6 +566,13 @@ func (fi *Invocation) EnableMongoSSL(mg *api.MongoDB, sslMode api.SSLMode, trans
 }
 
 func (fi *Invocation) EnableMongoReplication(mg *api.MongoDB, transformFuncs ...func(in *api.MongoDB)) {
+	// set storage engine
+	mg.Spec.StorageEngine = fi.getMongoStorageEngine()
+	// set storage type
+	mg.Spec.StorageType = fi.getStorageType()
+	// set pvc specification
+	mg.Spec.Storage = fi.getStorage()
+	// set replicas
 	mg.Spec.Replicas = pointer.Int32P(2)
 	mg.Spec.ReplicaSet = &api.MongoDBReplicaSet{
 		Name: fi.app,
@@ -613,6 +586,10 @@ func (fi *Invocation) EnableMongoReplication(mg *api.MongoDB, transformFuncs ...
 func (fi *Invocation) EnableMongoSharding(mg *api.MongoDB, transformFuncs ...func(in *api.MongoDB)) {
 	// remove the generic storage section
 	mg.Spec.Storage = nil
+	// set storage engine
+	mg.Spec.StorageEngine = fi.getMongoStorageEngine()
+	// set storage type
+	mg.Spec.StorageType = fi.getStorageType()
 	// add shard topology
 	mg.Spec.ShardTopology = &api.MongoDBShardingTopology{
 		Shard: api.MongoDBShardNode{
@@ -621,70 +598,29 @@ func (fi *Invocation) EnableMongoSharding(mg *api.MongoDB, transformFuncs ...fun
 				Replicas: 2,
 				PodTemplate: ofst.PodTemplateSpec{
 					Spec: ofst.PodSpec{
-						Resources: core.ResourceRequirements{
-							Limits: core.ResourceList{
-								core.ResourceCPU:    resource.MustParse("300m"),
-								core.ResourceMemory: resource.MustParse("512Mi"),
-							},
-							Requests: core.ResourceList{
-								core.ResourceCPU:    resource.MustParse("300m"),
-								core.ResourceMemory: resource.MustParse("512Mi"),
-							},
-						},
+						Resources: fi.getResources(),
 					},
 				},
 			},
-			Storage: &core.PersistentVolumeClaimSpec{
-				Resources: core.ResourceRequirements{
-					Requests: core.ResourceList{
-						core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
-					},
-				},
-				StorageClassName: pointer.StringP(fi.StorageClass),
-			},
+			Storage: fi.getStorage(),
 		},
 		ConfigServer: api.MongoDBConfigNode{
 			MongoDBNode: api.MongoDBNode{
 				Replicas: 2,
 				PodTemplate: ofst.PodTemplateSpec{
 					Spec: ofst.PodSpec{
-						Resources: core.ResourceRequirements{
-							Limits: core.ResourceList{
-								core.ResourceCPU:    resource.MustParse("300m"),
-								core.ResourceMemory: resource.MustParse("512Mi"),
-							},
-							Requests: core.ResourceList{
-								core.ResourceCPU:    resource.MustParse("300m"),
-								core.ResourceMemory: resource.MustParse("512Mi"),
-							},
-						},
+						Resources: fi.getResources(),
 					},
 				},
 			},
-			Storage: &core.PersistentVolumeClaimSpec{
-				Resources: core.ResourceRequirements{
-					Requests: core.ResourceList{
-						core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
-					},
-				},
-				StorageClassName: pointer.StringP(fi.StorageClass),
-			},
+			Storage: fi.getStorage(),
 		},
 		Mongos: api.MongoDBMongosNode{
 			MongoDBNode: api.MongoDBNode{
 				Replicas: 2,
 				PodTemplate: ofst.PodTemplateSpec{
 					Spec: ofst.PodSpec{
-						Resources: core.ResourceRequirements{
-							Limits: core.ResourceList{
-								core.ResourceCPU:    resource.MustParse("300m"),
-								core.ResourceMemory: resource.MustParse("512Mi"),
-							},
-							Requests: core.ResourceList{
-								core.ResourceCPU:    resource.MustParse("300m"),
-								core.ResourceMemory: resource.MustParse("512Mi"),
-							},
-						},
+						Resources: fi.getResources(),
 					},
 				},
 			},
@@ -722,4 +658,46 @@ func documentMatches(actual, expected Document) bool {
 
 func shouldWaitForInitialRestore(mg *api.MongoDB) bool {
 	return mg != nil && mg.Spec.Init != nil && mg.Spec.Init.WaitForInitialRestore
+}
+
+func (fi *Invocation) getStorage() *core.PersistentVolumeClaimSpec {
+	storage := &core.PersistentVolumeClaimSpec{
+		Resources: core.ResourceRequirements{
+			Requests: core.ResourceList{
+				core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
+			},
+		},
+		StorageClassName: pointer.StringP(fi.StorageClass),
+	}
+	if InMemory {
+		storage = nil
+	}
+	return storage
+}
+
+func (fi *Invocation) getResources() core.ResourceRequirements {
+	return core.ResourceRequirements{
+		Limits: core.ResourceList{
+			core.ResourceCPU:    resource.MustParse("300m"),
+			core.ResourceMemory: resource.MustParse("512Mi"),
+		},
+		Requests: core.ResourceList{
+			core.ResourceCPU:    resource.MustParse("300m"),
+			core.ResourceMemory: resource.MustParse("512Mi"),
+		},
+	}
+}
+
+func (fi *Invocation) getMongoStorageEngine() api.StorageEngine {
+	if InMemory {
+		return api.StorageEngineInMemory
+	}
+	return api.StorageEngineWiredTiger
+}
+
+func (fi *Invocation) getStorageType() api.StorageType {
+	if InMemory {
+		return api.StorageTypeEphemeral
+	}
+	return api.StorageTypeDurable
 }
