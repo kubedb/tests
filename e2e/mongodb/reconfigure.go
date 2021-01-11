@@ -167,6 +167,7 @@ var _ = Describe("Reconfigure", func() {
 			BeforeEach(func() {
 				to.mongodb = to.MongoDBRS()
 				to.mongodb.Spec.ConfigSecret = configSecret
+				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				to.mongoOpsReq = to.MongoDBOpsRequestReconfigure(to.mongodb.Name, to.mongodb.Namespace, nil, newCustomConfig, nil, nil, nil)
 			})
 

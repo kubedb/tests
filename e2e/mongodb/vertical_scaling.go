@@ -34,12 +34,12 @@ var _ = Describe("Vertical Scaling", func() {
 	testName := framework.VerticalScaling
 	resource := &v1.ResourceRequirements{
 		Limits: map[v1.ResourceName]resource.Quantity{
-			v1.ResourceMemory: resource.MustParse("300Mi"),
-			v1.ResourceCPU:    resource.MustParse(".2"),
+			v1.ResourceMemory: resource.MustParse("1250Mi"),
+			v1.ResourceCPU:    resource.MustParse(".6"),
 		},
 		Requests: map[v1.ResourceName]resource.Quantity{
-			v1.ResourceMemory: resource.MustParse("200Mi"),
-			v1.ResourceCPU:    resource.MustParse(".1"),
+			v1.ResourceMemory: resource.MustParse("1100Mi"),
+			v1.ResourceCPU:    resource.MustParse(".55"),
 		},
 	}
 
@@ -185,6 +185,7 @@ var _ = Describe("Vertical Scaling", func() {
 				BeforeEach(func() {
 					to.mongodb = to.MongoDBStandalone()
 					to.mongodb.Spec.ConfigSecret = configSecret
+					to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, resource, nil, nil, nil, nil, nil)
 					to.mongoOpsReq.Spec.Configuration = &dbaapi.MongoDBCustomConfigurationSpec{
 						Standalone: newCustomConfig,
@@ -200,6 +201,7 @@ var _ = Describe("Vertical Scaling", func() {
 				BeforeEach(func() {
 					to.mongodb = to.MongoDBRS()
 					to.mongodb.Spec.ConfigSecret = configSecret
+					to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, resource, nil, nil, nil, nil)
 					to.mongoOpsReq.Spec.Configuration = &dbaapi.MongoDBCustomConfigurationSpec{
 						ReplicaSet: newCustomConfig,
@@ -217,6 +219,7 @@ var _ = Describe("Vertical Scaling", func() {
 					to.mongodb.Spec.ShardTopology.Shard.ConfigSecret = configSecret
 					to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSecret = configSecret
 					to.mongodb.Spec.ShardTopology.Mongos.ConfigSecret = configSecret
+					to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, resource, resource, resource, nil)
 					to.mongoOpsReq.Spec.Configuration = &dbaapi.MongoDBCustomConfigurationSpec{
 						Mongos:       newCustomConfig,
@@ -262,6 +265,7 @@ var _ = Describe("Vertical Scaling", func() {
 				BeforeEach(func() {
 					to.mongodb = to.MongoDBStandalone()
 					to.mongodb.Spec.ConfigSecret = configSecret
+					to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, resource, nil, nil, nil, nil, nil)
 					to.mongoOpsReq.Spec.Configuration = &dbaapi.MongoDBCustomConfigurationSpec{
 						Standalone: newCustomConfig,
@@ -277,6 +281,7 @@ var _ = Describe("Vertical Scaling", func() {
 				BeforeEach(func() {
 					to.mongodb = to.MongoDBRS()
 					to.mongodb.Spec.ConfigSecret = configSecret
+					to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, resource, nil, nil, nil, nil)
 					to.mongoOpsReq.Spec.Configuration = &dbaapi.MongoDBCustomConfigurationSpec{
 						ReplicaSet: newCustomConfig,
@@ -294,6 +299,7 @@ var _ = Describe("Vertical Scaling", func() {
 					to.mongodb.Spec.ShardTopology.Shard.ConfigSecret = configSecret
 					to.mongodb.Spec.ShardTopology.ConfigServer.ConfigSecret = configSecret
 					to.mongodb.Spec.ShardTopology.Mongos.ConfigSecret = configSecret
+					to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					to.mongoOpsReq = to.MongoDBOpsRequestVerticalScale(to.mongodb.Name, to.mongodb.Namespace, nil, nil, resource, resource, resource, nil)
 					to.mongoOpsReq.Spec.Configuration = &dbaapi.MongoDBCustomConfigurationSpec{
 						Mongos:       newCustomConfig,

@@ -59,6 +59,7 @@ var (
 	StorageProvider  string
 	RootFramework    *Framework
 	SSLEnabled       bool
+	InMemory         bool
 	TestFailed       = false
 )
 
