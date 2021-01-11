@@ -185,4 +185,11 @@ func (fi *Invocation) CustomConfigForMySQL(customConfigs []string, name string) 
 	}
 	fi.AppendToCleanupList(cm)
 	return cm, err
+func (f *Framework) GetMariaDBRootPassword(md *api.MariaDB) (string, error) {
+	secret, err := f.kubeClient.CoreV1().Secrets(md.Namespace).Get(context.TODO(), md.Spec.AuthSecret.Name, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+	password := string(secret.Data[KeyMySQLPassword])
+	return password, nil
 }
