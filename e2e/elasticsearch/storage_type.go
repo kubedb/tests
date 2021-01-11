@@ -18,6 +18,7 @@ package elasticsearch
 
 import (
 	"fmt"
+	"strings"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
@@ -40,15 +41,12 @@ var _ = Describe("Storage Type", func() {
 			Skip("Missing StorageClassName. Provide as flag to test this.")
 		}
 
-		if framework.DBType != api.ResourceKindElasticsearch {
+		if strings.ToLower(framework.DBType) != api.ResourceSingularElasticsearch {
 			Skip(fmt.Sprintf("Skipping Elasticsearch: %s tests...", testName))
 		}
 
 		if !framework.RunTestCommunity(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` to test this.", testName))
-		}
-		if framework.SSLEnabled {
-			Skip("Skipping test with SSL enabled...")
 		}
 	})
 
@@ -74,6 +72,7 @@ var _ = Describe("Storage Type", func() {
 			It("Standalone Cluster", func() {
 				to.db = to.transformElasticsearch(to.StandaloneElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
 					in.Spec.StorageType = api.StorageTypeDurable
+					in.Spec.EnableSSL = framework.SSLEnabled
 					return in
 				})
 				to.createAndHaltElasticsearchAndWaitForBeingReady()
@@ -83,6 +82,7 @@ var _ = Describe("Storage Type", func() {
 			It("Dedicated Cluster", func() {
 				to.db = to.transformElasticsearch(to.ClusterElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
 					in.Spec.StorageType = api.StorageTypeDurable
+					in.Spec.EnableSSL = framework.SSLEnabled
 					return in
 				})
 				to.createAndHaltElasticsearchAndWaitForBeingReady()
@@ -97,6 +97,7 @@ var _ = Describe("Storage Type", func() {
 					in.Spec.StorageType = api.StorageTypeEphemeral
 					in.Spec.Storage = nil
 					in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+					in.Spec.EnableSSL = framework.SSLEnabled
 					return in
 				})
 				to.createElasticsearchAndWaitForBeingReady()
@@ -110,6 +111,7 @@ var _ = Describe("Storage Type", func() {
 					in.Spec.Topology.Data.Storage = nil
 					in.Spec.Topology.Ingest.Storage = nil
 					in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+					in.Spec.EnableSSL = framework.SSLEnabled
 					return in
 				})
 
@@ -122,6 +124,7 @@ var _ = Describe("Storage Type", func() {
 					in.Spec.TerminationPolicy = api.TerminationPolicyHalt
 					in.Spec.StorageType = api.StorageTypeEphemeral
 					in.Spec.Storage = nil
+					in.Spec.EnableSSL = framework.SSLEnabled
 					return in
 				})
 

@@ -18,6 +18,7 @@ package elasticsearch
 
 import (
 	"fmt"
+	"strings"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
@@ -40,7 +41,7 @@ var _ = Describe("Version Upgrade", func() {
 			Skip("Missing StorageClassName. Provide as flag to test this.")
 		}
 
-		if framework.DBType != api.ResourceSingularElasticsearch {
+		if strings.ToLower(framework.DBType) != api.ResourceSingularElasticsearch {
 			Skip(fmt.Sprintf("Skipping Elasticsearch: %s tests...", testName))
 		}
 
@@ -100,7 +101,7 @@ var _ = Describe("Version Upgrade", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 		})
 
-		It("Should be successfully upgraded", func() {
+		FIt("Should be successfully upgraded", func() {
 			to.createElasticsearchAndWaitForBeingReady()
 			indicesCount := to.insertData()
 			to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()

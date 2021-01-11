@@ -18,6 +18,7 @@ package elasticsearch
 
 import (
 	"fmt"
+	"strings"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
@@ -43,15 +44,12 @@ var _ = Describe("General", func() {
 			Skip("Missing StorageClassName. Provide as flag to test this.")
 		}
 
-		if framework.DBType != api.ResourceKindElasticsearch {
+		if strings.ToLower(framework.DBType) != api.ResourceSingularElasticsearch {
 			Skip(fmt.Sprintf("Skipping Elasticsearch: %s tests...", testName))
 		}
 
 		if !framework.RunTestCommunity(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` to test this.", testName))
-		}
-		if framework.SSLEnabled {
-			Skip("Skipping test with SSL enabled...")
 		}
 	})
 
@@ -72,7 +70,10 @@ var _ = Describe("General", func() {
 
 	Context("With PVC - Halted", func() {
 		It("Standalone Cluster With Default Resource", func() {
-			to.db = to.StandaloneElasticsearch()
+			to.db = to.transformElasticsearch(to.StandaloneElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
+				in.Spec.EnableSSL = framework.SSLEnabled
+				return in
+			})
 			to.createAndHaltElasticsearchAndWaitForBeingReady()
 			to.wipeOutElasticsearch()
 		})
@@ -87,7 +88,10 @@ var _ = Describe("General", func() {
 		})
 
 		It("Dedicated Elasticsearch Cluster With Default Resource", func() {
-			to.db = to.ClusterElasticsearch()
+			to.db = to.transformElasticsearch(to.ClusterElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
+				in.Spec.EnableSSL = framework.SSLEnabled
+				return in
+			})
 			to.createAndHaltElasticsearchAndWaitForBeingReady()
 			to.wipeOutElasticsearch()
 		})
@@ -113,6 +117,7 @@ var _ = Describe("General", func() {
 				in.Spec.AuthSecret = &core.LocalObjectReference{
 					Name: secret.Name,
 				}
+				in.Spec.EnableSSL = framework.SSLEnabled
 				return in
 			})
 			to.createElasticsearchAndWaitForBeingReady()
@@ -129,6 +134,7 @@ var _ = Describe("General", func() {
 				in.Spec.AuthSecret = &core.LocalObjectReference{
 					Name: secret.Name,
 				}
+				in.Spec.EnableSSL = framework.SSLEnabled
 				return in
 			})
 			to.createElasticsearchAndWaitForBeingReady()
@@ -142,6 +148,7 @@ var _ = Describe("General", func() {
 			to.db = to.transformElasticsearch(to.StandaloneElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
 				in.Spec.Replicas = types.Int32P(3)
 				in.Spec.MaxUnavailable = &intstr.IntOrString{IntVal: 1}
+				in.Spec.EnableSSL = framework.SSLEnabled
 				return in
 			})
 
@@ -155,12 +162,13 @@ var _ = Describe("General", func() {
 
 		It("Dedicated cluster should stand pod eviction", func() {
 			to.db = to.transformElasticsearch(to.ClusterElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
-				in.Spec.Topology.Master.Replicas = types.Int32P(3)
+				in.Spec.Topology.Master.Replicas = types.Int32P(2)
 				in.Spec.Topology.Master.MaxUnavailable = &intstr.IntOrString{IntVal: 1}
-				in.Spec.Topology.Data.Replicas = types.Int32P(3)
+				in.Spec.Topology.Data.Replicas = types.Int32P(2)
 				in.Spec.Topology.Data.MaxUnavailable = &intstr.IntOrString{IntVal: 1}
-				in.Spec.Topology.Ingest.Replicas = types.Int32P(3)
+				in.Spec.Topology.Ingest.Replicas = types.Int32P(2)
 				in.Spec.Topology.Ingest.MaxUnavailable = &intstr.IntOrString{IntVal: 1}
+				in.Spec.EnableSSL = framework.SSLEnabled
 				return in
 			})
 

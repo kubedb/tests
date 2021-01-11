@@ -19,6 +19,7 @@ package elasticsearch
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha2/util"
@@ -45,15 +46,12 @@ var _ = Describe("Environment Variable", func() {
 			Skip("Missing StorageClassName. Provide as flag to test this.")
 		}
 
-		if framework.DBType != api.ResourceKindElasticsearch {
+		if strings.ToLower(framework.DBType) != api.ResourceSingularElasticsearch {
 			Skip(fmt.Sprintf("Skipping Elasticsearch: %s tests...", testName))
 		}
 
 		if !framework.RunTestCommunity(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` to test this.", testName))
-		}
-		if framework.SSLEnabled {
-			Skip("Skipping test with SSL enabled...")
 		}
 	})
 
@@ -103,6 +101,7 @@ var _ = Describe("Environment Variable", func() {
 			It("Should Run Successfully with Given Env", func() {
 				to.db = to.transformElasticsearch(to.StandaloneElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
 					in.Spec.PodTemplate.Spec.Env = allowedEnvList
+					in.Spec.EnableSSL = framework.SSLEnabled
 					return in
 				})
 				to.createElasticsearchAndWaitForBeingReady()
@@ -128,6 +127,7 @@ var _ = Describe("Environment Variable", func() {
 				for _, env := range forbiddenEnvList {
 					to.db = to.transformElasticsearch(to.StandaloneElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
 						in.Spec.PodTemplate.Spec.Env = []core.EnvVar{env}
+						in.Spec.EnableSSL = framework.SSLEnabled
 						return in
 					})
 
@@ -142,6 +142,7 @@ var _ = Describe("Environment Variable", func() {
 			It("should not reject to update Envs", func() {
 				to.db = to.transformElasticsearch(to.StandaloneElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
 					in.Spec.PodTemplate.Spec.Env = allowedEnvList
+					in.Spec.EnableSSL = framework.SSLEnabled
 					return in
 				})
 

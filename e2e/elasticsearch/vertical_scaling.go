@@ -18,6 +18,7 @@ package elasticsearch
 
 import (
 	"fmt"
+	"strings"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
@@ -45,7 +46,7 @@ var _ = Describe("Vertical Scaling", func() {
 			Skip("Missing StorageClassName. Provide as flag to test this.")
 		}
 
-		if framework.DBType != api.ResourceSingularElasticsearch {
+		if strings.ToLower(framework.DBType) != api.ResourceSingularElasticsearch {
 			Skip(fmt.Sprintf("Skipping Elasticsearch: %s tests...", testName))
 		}
 

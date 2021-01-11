@@ -82,7 +82,7 @@ func (to *testOptions) createAndHaltElasticsearchAndWaitForBeingReady() {
 	defer tunnel.Close()
 
 	By("Checking indices after recovery from halted.")
-	to.EventuallyElasticsearchIndicesCount(esClient).Should(Equal(indicesCount))
+	to.EventuallyElasticsearchIndicesCount(indicesCount, esClient).Should(BeTrue())
 }
 
 func (to *testOptions) createElasticsearchAndWaitForBeingReady() {
@@ -208,7 +208,7 @@ func (to *testOptions) insertData() int {
 	indicesCount += 5
 
 	By("Checking created indices")
-	to.EventuallyElasticsearchIndicesCount(esClient).Should(Equal(indicesCount))
+	to.EventuallyElasticsearchIndicesCount(indicesCount, esClient).Should(BeTrue())
 
 	return indicesCount
 }
@@ -220,7 +220,7 @@ func (to *testOptions) verifyData(indicesCount int) {
 	defer tunnel.Close()
 
 	By("Checking indices...")
-	to.EventuallyElasticsearchIndicesCount(esClient).Should(Equal(indicesCount))
+	to.EventuallyElasticsearchIndicesCount(indicesCount, esClient).Should(BeTrue())
 }
 
 func (to *testOptions) verifyResources() bool {

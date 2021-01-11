@@ -18,6 +18,7 @@ package elasticsearch
 
 import (
 	"fmt"
+	"strings"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
@@ -40,15 +41,12 @@ var _ = Describe("Custom Configuration", func() {
 			Skip("Missing StorageClassName. Provide as flag to test this.")
 		}
 
-		if framework.DBType != api.ResourceKindElasticsearch {
+		if strings.ToLower(framework.DBType) != api.ResourceSingularElasticsearch {
 			Skip(fmt.Sprintf("Skipping Elasticsearch: %s tests...", testName))
 		}
 
 		if !framework.RunTestCommunity(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` to test this.", testName))
-		}
-		if framework.SSLEnabled {
-			Skip("Skipping test with SSL enabled...")
 		}
 	})
 
@@ -69,7 +67,10 @@ var _ = Describe("Custom Configuration", func() {
 
 	Describe("Custom Configuration", func() {
 		It("Dedicated Cluster", func() {
-			to.db = to.ClusterElasticsearch()
+			to.db = to.transformElasticsearch(to.ClusterElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
+				in.Spec.EnableSSL = framework.SSLEnabled
+				return in
+			})
 			to.createElasticsearchWithCustomConfigAndWaitForBeingReady()
 			to.wipeOutElasticsearch()
 			err := to.DeleteSecret(to.configSecret.ObjectMeta)
