@@ -50,6 +50,9 @@ var _ = Describe("Storage Engine inMemory", func() {
 		if to.StorageClass == "" {
 			Skip("Missing StorageClassName. Provide as flag to test this.")
 		}
+		if strings.ToLower(framework.DBType) != api.ResourceSingularMongoDB {
+			Skip(fmt.Sprintf("Skipping MongoDB: %s tests...", testName))
+		}
 		if !framework.RunTestCommunity(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` to test this.", testName))
 		}

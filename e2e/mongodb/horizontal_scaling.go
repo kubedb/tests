@@ -18,6 +18,7 @@ package e2e_test
 
 import (
 	"fmt"
+	"strings"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
@@ -34,6 +35,9 @@ var _ = Describe("Horizontal Scaling", func() {
 	testName := framework.HorizontalScaling
 	BeforeEach(func() {
 		to.Invocation = framework.NewInvocation()
+		if strings.ToLower(framework.DBType) != api.ResourceSingularMongoDB {
+			Skip(fmt.Sprintf("Skipping MongoDB: %s tests...", testName))
+		}
 		if !framework.RunTestEnterprise(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", testName))
 		}

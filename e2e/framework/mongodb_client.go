@@ -790,9 +790,12 @@ func (f *Framework) FillDisk(db *api.MongoDB, storage *v1alpha1.MongoDBStorageAu
 	if err != nil {
 		return err
 	}
-	command := []string{"dd", "if=/dev/zero", "of=/data/db/file.txt", "count=1024", "bs=548576"}
+	command := []string{"dd", "if=/dev/zero", "of=/data/db/file.txt", "count=1024", "bs=548576", "status=none"}
 
-	exec.ExecIntoPod(f.restConfig, pod, exec.Command(command...))
+	_, err = exec.ExecIntoPod(f.restConfig, pod, exec.Command(command...))
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

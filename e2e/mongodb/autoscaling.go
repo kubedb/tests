@@ -18,6 +18,7 @@ package e2e_test
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"kubedb.dev/apimachinery/apis/autoscaling/v1alpha1"
@@ -49,6 +50,9 @@ var _ = Describe("MongoDB Autoscaling", func() {
 
 	BeforeEach(func() {
 		to.Invocation = framework.NewInvocation()
+		if strings.ToLower(framework.DBType) != api.ResourceSingularMongoDB {
+			Skip(fmt.Sprintf("Skipping MongoDB: %s tests...", testName))
+		}
 		if !framework.RunTestEnterprise(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", testName))
 		}
