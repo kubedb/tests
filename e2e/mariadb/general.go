@@ -37,7 +37,6 @@ var _ = Describe("MariaDB", func() {
 
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
-
 		if !runTestDatabaseType() {
 			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMariaDB))
 		}
@@ -65,8 +64,8 @@ var _ = Describe("MariaDB", func() {
 					Name:      rand.WithUniqSuffix("md"),
 					Namespace: fi.Namespace(),
 				}
-				// Create MySQL standalone and wait for running
-				md, err := fi.CreateMariaDBSQLAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+				// Create MariaDB standalone and wait for running
+				md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
 					in.Name = mdMeta.Name
 					in.Namespace = mdMeta.Namespace
 					// Set termination policy Halt to leave the PVCs and secrets intact for reuse
@@ -81,25 +80,25 @@ var _ = Describe("MariaDB", func() {
 					User:               framework.MySQLRootUser,
 					Param:              "",
 				}
-				fi.EventuallyDBReady(md, dbInfo)
+				fi.EventuallyDBReadyMD(md, dbInfo)
 
 				By("Creating Table")
-				fi.EventuallyCreateTable(mdMeta, dbInfo).Should(BeTrue())
+				fi.EventuallyCreateTableMD(mdMeta, dbInfo).Should(BeTrue())
 
 				By("Inserting Rows")
-				fi.EventuallyInsertRow(mdMeta, dbInfo, 3).Should(BeTrue())
+				fi.EventuallyInsertRowMD(mdMeta, dbInfo, 3).Should(BeTrue())
 
 				By("Checking Row Count of Table")
-				fi.EventuallyCountRow(mdMeta, dbInfo).Should(Equal(3))
+				fi.EventuallyCountRowMD(mdMeta, dbInfo).Should(Equal(3))
 
 				By("Delete mariadb: " + mdMeta.Namespace + "/" + mdMeta.Name)
-				err = fi.DeleteMySQL(mdMeta)
+				err = fi.DeleteMariaDB(mdMeta)
 				Expect(err).NotTo(HaveOccurred())
 
 				By("Wait for mariadb to be deleted")
-				fi.EventuallyMySQL(mdMeta).Should(BeFalse())
+				fi.EventuallyMariaDB(mdMeta).Should(BeFalse())
 
-				// Create MySQL object again to resume it
+				// Create MariaDB object again to resume it
 				md, err = fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
 					in.Name = mdMeta.Name
 					in.Namespace = mdMeta.Namespace
@@ -107,10 +106,10 @@ var _ = Describe("MariaDB", func() {
 					in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				})
 				Expect(err).NotTo(HaveOccurred())
-				fi.EventuallyDBReady(md, dbInfo)
+				fi.EventuallyDBReadyMD(md, dbInfo)
 
 				By("Checking Row Count of Table")
-				fi.EventuallyCountRow(mdMeta, dbInfo).Should(Equal(3))
+				fi.EventuallyCountRowMD(mdMeta, dbInfo).Should(Equal(3))
 			})
 		})
 
@@ -136,7 +135,7 @@ var _ = Describe("MariaDB", func() {
 				customSecret, err := ensureCustomSecret(mdMeta)
 				Expect(err).NotTo(HaveOccurred())
 				// Create MariaDB standalone and wait for running
-				_, err = fi.CreateMariDBAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
+				_, err = fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
 					in.Name = mdMeta.Name
 					in.Namespace = mdMeta.Namespace
 					in.Spec.AuthSecret = &core.LocalObjectReference{
@@ -159,7 +158,7 @@ var _ = Describe("MariaDB", func() {
 				}
 
 				By("Delete mariadb: " + mdMeta.Namespace + "/" + mdMeta.Name)
-				err = fi.DeleteMySQL(mdMeta)
+				err = fi.DeleteMariaDB(mdMeta)
 				if err != nil {
 					if kerr.IsNotFound(err) {
 						// MariaDB was not created. Hence, rest of cleanup is not necessary.
@@ -169,7 +168,7 @@ var _ = Describe("MariaDB", func() {
 					Expect(err).NotTo(HaveOccurred())
 				}
 
-				By("Wait for mysql to be deleted " + mdMeta.Namespace + "/" + mdMeta.Name)
+				By("Wait for mariadb to be deleted " + mdMeta.Namespace + "/" + mdMeta.Name)
 				fi.EventuallyMariaDB(mdMeta).Should(BeFalse())
 
 				// Create MariaDB object again to resume it
@@ -195,7 +194,7 @@ var _ = Describe("MariaDB", func() {
 
 				//Evict MariaDB pods
 				By("Try to evict pods")
-				err = fi.EvictPodsFromStatefulSet(my.ObjectMeta, api.MariaDB{}.ResourceFQN())
+				err = fi.EvictPodsFromStatefulSet(md.ObjectMeta, api.MariaDB{}.ResourceFQN())
 				Expect(err).NotTo(HaveOccurred())
 			})
 		})

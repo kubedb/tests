@@ -36,5 +36,5 @@ func runTestEnterprise(testProfile string) bool {
 }
 
 func runTestDatabaseType() bool {
-	return strings.Compare(framework.DBType, api.ResourceSingularMySQL) == 0
+	return strings.Compare(framework.DBType, api.ResourceSingularMariaDB) == 0
 }
