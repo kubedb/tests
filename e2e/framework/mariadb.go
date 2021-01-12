@@ -161,9 +161,7 @@ func (fi *Invocation) EventuallyDBReadyMD(md *api.MariaDB, dbInfo DatabaseConnec
 			dbInfo.ClientPodIndex = int(i)
 			fi.EventuallyDBConnection(md.ObjectMeta, dbInfo).Should(BeTrue())
 		}
-	}
-
-	if md.Spec.TLS != nil {
+	} else {
 		requireSecureTransport := func(requireSSL bool) string {
 			if requireSSL {
 				return RequiredSecureTransportON
@@ -208,7 +206,7 @@ func (fi *Invocation) EventuallyCheckConnectionRootUserMD(md *api.MariaDB, requi
 		for i := int32(0); i < *md.Spec.Replicas; i++ {
 			By(fmt.Sprintf("Waiting for database to be ready for pod '%s-%d'", md.Name, i))
 			dbInfo.ClientPodIndex = int(i)
-			fi.EventuallyDBConnection(md.ObjectMeta, dbInfo).Should(BeTrue())
+			fi.EventuallyDBConnectionMD(md.ObjectMeta, dbInfo).Should(BeTrue())
 		}
 	}
 }

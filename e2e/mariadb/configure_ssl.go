@@ -33,14 +33,14 @@ import (
 	kmapi "kmodules.xyz/client-go/api/v1"
 )
 
-var _ = Describe("MySQL TLS/SSL", func() {
+var _ = Describe("MariaDB TLS/SSL", func() {
 	var fi *framework.Invocation
 
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
 
 		if !runTestDatabaseType() {
-			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
+			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMariaDB))
 		}
 		if !runTestEnterprise(framework.Enterprise) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.Enterprise))
@@ -64,18 +64,18 @@ var _ = Describe("MySQL TLS/SSL", func() {
 		Context("Exporter", func() {
 			Context("Standalone", func() {
 				It("Should verify Exporter", func() {
-					// MySQL objectMeta
-					myMeta := metav1.ObjectMeta{
-						Name:      rand.WithUniqSuffix("mysql"),
+					// MariaDB objectMeta
+					mdMeta := metav1.ObjectMeta{
+						Name:      rand.WithUniqSuffix("mariadb"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
+					issuer, err := fi.InsureIssuer(mdMeta, api.MariaDB{}.ResourceFQN())
 					Expect(err).NotTo(HaveOccurred())
-					// Create MySQL standalone with SSL secured and wait for running
-					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
-						in.Namespace = myMeta.Namespace
-						// configure TLS issuer to MySQL CRD
+					// Create MariaDB standalone with SSL secured and wait for running
+					md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+						in.Name = mdMeta.Name
+						in.Namespace = mdMeta.Namespace
+						// configure TLS issuer to MariaDB CRD
 						in.Spec.RequireSSL = true
 						in.Spec.TLS = &kmapi.TLSConfig{
 							IssuerRef: &core.TypedLocalObjectReference{
@@ -85,7 +85,7 @@ var _ = Describe("MySQL TLS/SSL", func() {
 							},
 							Certificates: []kmapi.CertificateSpec{
 								{
-									Alias: string(api.MySQLServerCert),
+									Alias: string(api.MariaDBServerCert),
 									Subject: &kmapi.X509Subject{
 										Organizations: []string{
 											"kubedb:server",
@@ -101,7 +101,7 @@ var _ = Describe("MySQL TLS/SSL", func() {
 							},
 						}
 						// Add Monitor
-						fi.AddMySQLMonitor(in)
+						fi.AddMariaDBMonitor(in)
 					})
 					Expect(err).NotTo(HaveOccurred())
 					dbInfo := framework.DatabaseConnectionInfo{
@@ -111,38 +111,30 @@ var _ = Describe("MySQL TLS/SSL", func() {
 						User:               framework.MySQLRootUser,
 						Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 					}
-					fi.EventuallyDBReady(my, dbInfo)
+					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Verify exporter")
-					err = fi.VerifyMySQLExporter(my)
+					err = fi.VerifyMariaDBExporter(md)
 					Expect(err).NotTo(HaveOccurred())
 					By("Done")
 				})
 			})
 
-			Context("Group Replication", func() {
+			Context("Galera Cluster", func() {
 				It("Should verify Exporter", func() {
 					// MySQL objectMeta
-					myMeta := metav1.ObjectMeta{
-						Name:      rand.WithUniqSuffix("mysql"),
+					mdMeta := metav1.ObjectMeta{
+						Name:      rand.WithUniqSuffix("mairadb"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
+					issuer, err := fi.InsureIssuer(mdMeta, api.MariaDB{}.ResourceFQN())
 					Expect(err).NotTo(HaveOccurred())
-					// Create MySQL standalone with SSL secured and wait for running
-					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
-						in.Namespace = myMeta.Namespace
-						in.Spec.Replicas = types.Int32P(api.MySQLDefaultGroupSize)
-						clusterMode := api.MySQLClusterModeGroup
-						in.Spec.Topology = &api.MySQLClusterTopology{
-							Mode: &clusterMode,
-							Group: &api.MySQLGroupSpec{
-								Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
-								BaseServerID: types.Int64P(api.MySQLDefaultBaseServerID),
-							},
-						}
-						// configure TLS issuer to MySQL CRD
+					// Create MariaDB galera cluster with SSL secured and wait for running
+					md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+						in.Name = mdMeta.Name
+						in.Namespace = mdMeta.Namespace
+						in.Spec.Replicas = types.Int32P(api.MariaDBDefaultClusterSize)
+						// configure TLS issuer to MariaDB CRD
 						in.Spec.RequireSSL = true
 						in.Spec.TLS = &kmapi.TLSConfig{
 							IssuerRef: &core.TypedLocalObjectReference{
@@ -152,7 +144,7 @@ var _ = Describe("MySQL TLS/SSL", func() {
 							},
 							Certificates: []kmapi.CertificateSpec{
 								{
-									Alias: string(api.MySQLServerCert),
+									Alias: string(api.MariaDBServerCert),
 									Subject: &kmapi.X509Subject{
 										Organizations: []string{
 											"kubedb:server",
@@ -167,7 +159,7 @@ var _ = Describe("MySQL TLS/SSL", func() {
 								},
 							},
 						}
-						fi.AddMySQLMonitor(in)
+						fi.AddMariaDBMonitor(in)
 					})
 					Expect(err).NotTo(HaveOccurred())
 					dbInfo := framework.DatabaseConnectionInfo{
@@ -177,31 +169,32 @@ var _ = Describe("MySQL TLS/SSL", func() {
 						User:               framework.MySQLRootUser,
 						Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 					}
-					fi.EventuallyDBReady(my, dbInfo)
+					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Verify exporter")
-					err = fi.VerifyMySQLExporter(my)
+					err = fi.VerifyMariaDBExporter(md)
 					Expect(err).NotTo(HaveOccurred())
 					By("Done")
 				})
 			})
 		})
+		// TODO: Done So far
 
 		Context("General", func() {
 			Context("with requireSSL true", func() {
 				Context("Standalone", func() {
 					It("should run successfully", func() {
-						// MySQL objectMeta
-						myMeta := metav1.ObjectMeta{
-							Name:      rand.WithUniqSuffix("mysql"),
+						// MariaDB objectMeta
+						mdMeta := metav1.ObjectMeta{
+							Name:      rand.WithUniqSuffix("mariadb"),
 							Namespace: fi.Namespace(),
 						}
-						issuer, err := fi.InsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
+						issuer, err := fi.InsureIssuer(mdMeta, api.MariaDB{}.ResourceFQN())
 						Expect(err).NotTo(HaveOccurred())
-						// Create MySQL standalone with SSL secured and wait for running
-						my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-							in.Name = myMeta.Name
-							in.Namespace = myMeta.Namespace
+						// Create MariaDB standalone with SSL secured and wait for running
+						md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+							in.Name = mdMeta.Name
+							in.Namespace = mdMeta.Namespace
 							// configure TLS issuer to MySQL CRD
 							in.Spec.RequireSSL = true
 							in.Spec.TLS = &kmapi.TLSConfig{
@@ -212,7 +205,7 @@ var _ = Describe("MySQL TLS/SSL", func() {
 								},
 								Certificates: []kmapi.CertificateSpec{
 									{
-										Alias: string(api.MySQLServerCert),
+										Alias: string(api.MariaDBServerCert),
 										Subject: &kmapi.X509Subject{
 											Organizations: []string{
 												"kubedb:server",
@@ -236,48 +229,40 @@ var _ = Describe("MySQL TLS/SSL", func() {
 							User:               framework.MySQLRootUser,
 							Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 						}
-						fi.EventuallyDBReady(my, dbInfo)
+						fi.EventuallyDBReadyMD(md, dbInfo)
 
-						// Create a mysql User with required SSL
+						// Create a mariadb User with required SSL
 						By("Create mysql User with required SSL")
-						fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
+						fi.EventuallyCreateUserWithRequiredSSLMD(md.ObjectMeta, dbInfo).Should(BeTrue())
 						dbInfo.User = framework.MySQLRequiredSSLUser
-						fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
+						fi.EventuallyCheckConnectionRequiredSSLUserMD(md, dbInfo)
 
 						By("Creating Table")
-						fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
+						fi.EventuallyCreateTableMD(md.ObjectMeta, dbInfo).Should(BeTrue())
 
 						By("Inserting Rows")
-						fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
+						fi.EventuallyInsertRowMD(md.ObjectMeta, dbInfo, 3).Should(BeTrue())
 
 						By("Checking Row Count of Table")
-						fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+						fi.EventuallyCountRowMD(md.ObjectMeta, dbInfo).Should(Equal(3))
 					})
 				})
 
-				Context("Group Replication", func() {
+				Context("Galera Cluster", func() {
 					It("should run successfully", func() {
-						// MySQL objectMeta
+						// MariaDB objectMeta
 						myMeta := metav1.ObjectMeta{
-							Name:      rand.WithUniqSuffix("mysql"),
+							Name:      rand.WithUniqSuffix("mairadb"),
 							Namespace: fi.Namespace(),
 						}
-						issuer, err := fi.InsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
+						issuer, err := fi.InsureIssuer(myMeta, api.MariaDB{}.ResourceFQN())
 						Expect(err).NotTo(HaveOccurred())
-						// Create MySQL standalone with SSL secured and wait for running
-						my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
+						// Create MariaDB standalone with SSL secured and wait for running
+						md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
 							in.Name = myMeta.Name
 							in.Namespace = myMeta.Namespace
-							in.Spec.Replicas = types.Int32P(api.MySQLDefaultGroupSize)
-							clusterMode := api.MySQLClusterModeGroup
-							in.Spec.Topology = &api.MySQLClusterTopology{
-								Mode: &clusterMode,
-								Group: &api.MySQLGroupSpec{
-									Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
-									BaseServerID: types.Int64P(api.MySQLDefaultBaseServerID),
-								},
-							}
-							// configure TLS issuer to MySQL CRD
+							in.Spec.Replicas = types.Int32P(api.MariaDBDefaultClusterSize)
+							// configure TLS issuer to MariaDB CRD
 							in.Spec.RequireSSL = true
 							in.Spec.TLS = &kmapi.TLSConfig{
 								IssuerRef: &core.TypedLocalObjectReference{
@@ -287,7 +272,7 @@ var _ = Describe("MySQL TLS/SSL", func() {
 								},
 								Certificates: []kmapi.CertificateSpec{
 									{
-										Alias: string(api.MySQLServerCert),
+										Alias: string(api.MariaDBServerCert),
 										Subject: &kmapi.X509Subject{
 											Organizations: []string{
 												"kubedb:server",
@@ -311,22 +296,22 @@ var _ = Describe("MySQL TLS/SSL", func() {
 							User:               framework.MySQLRootUser,
 							Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 						}
-						fi.EventuallyDBReady(my, dbInfo)
+						fi.EventuallyDBReadyMD(md, dbInfo)
 
 						// Create a mysql User with required SSL
 						By("Create mysql User with required SSL")
-						fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
+						fi.EventuallyCreateUserWithRequiredSSLMD(md.ObjectMeta, dbInfo).Should(BeTrue())
 						dbInfo.User = framework.MySQLRequiredSSLUser
-						fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
+						fi.EventuallyCheckConnectionRequiredSSLUserMD(md, dbInfo)
 
 						By("Creating Table")
-						fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
+						fi.EventuallyCreateTableMD(md.ObjectMeta, dbInfo).Should(BeTrue())
 
 						By("Inserting Rows")
-						fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
+						fi.EventuallyInsertRowMD(md.ObjectMeta, dbInfo, 3).Should(BeTrue())
 
 						By("Checking Row Count of Table")
-						fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+						fi.EventuallyCountRowMD(md.ObjectMeta, dbInfo).Should(Equal(3))
 					})
 				})
 			})
@@ -334,18 +319,18 @@ var _ = Describe("MySQL TLS/SSL", func() {
 			Context("with requireSSL false", func() {
 				Context("Standalone", func() {
 					It("should run successfully", func() {
-						// MySQL objectMeta
-						myMeta := metav1.ObjectMeta{
-							Name:      rand.WithUniqSuffix("mysql"),
+						// MariaDB objectMeta
+						mdMeta := metav1.ObjectMeta{
+							Name:      rand.WithUniqSuffix("mariadb"),
 							Namespace: fi.Namespace(),
 						}
-						issuer, err := fi.InsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
+						issuer, err := fi.InsureIssuer(mdMeta, api.MySQL{}.ResourceFQN())
 						Expect(err).NotTo(HaveOccurred())
-						// Create MySQL standalone with SSL secured and wait for running
-						my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-							in.Name = myMeta.Name
-							in.Namespace = myMeta.Namespace
-							// configure TLS issuer to MySQL CRD
+						// Create MariaDB standalone with SSL secured and wait for running
+						md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+							in.Name = mdMeta.Name
+							in.Namespace = mdMeta.Namespace
+							// configure TLS issuer to MariaDB CRD
 							in.Spec.RequireSSL = false
 							in.Spec.TLS = &kmapi.TLSConfig{
 								IssuerRef: &core.TypedLocalObjectReference{
@@ -355,7 +340,7 @@ var _ = Describe("MySQL TLS/SSL", func() {
 								},
 								Certificates: []kmapi.CertificateSpec{
 									{
-										Alias: string(api.MySQLServerCert),
+										Alias: string(api.MariaDBServerCert),
 										Subject: &kmapi.X509Subject{
 											Organizations: []string{
 												"kubedb:server",
@@ -379,30 +364,30 @@ var _ = Describe("MySQL TLS/SSL", func() {
 							User:               framework.MySQLRootUser,
 							Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 						}
-						fi.EventuallyDBReady(my, dbInfo)
+						fi.EventuallyDBReadyMD(md, dbInfo)
 
 						// Create a mysql User with required SSL
 						By("Create mysql User with required SSL")
-						fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
+						fi.EventuallyCreateUserWithRequiredSSLMD(md.ObjectMeta, dbInfo).Should(BeTrue())
 						dbInfo.User = framework.MySQLRequiredSSLUser
-						fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
+						fi.EventuallyCheckConnectionRequiredSSLUserMD(md, dbInfo)
 
 						By("Creating Table")
-						fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
+						fi.EventuallyCreateTableMD(md.ObjectMeta, dbInfo).Should(BeTrue())
 
 						By("Inserting Rows")
-						fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
+						fi.EventuallyInsertRowMD(md.ObjectMeta, dbInfo, 3).Should(BeTrue())
 
 						By("Checking Row Count of Table")
-						fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+						fi.EventuallyCountRowMD(md.ObjectMeta, dbInfo).Should(Equal(3))
 					})
 				})
-
-				Context("Group Replication", func() {
+				// TODO: Done so far(1)
+				Context("Galera CLuster", func() {
 					It("should run successfully", func() {
-						// MySQL objectMeta
+						// MariaDB objectMeta
 						myMeta := metav1.ObjectMeta{
-							Name:      rand.WithUniqSuffix("mysql"),
+							Name:      rand.WithUniqSuffix("mariadb"),
 							Namespace: fi.Namespace(),
 						}
 						issuer, err := fi.InsureIssuer(myMeta, api.MySQL{}.ResourceFQN())

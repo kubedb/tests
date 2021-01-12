@@ -33,13 +33,8 @@ import (
 	mona "kmodules.xyz/monitoring-agent-api/api/v1"
 )
 
-const (
-	mysqlUpMetric            = "mysql_up"
-	mySQLMetricsMatchedCount = 2
-	mysqlVersionMetric       = "mysql_version_info"
-)
 
-func (f *Framework) AddMySQLMonitor(obj *api.MySQL) {
+func (f *Framework) AddMariaDBMonitor(obj *api.MariaDB) {
 	obj.Spec.Monitor = &mona.AgentSpec{
 		Prometheus: &mona.PrometheusSpec{
 			Exporter: mona.PrometheusExporterSpec{
@@ -52,11 +47,11 @@ func (f *Framework) AddMySQLMonitor(obj *api.MySQL) {
 	}
 }
 
-//VerifyMySQLExporter uses metrics from given URL
+//Verify MariaDBExporter uses metrics from given URL
 //and check against known key and value
 //to verify the connection is functioning as intended
-func (f *Framework) VerifyMySQLExporter(my *api.MySQL) error {
-	tunnel, err := f.ForwardToPort(my.ObjectMeta, string(core.ResourceServices), my.StatsService().ServiceName(), aws.Int(mona.PrometheusExporterPortNumber))
+func (f *Framework) VerifyMariaDBExporter(md *api.MariaDB) error {
+	tunnel, err := f.ForwardToPort(md.ObjectMeta, string(core.ResourceServices), md.StatsService().ServiceName(), aws.Int(mona.PrometheusExporterPortNumber))
 	if err != nil {
 		log.Infoln(err)
 		return err
@@ -76,7 +71,7 @@ func (f *Framework) VerifyMySQLExporter(my *api.MySQL) error {
 		var count = 0
 		for mf := range mfChan {
 			if mf.Metric != nil && mf.Metric[0].Gauge != nil && mf.Metric[0].Gauge.Value != nil {
-				if *mf.Name == mysqlVersionMetric && strings.Contains(my.Spec.Version, *mf.Metric[0].Label[0].Value) {
+				if *mf.Name == mysqlVersionMetric && strings.Contains(md.Spec.Version, *mf.Metric[0].Label[0].Value) {
 					count++
 				} else if *mf.Name == mysqlUpMetric && int(*mf.Metric[0].Gauge.Value) > 0 {
 					count++
