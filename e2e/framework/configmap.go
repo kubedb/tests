@@ -98,6 +98,19 @@ func (fi *Invocation) GetCustomConfigForMySQL(configs []string) *core.Secret {
 	}
 }
 
+func (fi *Invocation) GetCustomConfigForMariaDB(configs []string) *core.Secret {
+	configs = append([]string{"[mysqld]"}, configs...)
+	return &core.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fi.app,
+			Namespace: fi.namespace,
+		},
+		StringData: map[string]string{
+			"md-custom.cnf": strings.Join(configs, "\n"),
+		},
+	}
+}
+
 func (fi *Invocation) CreateConfigMap(obj *core.ConfigMap) error {
 	_, err := fi.kubeClient.CoreV1().ConfigMaps(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
 	return err

@@ -27,14 +27,14 @@ import (
 	core "k8s.io/api/core/v1"
 )
 
-var _ = Describe("MySQL", func() {
+var _ = Describe("MariaDB", func() {
 	var fi *framework.Invocation
 
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
 
 		if !runTestDatabaseType() {
-			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
+			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMariaDB))
 		}
 		if !runTestCommunity(framework.Initialize) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.Initialize))
@@ -57,8 +57,8 @@ var _ = Describe("MySQL", func() {
 				// insure initScriptConfigMap
 				cm, err := fi.EnsureMyInitScriptConfigMap()
 				Expect(err).NotTo(HaveOccurred())
-				// Create MySQL standalone and wait for running
-				my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
+				// Create MariaDB standalone and wait for running
+				md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
 					in.Spec.Init = &api.InitSpec{
 						Script: &api.ScriptSourceSpec{
 							VolumeSource: core.VolumeSource{
@@ -82,10 +82,10 @@ var _ = Describe("MySQL", func() {
 					User:               framework.MySQLRootUser,
 					Param:              "",
 				}
-				fi.EventuallyDBReady(my, dbInfo)
+				fi.EventuallyDBReadyMD(md, dbInfo)
 
 				By("Checking Row Count of Table")
-				fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+				fi.EventuallyCountRowMD(md.ObjectMeta, dbInfo).Should(Equal(3))
 			})
 		})
 	})

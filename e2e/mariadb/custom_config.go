@@ -28,7 +28,7 @@ import (
 	core "k8s.io/api/core/v1"
 )
 
-var _ = Describe("MySQL", func() {
+var _ = Describe("MariaDB", func() {
 
 	var fi *framework.Invocation
 
@@ -36,7 +36,7 @@ var _ = Describe("MySQL", func() {
 		fi = framework.NewInvocation()
 
 		if !runTestDatabaseType() {
-			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
+			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMariaDB))
 		}
 		if !runTestCommunity(framework.CustomConfig) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.CustomConfig))
@@ -61,9 +61,9 @@ var _ = Describe("MySQL", func() {
 				"max_connections=200",
 				"read_buffer_size=1048576", // 1MB
 			}
-			var customConfigForMySQL = func() (*core.Secret, error) {
-				cm := fi.GetCustomConfigForMySQL(customConfigs)
-				By("Creating custom Config for MySQL " + cm.Namespace + "/" + cm.Name)
+			var customConfigForMariaDB = func() (*core.Secret, error) {
+				cm := fi.GetCustomConfigForMariaDB(customConfigs)
+				By("Creating custom Config for MariaDB " + cm.Namespace + "/" + cm.Name)
 				cm, err := fi.CreateSecret(cm)
 				if err != nil {
 					return nil, err
@@ -74,11 +74,11 @@ var _ = Describe("MySQL", func() {
 
 			Context("from secret", func() {
 				It("should set configuration provided in secret", func() {
-					cm, err := customConfigForMySQL()
+					cm, err := customConfigForMariaDB()
 					Expect(err).NotTo(HaveOccurred())
 
-					// Create MySQL standalone and wait for running
-					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
+					// Create MariaDB standalone and wait for running
+					md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
 						in.Spec.ConfigSecret = &core.LocalObjectReference{
 							Name: cm.Name,
 						}
@@ -94,11 +94,11 @@ var _ = Describe("MySQL", func() {
 						User:               framework.MySQLRootUser,
 						Param:              "",
 					}
-					fi.EventuallyDBReady(my, dbInfo)
+					fi.EventuallyDBReadyMD(md, dbInfo)
 
-					By("Checking mysql configured from provided custom configuration")
+					By("Checking mariadb configured from provided custom configuration")
 					for _, cfg := range customConfigs {
-						fi.EventuallyMySQLVariable(my.ObjectMeta, dbInfo, cfg).Should(matcher.UseCustomConfig(cfg))
+						fi.EventuallyMariaDBVariable(md.ObjectMeta, dbInfo, cfg).Should(matcher.UseCustomConfig(cfg))
 					}
 				})
 			})
