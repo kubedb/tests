@@ -358,7 +358,7 @@ func (fi *Invocation) EventuallyDatabaseVersionUpdatedMD(meta metav1.ObjectMeta,
 	)
 }
 
-func (fi *Invocation) EventuallyMariaDBVariableMD(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo, config string) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyMariaDBVariable(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo, config string) GomegaAsyncAssertion {
 	configPair := strings.Split(config, "=")
 	sql := fmt.Sprintf("SHOW VARIABLES LIKE '%s';", configPair[0])
 	return Eventually(

@@ -26,7 +26,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("MySQL", func() {
+var _ = Describe("MariaDB", func() {
 
 	var fi *framework.Invocation
 
@@ -34,7 +34,7 @@ var _ = Describe("MySQL", func() {
 		fi = framework.NewInvocation()
 
 		if !runTestDatabaseType() {
-			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
+			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMariaDB))
 		}
 		if !runTestCommunity(framework.StorageType) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.StorageType))
@@ -55,11 +55,11 @@ var _ = Describe("MySQL", func() {
 		Context("StorageType ", func() {
 			Context("Ephemeral", func() {
 				It("General Behaviour", func() {
-					// Create MySQL standalone and wait for running
-					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
+					// Create MariaDB standalone and wait for running
+					md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
 						in.Spec.StorageType = api.StorageTypeEphemeral
 						in.Spec.Storage = nil
-						// Set termination policy WipeOut to delete all mysql resources permanently
+						// Set termination policy WipeOut to delete all mariadb resources permanently
 						in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					})
 					Expect(err).NotTo(HaveOccurred())
@@ -71,22 +71,22 @@ var _ = Describe("MySQL", func() {
 						User:               framework.MySQLRootUser,
 						Param:              "",
 					}
-					fi.EventuallyDBReady(my, dbInfo)
+					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Creating Table")
-					fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
+					fi.EventuallyCreateTableMD(md.ObjectMeta, dbInfo).Should(BeTrue())
 
 					By("Inserting Rows")
-					fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
+					fi.EventuallyInsertRowMD(md.ObjectMeta, dbInfo, 3).Should(BeTrue())
 
 					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+					fi.EventuallyCountRowMD(md.ObjectMeta, dbInfo).Should(Equal(3))
 				})
 			})
 			Context("With TerminationPolicyHalt", func() {
-				It("should reject to create MySQL object", func() {
-					// Create MySQL standalone and wait for running
-					_, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
+				It("should reject to create MariaDB object", func() {
+					// Create MariaDB standalone and wait for running
+					_, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
 						in.Spec.StorageType = api.StorageTypeEphemeral
 						in.Spec.Storage = nil
 						// Set termination policy Halt to leave the PVCs and secrets intact for reuse

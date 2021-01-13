@@ -36,7 +36,7 @@ const (
 	MYSQL_ROOT_PASSWORD = "MYSQL_ROOT_PASSWORD"
 )
 
-var _ = Describe("MySQL", func() {
+var _ = Describe("MariaDB", func() {
 
 	var fi *framework.Invocation
 
@@ -44,7 +44,7 @@ var _ = Describe("MySQL", func() {
 		fi = framework.NewInvocation()
 
 		if !runTestDatabaseType() {
-			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
+			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMariaDB))
 		}
 		if !runTestCommunity(framework.EnvironmentVariable) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.EnvironmentVariable))
@@ -68,16 +68,16 @@ var _ = Describe("MySQL", func() {
 			Context("Database Name as EnvVar", func() {
 
 				It("should create DB with name provided in EvnVar", func() {
-					// MySQL database name
+					// MariaDB database name
 					dbName := fi.App()
-					myMeta := metav1.ObjectMeta{
-						Name:      rand.WithUniqSuffix("mysql"),
+					mdMeta := metav1.ObjectMeta{
+						Name:      rand.WithUniqSuffix("mariadb"),
 						Namespace: fi.Namespace(),
 					}
-					// Create MySQL standalone and wait for running
-					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
-						in.Namespace = myMeta.Namespace
+					// Create MariaDB standalone and wait for running
+					md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+						in.Name = mdMeta.Name
+						in.Namespace = mdMeta.Namespace
 						in.Spec.PodTemplate.Spec.Env = []core.EnvVar{
 							{
 								Name:  MYSQL_DATABASE,
@@ -96,45 +96,45 @@ var _ = Describe("MySQL", func() {
 						User:               framework.MySQLRootUser,
 						Param:              "",
 					}
-					fi.EventuallyDBReady(my, dbInfo)
+					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Creating Table")
-					fi.EventuallyCreateTable(myMeta, dbInfo).Should(BeTrue())
+					fi.EventuallyCreateTableMD(mdMeta, dbInfo).Should(BeTrue())
 
 					By("Inserting Rows")
-					fi.EventuallyInsertRow(myMeta, dbInfo, 3).Should(BeTrue())
+					fi.EventuallyInsertRowMD(mdMeta, dbInfo, 3).Should(BeTrue())
 
 					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(myMeta, dbInfo).Should(Equal(3))
+					fi.EventuallyCountRowMD(mdMeta, dbInfo).Should(Equal(3))
 
-					By("Delete mysql: " + myMeta.Namespace + "/" + myMeta.Name)
-					err = fi.DeleteMySQL(myMeta)
+					By("Delete mariadb: " + mdMeta.Namespace + "/" + mdMeta.Name)
+					err = fi.DeleteMariaDB(mdMeta)
 					Expect(err).NotTo(HaveOccurred())
 
-					By("Wait for mysql to be deleted")
-					fi.EventuallyMySQL(myMeta).Should(BeFalse())
+					By("Wait for mariadb to be deleted")
+					fi.EventuallyMariaDB(mdMeta).Should(BeFalse())
 
-					// Create MySQL object again to resume it
-					_, err = fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
-						in.Namespace = myMeta.Namespace
+					// Create MariaDB object again to resume it
+					_, err = fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+						in.Name = mdMeta.Name
+						in.Namespace = mdMeta.Namespace
 						// Set termination policy WipeOut to delete all mysql resources permanently
 						in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					})
 					Expect(err).NotTo(HaveOccurred())
-					fi.EventuallyDBReady(my, dbInfo)
+					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(myMeta, dbInfo).Should(Equal(3))
+					fi.EventuallyCountRowMD(mdMeta, dbInfo).Should(Equal(3))
 
 				})
 			})
 
 			Context("Root Password as EnvVar", func() {
 
-				It("should reject to create MySQL CRD", func() {
-					// Create MySQL standalone and wait for running
-					_, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
+				It("should reject to create MariaDB CRD", func() {
+					// Create MariaDB standalone and wait for running
+					_, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
 						in.Spec.PodTemplate.Spec.Env = []core.EnvVar{
 							{
 								Name:  MYSQL_ROOT_PASSWORD,
@@ -152,8 +152,8 @@ var _ = Describe("MySQL", func() {
 
 				It("should not reject to update EvnVar", func() {
 					dbName := fi.App()
-					// Create MySQL standalone and wait for running
-					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
+					// Create MariaDB standalone and wait for running
+					md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
 						in.Spec.PodTemplate.Spec.Env = []core.EnvVar{
 							{
 								Name:  MYSQL_DATABASE,
@@ -172,19 +172,19 @@ var _ = Describe("MySQL", func() {
 						User:               framework.MySQLRootUser,
 						Param:              "",
 					}
-					fi.EventuallyDBReady(my, dbInfo)
+					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Creating Table")
-					fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
+					fi.EventuallyCreateTableMD(md.ObjectMeta, dbInfo).Should(BeTrue())
 
 					By("Inserting Rows")
-					fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
+					fi.EventuallyInsertRowMD(md.ObjectMeta, dbInfo, 3).Should(BeTrue())
 
 					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+					fi.EventuallyCountRowMD(md.ObjectMeta, dbInfo).Should(Equal(3))
 
 					By("Patching EnvVar")
-					_, _, err = util.PatchMySQL(context.TODO(), fi.DBClient().KubedbV1alpha2(), my, func(in *api.MySQL) *api.MySQL {
+					_, _, err = util.PatchMariaDB(context.TODO(), fi.DBClient().KubedbV1alpha2(), md, func(in *api.MariaDB) *api.MariaDB {
 						in.Spec.PodTemplate.Spec.Env = []core.EnvVar{
 							{
 								Name:  MYSQL_DATABASE,

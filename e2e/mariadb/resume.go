@@ -30,14 +30,14 @@ import (
 	kmapi "kmodules.xyz/client-go/api/v1"
 )
 
-var _ = Describe("MySQL", func() {
+var _ = Describe("MariaDB", func() {
 	var fi *framework.Invocation
 
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
 
 		if !runTestDatabaseType() {
-			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
+			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMariaDB))
 		}
 		if !runTestCommunity(framework.Resume) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.Resume))
@@ -60,15 +60,15 @@ var _ = Describe("MySQL", func() {
 
 			Context("Super Fast User - Create-Delete-Create-Delete-Create ", func() {
 				It("should resume database successfully", func() {
-					// MySQL ObjectMeta
-					myMeta := metav1.ObjectMeta{
-						Name:      rand.WithUniqSuffix("mysql"),
+					// MariaDB ObjectMeta
+					mdMeta := metav1.ObjectMeta{
+						Name:      rand.WithUniqSuffix("mariadb"),
 						Namespace: fi.Namespace(),
 					}
-					// Create MySQL standalone and wait for running
-					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
-						in.Namespace = myMeta.Namespace
+					// Create MariaDB standalone and wait for running
+					md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+						in.Name = mdMeta.Name
+						in.Namespace = mdMeta.Namespace
 						// Set termination policy Halt to leave the PVCs and secrets intact for reuse
 						in.Spec.TerminationPolicy = api.TerminationPolicyHalt
 					})
@@ -81,67 +81,67 @@ var _ = Describe("MySQL", func() {
 						User:               framework.MySQLRootUser,
 						Param:              "",
 					}
-					fi.EventuallyDBReady(my, dbInfo)
+					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Creating Table")
-					fi.EventuallyCreateTable(myMeta, dbInfo).Should(BeTrue())
+					fi.EventuallyCreateTableMD(mdMeta, dbInfo).Should(BeTrue())
 
 					By("Inserting Rows")
-					fi.EventuallyInsertRow(myMeta, dbInfo, 3).Should(BeTrue())
+					fi.EventuallyInsertRowMD(mdMeta, dbInfo, 3).Should(BeTrue())
 
 					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(myMeta, dbInfo).Should(Equal(3))
+					fi.EventuallyCountRowMD(mdMeta, dbInfo).Should(Equal(3))
 
-					By("Delete mysql: " + myMeta.Namespace + "/" + myMeta.Name)
-					err = fi.DeleteMySQL(myMeta)
+					By("Delete mariadb: " + mdMeta.Namespace + "/" + mdMeta.Name)
+					err = fi.DeleteMariaDB(mdMeta)
 					Expect(err).NotTo(HaveOccurred())
 
-					By("Wait for mysql to be deleted")
-					fi.EventuallyMySQL(myMeta).Should(BeFalse())
+					By("Wait for mariadb to be deleted")
+					fi.EventuallyMariaDB(mdMeta).Should(BeFalse())
 
-					// Create MySQL object again to resume it
-					_, err = fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
-						in.Namespace = myMeta.Namespace
+					// Create MariaDB object again to resume it
+					_, err = fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+						in.Name = mdMeta.Name
+						in.Namespace = mdMeta.Namespace
 						// Set termination policy Halt to leave the PVCs and secrets intact for reuse
 						in.Spec.TerminationPolicy = api.TerminationPolicyHalt
 					})
 					Expect(err).NotTo(HaveOccurred())
-					fi.EventuallyDBReady(my, dbInfo)
+					fi.EventuallyDBReadyMD(md, dbInfo)
 
-					By("Delete mysql: " + myMeta.Namespace + "/" + myMeta.Name)
-					err = fi.DeleteMySQL(myMeta)
+					By("Delete mariadb: " + mdMeta.Namespace + "/" + mdMeta.Name)
+					err = fi.DeleteMariaDB(mdMeta)
 					Expect(err).NotTo(HaveOccurred())
 
-					By("Wait for mysql to be deleted")
-					fi.EventuallyMySQL(myMeta).Should(BeFalse())
+					By("Wait for mariadb to be deleted")
+					fi.EventuallyMariaDB(mdMeta).Should(BeFalse())
 
-					// Create MySQL object again to resume it
-					_, err = fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
-						in.Namespace = myMeta.Namespace
-						// Set termination policy WipeOut to delete all mysql resources permanently
+					// Create MariaDB object again to resume it
+					_, err = fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+						in.Name = mdMeta.Name
+						in.Namespace = mdMeta.Namespace
+						// Set termination policy WipeOut to delete all mariadb resources permanently
 						in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					})
 					Expect(err).NotTo(HaveOccurred())
-					fi.EventuallyDBReady(my, dbInfo)
+					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(myMeta, dbInfo).Should(Equal(3))
+					fi.EventuallyCountRow(mdMeta, dbInfo).Should(Equal(3))
 				})
 			})
 
 			Context("Without Init", func() {
 				It("should resume database successfully", func() {
-					// MySQL ObjectMeta
-					myMeta := metav1.ObjectMeta{
-						Name:      rand.WithUniqSuffix("mysql"),
+					// MariaDB ObjectMeta
+					mdMeta := metav1.ObjectMeta{
+						Name:      rand.WithUniqSuffix("mariadb"),
 						Namespace: fi.Namespace(),
 					}
-					// Create MySQL standalone and wait for running
-					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
-						in.Namespace = myMeta.Namespace
+					// Create MariaDB standalone and wait for running
+					md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+						in.Name = mdMeta.Name
+						in.Namespace = mdMeta.Namespace
 						// Set termination policy Halt to leave the PVCs and secrets intact for reuse
 						in.Spec.TerminationPolicy = api.TerminationPolicyHalt
 					})
@@ -154,53 +154,53 @@ var _ = Describe("MySQL", func() {
 						User:               framework.MySQLRootUser,
 						Param:              "",
 					}
-					fi.EventuallyDBReady(my, dbInfo)
+					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Creating Table")
-					fi.EventuallyCreateTable(myMeta, dbInfo).Should(BeTrue())
+					fi.EventuallyCreateTableMD(mdMeta, dbInfo).Should(BeTrue())
 
 					By("Inserting Rows")
-					fi.EventuallyInsertRow(myMeta, dbInfo, 3).Should(BeTrue())
+					fi.EventuallyInsertRowMD(mdMeta, dbInfo, 3).Should(BeTrue())
 
 					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(myMeta, dbInfo).Should(Equal(3))
+					fi.EventuallyCountRowMD(mdMeta, dbInfo).Should(Equal(3))
 
-					By("Delete mysql: " + myMeta.Namespace + "/" + myMeta.Name)
-					err = fi.DeleteMySQL(myMeta)
+					By("Delete mariadb: " + mdMeta.Namespace + "/" + mdMeta.Name)
+					err = fi.DeleteMariaDB(mdMeta)
 					Expect(err).NotTo(HaveOccurred())
 
-					By("Wait for mysql to be deleted")
-					fi.EventuallyMySQL(myMeta).Should(BeFalse())
+					By("Wait for mariadb to be deleted")
+					fi.EventuallyMariaDB(mdMeta).Should(BeFalse())
 
-					// Create MySQL object again to resume it
-					_, err = fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
-						in.Namespace = myMeta.Namespace
-						// Set termination policy WipeOut to delete all mysql resources permanently
+					// Create MariaDB object again to resume it
+					_, err = fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+						in.Name = mdMeta.Name
+						in.Namespace = mdMeta.Namespace
+						// Set termination policy WipeOut to delete all mariadb resources permanently
 						in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					})
 					Expect(err).NotTo(HaveOccurred())
-					fi.EventuallyDBReady(my, dbInfo)
+					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(myMeta, dbInfo).Should(Equal(3))
+					fi.EventuallyCountRowMD(mdMeta, dbInfo).Should(Equal(3))
 				})
 			})
 
 			Context("with init Script", func() {
 				It("should resume database successfully", func() {
-					// MySQL ObjectMeta
-					myMeta := metav1.ObjectMeta{
-						Name:      rand.WithUniqSuffix("mysql"),
+					// MariaDB ObjectMeta
+					mdMeta := metav1.ObjectMeta{
+						Name:      rand.WithUniqSuffix("mariadb"),
 						Namespace: fi.Namespace(),
 					}
 					// insure initScriptConfigMap
 					cm, err := fi.EnsureMyInitScriptConfigMap()
 					Expect(err).NotTo(HaveOccurred())
-					// Create MySQL standalone and wait for running
-					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
-						in.Namespace = myMeta.Namespace
+					// Create MariaDB standalone and wait for running
+					md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+						in.Name = mdMeta.Name
+						in.Namespace = mdMeta.Namespace
 						in.Spec.Init = &api.InitSpec{
 							Script: &api.ScriptSourceSpec{
 								VolumeSource: core.VolumeSource{
@@ -224,22 +224,22 @@ var _ = Describe("MySQL", func() {
 						User:               framework.MySQLRootUser,
 						Param:              "",
 					}
-					fi.EventuallyDBReady(my, dbInfo)
+					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(myMeta, dbInfo).Should(Equal(3))
+					fi.EventuallyCountRowMD(mdMeta, dbInfo).Should(Equal(3))
 
-					By("Delete mysql " + myMeta.Namespace + "/" + myMeta.Name)
-					err = fi.DeleteMySQL(myMeta)
+					By("Delete mariadb " + mdMeta.Namespace + "/" + mdMeta.Name)
+					err = fi.DeleteMariaDB(mdMeta)
 					Expect(err).NotTo(HaveOccurred())
 
-					By("Wait for mysql to be deleted")
-					fi.EventuallyMySQL(myMeta).Should(BeFalse())
+					By("Wait for mariadb to be deleted")
+					fi.EventuallyMariaDB(mdMeta).Should(BeFalse())
 
-					// Create MySQL object again to resume it
-					_, err = fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
-						in.Namespace = myMeta.Namespace
+					// Create MariaDB object again to resume it
+					_, err = fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+						in.Name = mdMeta.Name
+						in.Namespace = mdMeta.Namespace
 						in.Spec.Init = &api.InitSpec{
 							Script: &api.ScriptSourceSpec{
 								VolumeSource: core.VolumeSource{
@@ -251,38 +251,38 @@ var _ = Describe("MySQL", func() {
 								},
 							},
 						}
-						// Set termination policy WipeOut to delete all mysql resources permanently
+						// Set termination policy WipeOut to delete all mariadb resources permanently
 						in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					})
 					Expect(err).NotTo(HaveOccurred())
-					fi.EventuallyDBReady(my, dbInfo)
+					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(myMeta, dbInfo).Should(Equal(3))
+					fi.EventuallyCountRowMD(mdMeta, dbInfo).Should(Equal(3))
 
-					my, err = fi.GetMySQL(myMeta)
+					md, err = fi.GetMariaDB(mdMeta)
 					Expect(err).NotTo(HaveOccurred())
-					Expect(my.Spec.Init).NotTo(BeNil())
+					Expect(md.Spec.Init).NotTo(BeNil())
 
-					By("Checking MySQL crd does not have status.conditions[DataRestored]")
-					Expect(kmapi.HasCondition(my.Status.Conditions, api.DatabaseDataRestored)).To(BeFalse())
+					By("Checking MariaDB crd does not have status.conditions[DataRestored]")
+					Expect(kmapi.HasCondition(md.Status.Conditions, api.DatabaseDataRestored)).To(BeFalse())
 				})
 			})
 
 			Context("Multiple times with init", func() {
 				It("should resume database successfully", func() {
-					// MySQL ObjectMeta
-					myMeta := metav1.ObjectMeta{
-						Name:      rand.WithUniqSuffix("mysql"),
+					// MariaDB ObjectMeta
+					mdMeta := metav1.ObjectMeta{
+						Name:      rand.WithUniqSuffix("mariadb"),
 						Namespace: fi.Namespace(),
 					}
 					// insure initScriptConfigMap
 					cm, err := fi.EnsureMyInitScriptConfigMap()
 					Expect(err).NotTo(HaveOccurred())
-					// Create MySQL standalone and wait for running
-					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
-						in.Namespace = myMeta.Namespace
+					// Create MariaDB standalone and wait for running
+					md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+						in.Name = mdMeta.Name
+						in.Namespace = mdMeta.Namespace
 						in.Spec.Init = &api.InitSpec{
 							Script: &api.ScriptSourceSpec{
 								VolumeSource: core.VolumeSource{
@@ -306,25 +306,25 @@ var _ = Describe("MySQL", func() {
 						User:               framework.MySQLRootUser,
 						Param:              "",
 					}
-					fi.EventuallyDBReady(my, dbInfo)
+					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(myMeta, dbInfo).Should(Equal(3))
+					fi.EventuallyCountRowMD(mdMeta, dbInfo).Should(Equal(3))
 
 					for i := 0; i < 3; i++ {
 						By(fmt.Sprintf("%v-th", i+1) + " time running.")
 
-						By("Delete mysql " + myMeta.Namespace + "/" + myMeta.Name)
-						err = fi.DeleteMySQL(myMeta)
+						By("Delete mariadb " + mdMeta.Namespace + "/" + mdMeta.Name)
+						err = fi.DeleteMariaDB(mdMeta)
 						Expect(err).NotTo(HaveOccurred())
 
-						By("Wait for mysql to be deleted")
-						fi.EventuallyMySQL(myMeta).Should(BeFalse())
+						By("Wait for mariadb to be deleted")
+						fi.EventuallyMariaDB(mdMeta).Should(BeFalse())
 
-						// Create MySQL object again to resume it
-						_, err = fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-							in.Name = myMeta.Name
-							in.Namespace = myMeta.Namespace
+						// Create MariaDB object again to resume it
+						_, err = fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+							in.Name = mdMeta.Name
+							in.Namespace = mdMeta.Namespace
 							in.Spec.Init = &api.InitSpec{
 								Script: &api.ScriptSourceSpec{
 									VolumeSource: core.VolumeSource{
@@ -336,25 +336,25 @@ var _ = Describe("MySQL", func() {
 									},
 								},
 							}
-							// Set termination policy WipeOut to delete all mysql resources permanently
+							// Set termination policy WipeOut to delete all mariadb resources permanently
 							in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 						})
 						Expect(err).NotTo(HaveOccurred())
-						fi.EventuallyDBReady(my, dbInfo)
+						fi.EventuallyDBReadyMD(md, dbInfo)
 
 						By("Checking Row Count of Table")
-						fi.EventuallyCountRow(myMeta, dbInfo).Should(Equal(3))
+						fi.EventuallyCountRowMD(mdMeta, dbInfo).Should(Equal(3))
 
-						my, err := fi.GetMySQL(myMeta)
+						md, err := fi.GetMariaDB(mdMeta)
 						Expect(err).NotTo(HaveOccurred())
-						Expect(my.Spec.Init).ShouldNot(BeNil())
+						Expect(md.Spec.Init).ShouldNot(BeNil())
 
-						By("Checking MySQL crd does not have status.conditions[DataRestored]")
-						Expect(kmapi.HasCondition(my.Status.Conditions, api.DatabaseDataRestored)).To(BeFalse())
+						By("Checking MariaDB crd does not have status.conditions[DataRestored]")
+						Expect(kmapi.HasCondition(md.Status.Conditions, api.DatabaseDataRestored)).To(BeFalse())
 					}
-					By("Update mysql to set spec.terminationPolicy = WipeOut")
-					_, err = fi.PatchMySQL(myMeta, func(in *api.MySQL) *api.MySQL {
-						// Set termination policy WipeOut to delete all mysql resources permanently
+					By("Update mariadb to set spec.terminationPolicy = WipeOut")
+					_, err = fi.PatchMariaDB(mdMeta, func(in *api.MariaDB) *api.MariaDB {
+						// Set termination policy WipeOut to delete all mariadb resources permanently
 						in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 						return in
 					})
