@@ -21,10 +21,14 @@ import (
 	"fmt"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
+	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
 
+	"github.com/appscode/go/log"
+	"github.com/google/go-cmp/cmp"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,9 +36,10 @@ import (
 
 type testOptions struct {
 	*framework.Invocation
-	db           *api.Elasticsearch
-	skipMessage  string
-	configSecret *core.Secret
+	db                  *api.Elasticsearch
+	skipMessage         string
+	configSecret        *core.Secret
+	elasticsearchOpsReq *dbaapi.ElasticsearchOpsRequest
 }
 
 func (to *testOptions) createAndHaltElasticsearchAndWaitForBeingReady() {
@@ -77,7 +82,7 @@ func (to *testOptions) createAndHaltElasticsearchAndWaitForBeingReady() {
 	defer tunnel.Close()
 
 	By("Checking indices after recovery from halted.")
-	to.EventuallyElasticsearchIndicesCount(esClient).Should(Equal(indicesCount))
+	to.EventuallyElasticsearchIndicesCount(indicesCount, esClient).Should(BeTrue())
 }
 
 func (to *testOptions) createElasticsearchAndWaitForBeingReady() {
@@ -140,6 +145,14 @@ func (to *testOptions) createElasticsearchWithCustomConfigAndWaitForBeingReady()
 
 }
 
+func (to *testOptions) createElasticsearchOpsRequestAndWaitForBeingSuccessful() {
+	_, err := to.DBClient().OpsV1alpha1().ElasticsearchOpsRequests(to.Namespace()).Create(context.TODO(), to.elasticsearchOpsReq, metav1.CreateOptions{})
+	Expect(err).NotTo(HaveOccurred())
+
+	By("Waiting for Ops Request to be successful or failed...")
+	to.EventuallyElasticsearchOpsRequestSuccessful(to.elasticsearchOpsReq.ObjectMeta, 4*framework.WaitTimeOut).Should(BeTrue())
+}
+
 func (to *testOptions) wipeOutElasticsearch() {
 	if to.db == nil {
 		Skip("Skipping...")
@@ -190,16 +203,266 @@ func (to *testOptions) insertData() int {
 	Expect(err).NotTo(HaveOccurred())
 
 	By("Creating indices in Elasticsearch")
-	err = esClient.CreateIndex(2)
+	err = esClient.CreateIndex(5)
 	Expect(err).NotTo(HaveOccurred())
-	indicesCount += 2
+	indicesCount += 5
 
 	By("Checking created indices")
-	to.EventuallyElasticsearchIndicesCount(esClient).Should(Equal(indicesCount))
+	to.EventuallyElasticsearchIndicesCount(indicesCount, esClient).Should(BeTrue())
 
 	return indicesCount
 }
 
+func (to *testOptions) verifyData(indicesCount int) {
+	esClient, tunnel, err := to.GetElasticClient(to.db.ObjectMeta)
+	Expect(err).NotTo(HaveOccurred())
+	defer esClient.Stop()
+	defer tunnel.Close()
+
+	By("Checking indices...")
+	to.EventuallyElasticsearchIndicesCount(indicesCount, esClient).Should(BeTrue())
+}
+
+func (to *testOptions) verifyResources() bool {
+	reqSpec := to.elasticsearchOpsReq.Spec.VerticalScaling
+	if reqSpec == nil {
+		return false
+	}
+	db, err := to.DBClient().KubedbV1alpha2().Elasticsearches(to.db.Namespace).Get(context.TODO(), to.db.Name, metav1.GetOptions{})
+	Expect(err).NotTo(HaveOccurred())
+	dbSpec := db.Spec
+
+	if reqSpec.Node != nil && dbSpec.Topology == nil {
+		// Get StatefulSet
+		sts, err := to.KubeClient().AppsV1().StatefulSets(db.Namespace).Get(context.TODO(), db.OffshootName(), metav1.GetOptions{})
+		Expect(err).NotTo(HaveOccurred())
+		container := GetElasticsearchContainer(sts, api.ElasticsearchContainerName)
+		if !cmp.Equal(container.Resources, *reqSpec.Node) {
+			log.Error("statefulSet....container.Resources and reqSpec.Node are not equal!")
+			return false
+		}
+
+		if !cmp.Equal(dbSpec.PodTemplate.Spec.Resources, *reqSpec.Node) {
+			log.Error("dbSpec.PodTemplate.Spec.Resources and reqSpec.Node are not equal!")
+			return false
+		}
+	}
+
+	if reqSpec.Topology != nil && dbSpec.Topology != nil {
+		if reqSpec.Topology.Master != nil {
+			// Get StatefulSet
+			sts, err := to.KubeClient().AppsV1().StatefulSets(db.Namespace).Get(context.TODO(), db.MasterStatefulSetName(), metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			container := GetElasticsearchContainer(sts, api.ElasticsearchContainerName)
+			if !cmp.Equal(container.Resources, *reqSpec.Topology.Master) {
+				log.Error("statefulSet....container.Resources and reqSpec.topology.master are not equal!")
+				return false
+			}
+
+			if !cmp.Equal(*reqSpec.Topology.Master, dbSpec.Topology.Master.Resources) {
+				log.Error("reqSpec.Topology.Master and dbSpec.Topology.Master.Resources are not equal!")
+				return false
+			}
+		}
+
+		if reqSpec.Topology.Data != nil {
+			// Get StatefulSet
+			sts, err := to.KubeClient().AppsV1().StatefulSets(db.Namespace).Get(context.TODO(), db.DataStatefulSetName(), metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			container := GetElasticsearchContainer(sts, api.ElasticsearchContainerName)
+			if !cmp.Equal(container.Resources, *reqSpec.Topology.Data) {
+				log.Error("statefulSet....container.Resources and reqSpec.topology.data are not equal!")
+				return false
+			}
+
+			if !cmp.Equal(*reqSpec.Topology.Data, dbSpec.Topology.Data.Resources) {
+				log.Error("reqSpec.Topology.Data and dbSpec.Topology.Data.Resources are not equal!")
+				return false
+			}
+		}
+
+		if reqSpec.Topology.Ingest != nil {
+			// Get StatefulSet
+			sts, err := to.KubeClient().AppsV1().StatefulSets(db.Namespace).Get(context.TODO(), db.IngestStatefulSetName(), metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			container := GetElasticsearchContainer(sts, api.ElasticsearchContainerName)
+			if !cmp.Equal(container.Resources, *reqSpec.Topology.Ingest) {
+				log.Error("statefulSet....container.Resources and reqSpec.topology.ingest are not equal!")
+				return false
+			}
+			// Exporter sidecar of ingest node
+			if reqSpec.Exporter != nil && dbSpec.Monitor != nil && dbSpec.Monitor.Prometheus != nil {
+				container = GetElasticsearchContainer(sts, api.ElasticsearchExporterContainerName)
+				if !cmp.Equal(container.Resources, *reqSpec.Exporter) {
+					log.Error("statefulSet....container.Resources and reqSpec.exporter are not equal!")
+					return false
+				}
+			}
+
+			if !cmp.Equal(*reqSpec.Topology.Ingest, dbSpec.Topology.Ingest.Resources) {
+				log.Error("reqSpec.Topology.Ingest and dbSpec.Topology.Ingest.Resources are not equal!")
+				return false
+			}
+		}
+	}
+	if reqSpec.Exporter != nil && dbSpec.Monitor != nil && dbSpec.Monitor.Prometheus != nil {
+		if !cmp.Equal(*reqSpec.Exporter, dbSpec.Monitor.Prometheus.Exporter.Resources) {
+			log.Error("reqSpec.Exporter and dbSpec.Monitor.Prometheus.Exporter.Resources are not equal!")
+			return false
+		}
+	}
+	return true
+}
+
+func (to *testOptions) verifyStorage() bool {
+	reqSpec := to.elasticsearchOpsReq.Spec.VolumeExpansion
+	if reqSpec == nil {
+		return false
+	}
+	db, err := to.DBClient().KubedbV1alpha2().Elasticsearches(to.db.Namespace).Get(context.TODO(), to.db.Name, metav1.GetOptions{})
+	Expect(err).NotTo(HaveOccurred())
+	dbSpec := db.Spec
+
+	if reqSpec.Node != nil && dbSpec.Topology == nil {
+		// Get StatefulSet
+		sts, err := to.KubeClient().AppsV1().StatefulSets(db.Namespace).Get(context.TODO(), db.CombinedStatefulSetName(), metav1.GetOptions{})
+		Expect(err).NotTo(HaveOccurred())
+
+		// with statefulSet
+		if !cmp.Equal(*sts.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage(), *reqSpec.Node) {
+			log.Error("VolumeClaimTemplates[0].Spec.Resources.Requests.Storage() and reqSpec.Node are not equal!")
+			return false
+		}
+
+		// with PVCs
+		pvcNames := GetPVCNamesForStatefulSet(sts)
+		for _, pvcName := range pvcNames {
+			pvc, err := to.KubeClient().CoreV1().PersistentVolumeClaims(to.db.Namespace).Get(context.TODO(), pvcName, metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			if !cmp.Equal(*pvc.Spec.Resources.Requests.Storage(), *reqSpec.Node) {
+				log.Error("pvc.Spec.Resources.Requests.Storage() and reqSpec.Node are not equal!")
+				return false
+			}
+		}
+
+		// with Elasticsearch CRD
+		if !cmp.Equal(*dbSpec.Storage.Resources.Requests.Storage(), *reqSpec.Node) {
+			log.Error("db.Spec.Storage.Resources.Requests.Storage() and reqSpec.Node are not equal!")
+			return false
+		}
+	}
+
+	if reqSpec.Topology != nil && dbSpec.Topology != nil {
+		if reqSpec.Topology.Master != nil {
+			// Get StatefulSet
+			sts, err := to.KubeClient().AppsV1().StatefulSets(db.Namespace).Get(context.TODO(), db.MasterStatefulSetName(), metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
+			// with StatefulSet
+			if !cmp.Equal(*sts.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage(), *reqSpec.Topology.Master) {
+				log.Error("VolumeClaimTemplates[0].Spec.Resources.Requests.Storage() and reqSpec.Topology.Master are not equal!")
+				return false
+			}
+
+			// with PVCs
+			pvcNames := GetPVCNamesForStatefulSet(sts)
+			for _, pvcName := range pvcNames {
+				pvc, err := to.KubeClient().CoreV1().PersistentVolumeClaims(to.db.Namespace).Get(context.TODO(), pvcName, metav1.GetOptions{})
+				Expect(err).NotTo(HaveOccurred())
+				if !cmp.Equal(*pvc.Spec.Resources.Requests.Storage(), *reqSpec.Topology.Master) {
+					log.Error("pvc.Spec.Resources.Requests.Storage() and reqSpec.Topology.Master are not equal!")
+					return false
+				}
+			}
+
+			// with Elasticsearch CRD
+			if !cmp.Equal(*dbSpec.Topology.Master.Storage.Resources.Requests.Storage(), *reqSpec.Topology.Master) {
+				log.Error("db.Spec.Topology.Master.Storage.Resources.Requests.Storage() and reqSpec.Topology.Master are not equal!")
+				return false
+			}
+		}
+
+		if reqSpec.Topology.Data != nil {
+			// Get StatefulSet
+			sts, err := to.KubeClient().AppsV1().StatefulSets(db.Namespace).Get(context.TODO(), db.DataStatefulSetName(), metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
+			// with statefulSet
+			if !cmp.Equal(*sts.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage(), *reqSpec.Topology.Data) {
+				log.Error("VolumeClaimTemplates[0].Spec.Resources.Requests.Storage() and reqSpec.topology.data are not equal!")
+				return false
+			}
+
+			// with PVCs
+			pvcNames := GetPVCNamesForStatefulSet(sts)
+			for _, pvcName := range pvcNames {
+				pvc, err := to.KubeClient().CoreV1().PersistentVolumeClaims(to.db.Namespace).Get(context.TODO(), pvcName, metav1.GetOptions{})
+				Expect(err).NotTo(HaveOccurred())
+				if !cmp.Equal(*pvc.Spec.Resources.Requests.Storage(), *reqSpec.Topology.Data) {
+					log.Error("pvc.Spec.Resources.Requests.Storage() and reqSpec.Topology.Data are not equal!")
+					return false
+				}
+			}
+
+			// with Elasticsearch CRD
+			if !cmp.Equal(*dbSpec.Topology.Data.Storage.Resources.Requests.Storage(), *reqSpec.Topology.Data) {
+				log.Error("dbSpec.Topology.Data.Storage.Resources.Requests.Storage() and reqSpec.Topology.Data are not equal!")
+				return false
+			}
+		}
+
+		if reqSpec.Topology.Ingest != nil {
+			// Get StatefulSet
+			sts, err := to.KubeClient().AppsV1().StatefulSets(db.Namespace).Get(context.TODO(), db.IngestStatefulSetName(), metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
+			// with statefulSet
+			if !cmp.Equal(*sts.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage(), *reqSpec.Topology.Ingest) {
+				log.Error("sts.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage() and reqSpec.topology.ingest are not equal!")
+				return false
+			}
+
+			// with PVCs
+			pvcNames := GetPVCNamesForStatefulSet(sts)
+			for _, pvcName := range pvcNames {
+				pvc, err := to.KubeClient().CoreV1().PersistentVolumeClaims(to.db.Namespace).Get(context.TODO(), pvcName, metav1.GetOptions{})
+				Expect(err).NotTo(HaveOccurred())
+				if !cmp.Equal(*pvc.Spec.Resources.Requests.Storage(), *reqSpec.Topology.Ingest) {
+					log.Error("pvc.Spec.Resources.Requests.Storage() and reqSpec.Topology.Ingest are not equal!")
+					return false
+				}
+			}
+
+			// with Elasticsearch CRD
+			if !cmp.Equal(*dbSpec.Topology.Ingest.Storage.Resources.Requests.Storage(), *reqSpec.Topology.Ingest) {
+				log.Error("reqSpec.Topology.Ingest and dbSpec.Topology.Ingest.Resources are not equal!")
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
 func (to *testOptions) transformElasticsearch(db *api.Elasticsearch, transform func(in *api.Elasticsearch) *api.Elasticsearch) *api.Elasticsearch {
 	return transform(db)
+}
+
+func GetElasticsearchContainer(sts *apps.StatefulSet, containerName string) core.Container {
+	for _, c := range sts.Spec.Template.Spec.Containers {
+		if c.Name == containerName {
+			return c
+		}
+	}
+
+	return core.Container{}
+}
+
+func GetPVCNamesForStatefulSet(sts *apps.StatefulSet) []string {
+	replicas := *sts.Spec.Replicas
+	var names []string
+	for idx := int32(0); idx < replicas; idx++ {
+		names = append(names, fmt.Sprintf("%s-%s-%d", api.DefaultVolumeClaimTemplateName, sts.Name, idx))
+	}
+	return names
 }

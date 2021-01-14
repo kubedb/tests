@@ -29,6 +29,7 @@ import (
 	"kubedb.dev/tests/e2e/elasticsearch/client/es"
 
 	"github.com/appscode/go/crypto/rand"
+	"github.com/appscode/go/log"
 	string_util "github.com/appscode/go/strings"
 	"github.com/appscode/go/types"
 	. "github.com/onsi/gomega"
@@ -196,7 +197,7 @@ func (fi *Invocation) ClusterElasticsearch() *api.Elasticsearch {
 			Version: DBVersion,
 			Topology: &api.ElasticsearchClusterTopology{
 				Master: api.ElasticsearchNode{
-					Replicas: types.Int32P(2),
+					Replicas: types.Int32P(1),
 					Prefix:   "master",
 					Storage: &core.PersistentVolumeClaimSpec{
 						Resources: core.ResourceRequirements{
@@ -220,7 +221,7 @@ func (fi *Invocation) ClusterElasticsearch() *api.Elasticsearch {
 					},
 				},
 				Ingest: api.ElasticsearchNode{
-					Replicas: types.Int32P(2),
+					Replicas: types.Int32P(1),
 					Prefix:   "ingest",
 					Storage: &core.PersistentVolumeClaimSpec{
 						Resources: core.ResourceRequirements{
@@ -372,14 +373,15 @@ func (f *Framework) ElasticsearchIndicesCount(client es.ESClient) (int, error) {
 	return count, err
 }
 
-func (f *Framework) EventuallyElasticsearchIndicesCount(client es.ESClient) GomegaAsyncAssertion {
+func (f *Framework) EventuallyElasticsearchIndicesCount(oldCount int, client es.ESClient) GomegaAsyncAssertion {
 	return Eventually(
-		func() int {
-			count, err := client.CountIndex()
+		func() bool {
+			newCount, err := client.CountIndex()
 			if err != nil {
-				return -1
+				log.Error(err)
+				return false
 			}
-			return count
+			return oldCount <= newCount
 		},
 		WaitTimeOut,
 		PullInterval,
@@ -401,6 +403,12 @@ func (f *Framework) CleanElasticsearch() {
 		}
 	}
 	if err := f.dbClient.KubedbV1alpha2().Elasticsearches(f.namespace).DeleteCollection(context.TODO(), meta_util.DeleteInForeground(), metav1.ListOptions{}); err != nil {
+		fmt.Printf("error in deletion of Elasticsearch. Error: %v", err)
+	}
+}
+
+func (f *Framework) CleanElasticsearchOpsRequests() {
+	if err := f.dbClient.OpsV1alpha1().ElasticsearchOpsRequests(f.namespace).DeleteCollection(context.TODO(), meta_util.DeleteInForeground(), metav1.ListOptions{}); err != nil {
 		fmt.Printf("error in deletion of Elasticsearch. Error: %v", err)
 	}
 }

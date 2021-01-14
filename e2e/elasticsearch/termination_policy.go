@@ -18,6 +18,7 @@ package elasticsearch
 
 import (
 	"fmt"
+	"strings"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
@@ -40,15 +41,12 @@ var _ = Describe("Termination Policy", func() {
 			Skip("Missing StorageClassName. Provide as flag to test this.")
 		}
 
-		if framework.DBType != api.ResourceKindElasticsearch {
+		if strings.ToLower(framework.DBType) != api.ResourceSingularElasticsearch {
 			Skip(fmt.Sprintf("Skipping Elasticsearch: %s tests...", testName))
 		}
 
 		if !framework.RunTestCommunity(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` to test this.", testName))
-		}
-		if framework.SSLEnabled {
-			Skip("Skipping test...")
 		}
 	})
 
@@ -74,6 +72,7 @@ var _ = Describe("Termination Policy", func() {
 			It("Standalone cluster", func() {
 				to.db = to.transformElasticsearch(to.StandaloneElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
 					in.Spec.TerminationPolicy = api.TerminationPolicyHalt
+					in.Spec.EnableSSL = framework.SSLEnabled
 					return in
 				})
 				to.createAndHaltElasticsearchAndWaitForBeingReady()
@@ -83,6 +82,7 @@ var _ = Describe("Termination Policy", func() {
 			It("Dedicated cluster", func() {
 				to.db = to.transformElasticsearch(to.ClusterElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
 					in.Spec.TerminationPolicy = api.TerminationPolicyHalt
+					in.Spec.EnableSSL = framework.SSLEnabled
 					return in
 				})
 				to.createAndHaltElasticsearchAndWaitForBeingReady()
@@ -115,6 +115,7 @@ var _ = Describe("Termination Policy", func() {
 			It("Standalone Cluster", func() {
 				to.db = to.transformElasticsearch(to.StandaloneElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
 					in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+					in.Spec.EnableSSL = framework.SSLEnabled
 					return in
 				})
 				shouldRunWithTerminationWipeOut()
@@ -122,6 +123,7 @@ var _ = Describe("Termination Policy", func() {
 
 			It("Dedicated Cluster", func() {
 				to.db = to.transformElasticsearch(to.ClusterElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
+					in.Spec.EnableSSL = framework.SSLEnabled
 					in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 					return in
 				})
@@ -135,6 +137,7 @@ var _ = Describe("Termination Policy", func() {
 			It("should work successfully", func() {
 				to.db = to.transformElasticsearch(to.ClusterElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
 					in.Spec.TerminationPolicy = api.TerminationPolicyDoNotTerminate
+					in.Spec.EnableSSL = framework.SSLEnabled
 					return in
 				})
 
@@ -201,6 +204,7 @@ var _ = Describe("Termination Policy", func() {
 			It("Should work successfully", func() {
 				to.db = to.transformElasticsearch(to.ClusterElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
 					in.Spec.TerminationPolicy = api.TerminationPolicyDelete
+					in.Spec.EnableSSL = framework.SSLEnabled
 					return in
 				})
 

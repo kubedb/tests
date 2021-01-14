@@ -46,9 +46,6 @@ var _ = Describe("Initialize", func() {
 		if !framework.RunTestCommunity(testName) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` to test this.", testName))
 		}
-		if framework.SSLEnabled {
-			Skip("Skipping test...")
-		}
 	})
 
 	AfterEach(func() {
