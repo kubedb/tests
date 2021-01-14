@@ -198,7 +198,7 @@ func (fi *Invocation) ClusterElasticsearch() *api.Elasticsearch {
 			Topology: &api.ElasticsearchClusterTopology{
 				Master: api.ElasticsearchNode{
 					Replicas: types.Int32P(1),
-					Prefix:   "master",
+					Suffix:   api.ElasticsearchMasterNodeSuffix,
 					Storage: &core.PersistentVolumeClaimSpec{
 						Resources: core.ResourceRequirements{
 							Requests: core.ResourceList{
@@ -210,7 +210,7 @@ func (fi *Invocation) ClusterElasticsearch() *api.Elasticsearch {
 				},
 				Data: api.ElasticsearchNode{
 					Replicas: types.Int32P(2),
-					Prefix:   "data",
+					Suffix:   api.ElasticsearchDataNodeSuffix,
 					Storage: &core.PersistentVolumeClaimSpec{
 						Resources: core.ResourceRequirements{
 							Requests: core.ResourceList{
@@ -222,7 +222,7 @@ func (fi *Invocation) ClusterElasticsearch() *api.Elasticsearch {
 				},
 				Ingest: api.ElasticsearchNode{
 					Replicas: types.Int32P(1),
-					Prefix:   "ingest",
+					Suffix:   api.ElasticsearchIngestNodeSuffix,
 					Storage: &core.PersistentVolumeClaimSpec{
 						Resources: core.ResourceRequirements{
 							Requests: core.ResourceList{
@@ -414,16 +414,7 @@ func (f *Framework) CleanElasticsearchOpsRequests() {
 }
 
 func (f *Framework) GetElasticsearchIngestPodName(elasticsearch *api.Elasticsearch) string {
-	clientName := elasticsearch.Name
-
-	if elasticsearch.Spec.Topology != nil {
-		if elasticsearch.Spec.Topology.Ingest.Prefix != "" {
-			clientName = fmt.Sprintf("%v-%v", elasticsearch.Spec.Topology.Ingest.Prefix, clientName)
-		} else {
-			clientName = fmt.Sprintf("%v-%v", api.ElasticsearchIngestNodePrefix, clientName)
-		}
-	}
-	return fmt.Sprintf("%v-0", clientName)
+	return fmt.Sprintf("%v-0", elasticsearch.IngestStatefulSetName())
 }
 
 func (f *Framework) GetElasticClient(meta metav1.ObjectMeta) (es.ESClient, *portforward.Tunnel, error) {
