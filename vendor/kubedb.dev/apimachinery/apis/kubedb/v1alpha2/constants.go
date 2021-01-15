@@ -130,8 +130,10 @@ const (
 	MongoDBInitInstallContainerName   = "copy-config"
 	MongoDBInitBootstrapContainerName = "bootstrap"
 
-	MongoDBConfigDirectoryName        = "configdir"
-	MongoDBConfigDirectoryPath        = "/data/configdb"
+	MongoDBConfigDirectoryName = "config"
+	MongoDBConfigDirectoryPath = "/data/configdb"
+
+	MongoDBInitialConfigDirectoryName = "configdir"
 	MongoDBInitialConfigDirectoryPath = "/configdb-readonly"
 
 	MongoDBInitScriptDirectoryName = "init-scripts"
@@ -288,15 +290,6 @@ const (
 
 var (
 	DefaultResourceLimits = core.ResourceList{
-		core.ResourceCPU:    resource.MustParse(".500"),
-		core.ResourceMemory: resource.MustParse("1024Mi"),
-	}
-
-	defaultMySQLResourceLimits = core.ResourceList{
-		core.ResourceCPU:    resource.MustParse(".500"),
-		core.ResourceMemory: resource.MustParse("1024Mi"),
-	}
-	defaultMySQLResourceRequests = core.ResourceList{
 		core.ResourceCPU:    resource.MustParse(".500"),
 		core.ResourceMemory: resource.MustParse("1024Mi"),
 	}
