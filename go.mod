@@ -10,6 +10,7 @@ require (
 	github.com/elastic/go-elasticsearch/v7 v7.9.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
+	github.com/google/go-cmp v0.5.2
 	github.com/jetstack/cert-manager v1.0.3
 	github.com/olivere/elastic v6.2.35+incompatible // indirect
 	github.com/olivere/elastic/v7 v7.0.21
@@ -39,7 +40,7 @@ require (
 	kmodules.xyz/monitoring-agent-api v0.0.0-20201105074044-be7a1044891a
 	kmodules.xyz/objectstore-api v0.0.0-20201105133858-cbb2af88d50a
 	kmodules.xyz/offshoot-api v0.0.0-20201105074700-8675f5f686f2
-	kubedb.dev/apimachinery v0.16.0
+	kubedb.dev/apimachinery v0.16.1
 	sigs.k8s.io/yaml v1.2.0
 	stash.appscode.dev/apimachinery v0.11.8
 	xorm.io/xorm v1.0.5
