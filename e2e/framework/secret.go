@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"gomodules.xyz/password-generator"
 	"time"
 
 	"kubedb.dev/apimachinery/apis/kubedb"
@@ -104,6 +105,30 @@ func (f *Framework) CheckSecret(secret *core.Secret) error {
 	_, err := f.kubeClient.CoreV1().Secrets(f.namespace).Get(context.TODO(), secret.Name, metav1.GetOptions{})
 	return err
 }
+
+func (fi *Invocation) GetAuthSecret(meta metav1.ObjectMeta, mangedByKubeDB bool) *core.Secret {
+	//mangedByKubeDB mimics a secret created and manged by kubedb and not user.
+	// It should get deleted during wipeout
+	var dbObjectMeta = metav1.ObjectMeta{
+		Name:      fmt.Sprintf("kubedb-%v-%v", meta.Name, CustomSecretSuffix),
+		Namespace: meta.Namespace,
+	}
+	if mangedByKubeDB {
+		dbObjectMeta.Labels = map[string]string{
+			meta_util.ManagedByLabelKey: kubedb.GroupName,
+		}
+	}
+	return &core.Secret{
+		ObjectMeta: dbObjectMeta,
+		Type:       core.SecretTypeBasicAuth,
+		StringData: map[string]string{
+			KeyMariaDBUser:     mariadbUser,
+			KeyMariaDBPassword: password.Generate(api.DefaultPasswordLength),
+		},
+	}
+}
+
+
 
 func (fi *Invocation) SecretForDatabaseAuthentication(meta metav1.ObjectMeta, mangedByKubeDB bool) *core.Secret {
 	//mangedByKubeDB mimics a secret created and manged by kubedb and not User.

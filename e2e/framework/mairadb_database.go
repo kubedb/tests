@@ -184,7 +184,7 @@ func (fi *Invocation) EventuallyDBConnectionMD(meta metav1.ObjectMeta, dbInfo Da
 			}
 			defer tunnel.Close()
 
-			en, err := fi.getMySQLClient(meta, tunnel, dbInfo)
+			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return false
 			}

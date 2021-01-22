@@ -23,6 +23,7 @@ require (
 	gocloud.dev v0.20.0
 	gomodules.xyz/blobfs v0.1.4
 	gomodules.xyz/cert v1.1.2
+	gomodules.xyz/password-generator v0.2.6
 	gomodules.xyz/pointer v0.0.0-20201105071923-daf60fa55209
 	gomodules.xyz/x v0.0.0-20201105065653-91c568df6331
 	gopkg.in/olivere/elastic.v5 v5.0.86

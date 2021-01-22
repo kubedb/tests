@@ -93,7 +93,7 @@ func (fi *Invocation) GetCustomConfigForMariaDB(configs []string) *core.Secret {
 			Namespace: fi.namespace,
 		},
 		StringData: map[string]string{
-			"md-custom.cnf": strings.Join(configs, "\n"),
+			"my-custom.cnf": strings.Join(configs, "\n"),
 		},
 	}
 }
