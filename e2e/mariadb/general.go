@@ -18,6 +18,8 @@ package mariadb
 
 import (
 	"fmt"
+	//"github.com/davecgh/go-spew/spew"
+ 	"encoding/json"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
@@ -31,6 +33,11 @@ import (
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+func prettyPrint(i interface{}) string {
+	s, _ := json.MarshalIndent(i, "", "\t")
+	return string(s)
+}
 
 var _ = Describe("MariaDB", func() {
 	var fi *framework.Invocation
@@ -116,7 +123,7 @@ var _ = Describe("MariaDB", func() {
 		Context("with custom SA Name", func() {
 			var ensureCustomSecret = func(objMeta metav1.ObjectMeta) (*core.Secret, error) {
 				By("Create Custom secret for MariaDB")
-				secret := fi.SecretForDatabaseAuthentication(objMeta, false)
+				secret := fi.GetAuthSecret(objMeta, false)
 				secret, err := fi.CreateSecret(secret)
 				if err != nil {
 					return nil, err
@@ -128,7 +135,7 @@ var _ = Describe("MariaDB", func() {
 			It("should start and resume successfully", func() {
 				// MariaDB objectMeta
 				mdMeta := metav1.ObjectMeta{
-					Name:      rand.WithUniqSuffix("mariadb"),
+					Name:      rand.WithUniqSuffix("md"),
 					Namespace: fi.Namespace(),
 				}
 				// Create custom Secret for MariaDB
@@ -175,6 +182,9 @@ var _ = Describe("MariaDB", func() {
 				_, err = fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
 					in.Name = mdMeta.Name
 					in.Namespace = mdMeta.Namespace
+					in.Spec.AuthSecret = &core.LocalObjectReference{
+						Name: customSecret.Name,
+					}
 					// Set termination policy WipeOut to delete all mysql resources permanently
 					in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				})

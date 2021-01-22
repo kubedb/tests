@@ -19,7 +19,6 @@ package framework
 import (
 	"context"
 	"fmt"
-
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha2/util"
 	"kubedb.dev/tests/e2e/matcher"
@@ -103,6 +102,25 @@ func (fi *Invocation) EventuallyMariaDBReady(meta metav1.ObjectMeta) GomegaAsync
 	)
 }
 
+func (f *Framework) CleanMariaDB() {
+	mariadbList, err := f.dbClient.KubedbV1alpha2().MariaDBs(f.namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return
+	}
+	for _, e := range mariadbList.Items {
+		if _, _, err := util.PatchMariaDB(context.TODO(), f.dbClient.KubedbV1alpha2(), &e, func(in *api.MariaDB) *api.MariaDB {
+			in.ObjectMeta.Finalizers = nil
+			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+			return in
+		}, metav1.PatchOptions{}); err != nil {
+			fmt.Printf("error Patching MariaDB. error: %v", err)
+		}
+	}
+	if err := f.dbClient.KubedbV1alpha2().MariaDBs(f.namespace).DeleteCollection(context.TODO(), meta_util.DeleteInForeground(), metav1.ListOptions{}); err != nil {
+		fmt.Printf("error in deletion of MariaDB. Error: %v", err)
+	}
+}
+
 func (fi *Invocation) EventuallyMariaDB(meta metav1.ObjectMeta) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
@@ -125,9 +143,9 @@ func (fi *Invocation) DeleteMariaDB(meta metav1.ObjectMeta) error {
 }
 
 func (fi *Invocation) CreateMariaDBAndWaitForRunning(version string, transformFuncs ...func(in *api.MariaDB)) (*api.MariaDB, error) {
-	// Generate MySQL definition
+	// Generate MariaDB definition
 	md := fi.MariaDBDefinition(version)
-	// transformFunc provide a function that made test specific change on the MySQL
+	// transformFunc provide a function that made test specific change on the MariaDB
 	// apply these test specific changes
 	for _, fn := range transformFuncs {
 		fn(md)
@@ -159,7 +177,7 @@ func (fi *Invocation) EventuallyDBReadyMD(md *api.MariaDB, dbInfo DatabaseConnec
 		for i := int32(0); i < *md.Spec.Replicas; i++ {
 			By(fmt.Sprintf("Waiting for database to be ready for pod '%s-%d'", md.Name, i))
 			dbInfo.ClientPodIndex = int(i)
-			fi.EventuallyDBConnection(md.ObjectMeta, dbInfo).Should(BeTrue())
+			fi.EventuallyDBConnectionMD(md.ObjectMeta, dbInfo).Should(BeTrue())
 		}
 	} else {
 		requireSecureTransport := func(requireSSL bool) string {

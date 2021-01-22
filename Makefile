@@ -271,7 +271,7 @@ unit-tests: $(BUILD_DIRS)
 # NB: -t is used to catch ctrl-c interrupt from keyboard and -t will be problematic for CI.
 
 GINKGO_ARGS ?=
-TEST_ARGS   ?=
+TEST_ARGS   ?= --db-type=mariadb
 
 # By default the tests will use Minio as backend storage.
 # In order to use specific backend, use 'TEST_ARGS="--storage-provider=<provider name>'
