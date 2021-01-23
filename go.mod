@@ -21,7 +21,6 @@ require (
 	github.com/prometheus/prom2json v1.3.0
 	go.mongodb.org/mongo-driver v1.3.2
 	gocloud.dev v0.20.0
-	golang.org/x/tools v0.0.0-20201110124207-079ba7bd75cd // indirect
 	gomodules.xyz/blobfs v0.1.4
 	gomodules.xyz/cert v1.1.2
 	gomodules.xyz/pointer v0.0.0-20201105071923-daf60fa55209
@@ -35,7 +34,7 @@ require (
 	k8s.io/client-go v0.19.0
 	k8s.io/kube-aggregator v0.19.0
 	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
-	kmodules.xyz/client-go v0.0.0-20201230092550-8ca15cfcbefa
+	kmodules.xyz/client-go v0.0.0-20210118094617-273ba20ad7ca
 	kmodules.xyz/custom-resources v0.0.0-20201124062543-bd8d35c21b0c
 	kmodules.xyz/monitoring-agent-api v0.0.0-20201105074044-be7a1044891a
 	kmodules.xyz/objectstore-api v0.0.0-20201105133858-cbb2af88d50a
