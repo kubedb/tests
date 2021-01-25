@@ -168,7 +168,7 @@ func (to *testOptions) shouldTestComputeAutoscaler() {
 	Expect(err).NotTo(HaveOccurred())
 
 	By("Wait for Vertical Scaling")
-	to.EventuallyVerticallyScaled(to.mongodb.ObjectMeta, to.mgAutoscaler.Spec.Compute).Should(BeTrue())
+	to.EventuallyVerticallyScaledMongoDB(to.mongodb.ObjectMeta, to.mgAutoscaler.Spec.Compute).Should(BeTrue())
 
 	// Retrieve Inserted Data
 	By("Checking Inserted Document after scaling")
@@ -192,11 +192,11 @@ func (to *testOptions) shouldTestStorageAutoscaler() {
 	Expect(err).NotTo(HaveOccurred())
 
 	By("Fill Persistent Volume")
-	err = to.FillDisk(to.mongodb, to.mgAutoscaler.Spec.Storage)
+	err = to.FillDiskMongoDB(to.mongodb, to.mgAutoscaler.Spec.Storage)
 	Expect(err).NotTo(HaveOccurred())
 
 	By("Wait for Volume Expansion")
-	to.EventuallyVolumeExpanded(to.mongodb, to.mgAutoscaler.Spec.Storage).Should(BeTrue())
+	to.EventuallyVolumeExpandedMongoDB(to.mongodb, to.mgAutoscaler.Spec.Storage).Should(BeTrue())
 
 	By("Wait for Ready mongodb")
 	to.EventuallyMongoDBReady(to.mongodb.ObjectMeta).Should(BeTrue())

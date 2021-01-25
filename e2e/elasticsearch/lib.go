@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+	"kubedb.dev/apimachinery/apis/autoscaling/v1alpha1"
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
@@ -40,6 +41,7 @@ type testOptions struct {
 	skipMessage         string
 	configSecret        *core.Secret
 	elasticsearchOpsReq *dbaapi.ElasticsearchOpsRequest
+	esAutoscaler        *v1alpha1.ElasticsearchAutoscaler
 }
 
 func (to *testOptions) createAndHaltElasticsearchAndWaitForBeingReady() {
@@ -465,4 +467,45 @@ func GetPVCNamesForStatefulSet(sts *apps.StatefulSet) []string {
 		names = append(names, fmt.Sprintf("%s-%s-%d", api.DefaultVolumeClaimTemplateName, sts.Name, idx))
 	}
 	return names
+}
+
+func (to *testOptions) shouldTestComputeAutoscaler() {
+	to.createElasticsearchAndWaitForBeingReady()
+
+	indicesCount := to.insertData()
+
+	to.verifyData(indicesCount)
+
+	By("Creating Elasticsearch Autoscaler")
+	err := to.CreateElasticsearchAutoscaler(to.esAutoscaler)
+	Expect(err).NotTo(HaveOccurred())
+
+	By("Wait for Vertical Scaling")
+	to.EventuallyVerticallyScaledElasticsearch(to.db.ObjectMeta, to.esAutoscaler.Spec.Compute).Should(BeTrue())
+
+	to.verifyData(indicesCount)
+}
+
+func (to *testOptions) shouldTestStorageAutoscaler() {
+	to.createElasticsearchAndWaitForBeingReady()
+
+	indicesCount := to.insertData()
+
+	to.verifyData(indicesCount)
+
+	By("Creating Elasticsearch Autoscaler")
+	err := to.CreateElasticsearchAutoscaler(to.esAutoscaler)
+	Expect(err).NotTo(HaveOccurred())
+
+	By("Fill Persistent Volume")
+	err = to.FillDiskElasticsearch(to.db, to.esAutoscaler.Spec.Storage)
+	Expect(err).NotTo(HaveOccurred())
+
+	By("Wait for Volume Expansion")
+	to.EventuallyVolumeExpandedElasticsearch(to.db, to.esAutoscaler.Spec.Storage).Should(BeTrue())
+
+	By("Wait for Ready elasticsearch")
+	to.EventuallyElasticsearchReady(to.db.ObjectMeta).Should(BeTrue())
+
+	to.verifyData(indicesCount)
 }
