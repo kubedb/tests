@@ -552,7 +552,7 @@ func (fi *Invocation) VerifyMongoDBRestore(meta metav1.ObjectMeta, databases ...
 
 func (fi *Invocation) EnableMongoSSL(mg *api.MongoDB, sslMode api.SSLMode, transformFuncs ...func(in *api.MongoDB)) {
 	// Create Issuer
-	issuer, err := fi.InsureIssuer(mg.ObjectMeta, api.ResourceKindMongoDB)
+	issuer, err := fi.EnsureIssuer(mg.ObjectMeta, api.ResourceKindMongoDB)
 	Expect(err).NotTo(HaveOccurred())
 
 	// Enable SSL in the MongoDB

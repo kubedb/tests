@@ -69,7 +69,7 @@ var _ = Describe("MySQL TLS/SSL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
+					issuer, err := fi.EnsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL standalone with SSL secured and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -127,7 +127,7 @@ var _ = Describe("MySQL TLS/SSL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
+					issuer, err := fi.EnsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL standalone with SSL secured and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -196,7 +196,7 @@ var _ = Describe("MySQL TLS/SSL", func() {
 							Name:      rand.WithUniqSuffix("mysql"),
 							Namespace: fi.Namespace(),
 						}
-						issuer, err := fi.InsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
+						issuer, err := fi.EnsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
 						Expect(err).NotTo(HaveOccurred())
 						// Create MySQL standalone with SSL secured and wait for running
 						my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -262,7 +262,7 @@ var _ = Describe("MySQL TLS/SSL", func() {
 							Name:      rand.WithUniqSuffix("mysql"),
 							Namespace: fi.Namespace(),
 						}
-						issuer, err := fi.InsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
+						issuer, err := fi.EnsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
 						Expect(err).NotTo(HaveOccurred())
 						// Create MySQL standalone with SSL secured and wait for running
 						my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -339,7 +339,7 @@ var _ = Describe("MySQL TLS/SSL", func() {
 							Name:      rand.WithUniqSuffix("mysql"),
 							Namespace: fi.Namespace(),
 						}
-						issuer, err := fi.InsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
+						issuer, err := fi.EnsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
 						Expect(err).NotTo(HaveOccurred())
 						// Create MySQL standalone with SSL secured and wait for running
 						my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -405,7 +405,7 @@ var _ = Describe("MySQL TLS/SSL", func() {
 							Name:      rand.WithUniqSuffix("mysql"),
 							Namespace: fi.Namespace(),
 						}
-						issuer, err := fi.InsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
+						issuer, err := fi.EnsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
 						Expect(err).NotTo(HaveOccurred())
 						// Create MySQL standalone with SSL secured and wait for running
 						my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {

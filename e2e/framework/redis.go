@@ -90,7 +90,7 @@ func (fi *Invocation) RedisCluster(version string, master, replicas *int32) *api
 }
 
 func (fi *Invocation) RedisWithTLS(redis *api.Redis) *api.Redis {
-	issuer, err := fi.InsureIssuer(redis.ObjectMeta, api.Redis{}.ResourceFQN())
+	issuer, err := fi.EnsureIssuer(redis.ObjectMeta, api.Redis{}.ResourceFQN())
 	Expect(err).NotTo(HaveOccurred())
 	if redis.Spec.TLS == nil {
 		redis.Spec.TLS = &kmapi.TLSConfig{

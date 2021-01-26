@@ -117,7 +117,7 @@ func (fi *Invocation) EventuallyCreateUserWithRequiredSSLMD(meta metav1.ObjectMe
 			}
 			defer tunnel.Close()
 
-			en, err := fi.getMySQLClient(meta, tunnel, dbInfo)
+			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return false
 			}
@@ -158,7 +158,7 @@ func (fi *Invocation) EventuallyCheckSSLSettingsMD(meta metav1.ObjectMeta, dbInf
 			}
 			defer tunnel.Close()
 
-			en, err := fi.getMySQLClient(meta, tunnel, dbInfo)
+			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return nil
 			}

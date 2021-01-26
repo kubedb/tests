@@ -71,7 +71,7 @@ type testOptions struct {
 
 func (to *testOptions) addIssuerRef() {
 	//create cert-manager ca secret
-	issuer, err := to.InsureIssuer(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN())
+	issuer, err := to.EnsureIssuer(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN())
 	Expect(err).NotTo(HaveOccurred())
 	to.mongodb.Spec.TLS = &kmapi.TLSConfig{
 		IssuerRef: &core.TypedLocalObjectReference{
