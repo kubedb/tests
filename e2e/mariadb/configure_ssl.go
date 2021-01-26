@@ -69,7 +69,7 @@ var _ = Describe("MariaDB TLS/SSL", func() {
 						Name:      rand.WithUniqSuffix("mariadb"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(mdMeta, api.MariaDB{}.ResourceFQN())
+					issuer, err := fi.EnsureIssuer(mdMeta, api.MariaDB{}.ResourceFQN())
 					Expect(err).NotTo(HaveOccurred())
 					// Create MariaDB standalone with SSL secured and wait for running
 					md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
@@ -127,7 +127,7 @@ var _ = Describe("MariaDB TLS/SSL", func() {
 						Name:      rand.WithUniqSuffix("mairadb"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(mdMeta, api.MariaDB{}.ResourceFQN())
+					issuer, err := fi.EnsureIssuer(mdMeta, api.MariaDB{}.ResourceFQN())
 					Expect(err).NotTo(HaveOccurred())
 					// Create MariaDB galera cluster with SSL secured and wait for running
 					md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
@@ -178,7 +178,6 @@ var _ = Describe("MariaDB TLS/SSL", func() {
 				})
 			})
 		})
-		// TODO: Done So far
 
 		Context("General", func() {
 			Context("with requireSSL true", func() {
@@ -189,13 +188,13 @@ var _ = Describe("MariaDB TLS/SSL", func() {
 							Name:      rand.WithUniqSuffix("mariadb"),
 							Namespace: fi.Namespace(),
 						}
-						issuer, err := fi.InsureIssuer(mdMeta, api.MariaDB{}.ResourceFQN())
+						issuer, err := fi.EnsureIssuer(mdMeta, api.MariaDB{}.ResourceFQN())
 						Expect(err).NotTo(HaveOccurred())
 						// Create MariaDB standalone with SSL secured and wait for running
 						md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
 							in.Name = mdMeta.Name
 							in.Namespace = mdMeta.Namespace
-							// configure TLS issuer to MySQL CRD
+							// configure TLS issuer to MairaDB CRD
 							in.Spec.RequireSSL = true
 							in.Spec.TLS = &kmapi.TLSConfig{
 								IssuerRef: &core.TypedLocalObjectReference{
@@ -255,7 +254,7 @@ var _ = Describe("MariaDB TLS/SSL", func() {
 							Name:      rand.WithUniqSuffix("mairadb"),
 							Namespace: fi.Namespace(),
 						}
-						issuer, err := fi.InsureIssuer(myMeta, api.MariaDB{}.ResourceFQN())
+						issuer, err := fi.EnsureIssuer(myMeta, api.MariaDB{}.ResourceFQN())
 						Expect(err).NotTo(HaveOccurred())
 						// Create MariaDB standalone with SSL secured and wait for running
 						md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
@@ -324,7 +323,7 @@ var _ = Describe("MariaDB TLS/SSL", func() {
 							Name:      rand.WithUniqSuffix("mariadb"),
 							Namespace: fi.Namespace(),
 						}
-						issuer, err := fi.InsureIssuer(mdMeta, api.MySQL{}.ResourceFQN())
+						issuer, err := fi.EnsureIssuer(mdMeta, api.MySQL{}.ResourceFQN())
 						Expect(err).NotTo(HaveOccurred())
 						// Create MariaDB standalone with SSL secured and wait for running
 						md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
@@ -382,7 +381,6 @@ var _ = Describe("MariaDB TLS/SSL", func() {
 						fi.EventuallyCountRowMD(md.ObjectMeta, dbInfo).Should(Equal(3))
 					})
 				})
-				// TODO: Done so far(1)
 				Context("Galera CLuster", func() {
 					It("should run successfully", func() {
 						// MariaDB objectMeta
@@ -390,7 +388,7 @@ var _ = Describe("MariaDB TLS/SSL", func() {
 							Name:      rand.WithUniqSuffix("mariadb"),
 							Namespace: fi.Namespace(),
 						}
-						issuer, err := fi.InsureIssuer(mdMeta, api.MariaDB{}.ResourceFQN())
+						issuer, err := fi.EnsureIssuer(mdMeta, api.MariaDB{}.ResourceFQN())
 						Expect(err).NotTo(HaveOccurred())
 						// Create MariaDB standalone with SSL secured and wait for running
 						md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {

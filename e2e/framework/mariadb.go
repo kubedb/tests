@@ -204,7 +204,7 @@ func (fi *Invocation) EventuallyDBReadyMD(md *api.MariaDB, dbInfo DatabaseConnec
 
 		for _, cfg := range sslConfigVar {
 			dbInfo.Param = fmt.Sprintf("tls=%s", TLSCustomConfig)
-			fi.EventuallyCheckSSLSettings(md.ObjectMeta, dbInfo, cfg).Should(matcher.HaveSSL(cfg))
+			fi.EventuallyCheckSSLSettingsMD(md.ObjectMeta, dbInfo, cfg).Should(matcher.HaveSSL(cfg))
 		}
 	}
 }
@@ -240,7 +240,7 @@ func (fi *Invocation) EventuallyCheckConnectionRequiredSSLUserMD(md *api.MariaDB
 		for i := int32(0); i < *md.Spec.Replicas; i++ {
 			By(fmt.Sprintf("Waiting for database to be ready for pod '%s-%d'", md.Name, i))
 			dbInfo.ClientPodIndex = int(i)
-			fi.EventuallyDBConnection(md.ObjectMeta, dbInfo).Should(BeTrue())
+			fi.EventuallyDBConnectionMD(md.ObjectMeta, dbInfo).Should(BeTrue())
 		}
 	}
 }

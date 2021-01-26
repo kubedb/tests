@@ -56,12 +56,10 @@ func (f *Framework) VerifyMariaDBExporter(md *api.MariaDB) error {
 		log.Infoln(err)
 		return err
 	}
-
 	return wait.PollImmediate(time.Second, kutil.ReadinessTimeout, func() (bool, error) {
 		metricsURL := fmt.Sprintf("http://127.0.0.1:%d/metrics", tunnel.Local)
 		mfChan := make(chan *promClient.MetricFamily, 1024)
 		transport := makeTransport()
-
 		err := prom2json.FetchMetricFamilies(metricsURL, mfChan, transport)
 		if err != nil {
 			log.Infoln(err)
@@ -71,14 +69,13 @@ func (f *Framework) VerifyMariaDBExporter(md *api.MariaDB) error {
 		var count = 0
 		for mf := range mfChan {
 			if mf.Metric != nil && mf.Metric[0].Gauge != nil && mf.Metric[0].Gauge.Value != nil {
-				if *mf.Name == mysqlVersionMetric && strings.Contains(md.Spec.Version, *mf.Metric[0].Label[0].Value) {
+				if *mf.Name == mysqlVersionMetric && strings.Contains(*mf.Metric[0].Label[0].Value, md.Spec.Version) {
 					count++
 				} else if *mf.Name == mysqlUpMetric && int(*mf.Metric[0].Gauge.Value) > 0 {
 					count++
 				}
 			}
 		}
-
 		if count != mySQLMetricsMatchedCount {
 			return false, nil
 		}

@@ -27,7 +27,6 @@ import (
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	kmapi "kmodules.xyz/client-go/api/v1"
 )
 
 var _ = Describe("MariaDB", func() {
@@ -127,7 +126,7 @@ var _ = Describe("MariaDB", func() {
 					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(mdMeta, dbInfo).Should(Equal(3))
+					fi.EventuallyCountRowMD(mdMeta, dbInfo).Should(Equal(3))
 				})
 			})
 
@@ -264,8 +263,8 @@ var _ = Describe("MariaDB", func() {
 					Expect(err).NotTo(HaveOccurred())
 					Expect(md.Spec.Init).NotTo(BeNil())
 
-					By("Checking MariaDB crd does not have status.conditions[DataRestored]")
-					Expect(kmapi.HasCondition(md.Status.Conditions, api.DatabaseDataRestored)).To(BeFalse())
+					//By("Checking MariaDB crd does not have status.conditions[DataRestored]")
+					//Expect(kmapi.HasCondition(md.Status.Conditions, api.DatabaseDataRestored)).To(BeFalse())
 				})
 			})
 
@@ -348,9 +347,6 @@ var _ = Describe("MariaDB", func() {
 						md, err := fi.GetMariaDB(mdMeta)
 						Expect(err).NotTo(HaveOccurred())
 						Expect(md.Spec.Init).ShouldNot(BeNil())
-
-						By("Checking MariaDB crd does not have status.conditions[DataRestored]")
-						Expect(kmapi.HasCondition(md.Status.Conditions, api.DatabaseDataRestored)).To(BeFalse())
 					}
 					By("Update mariadb to set spec.terminationPolicy = WipeOut")
 					_, err = fi.PatchMariaDB(mdMeta, func(in *api.MariaDB) *api.MariaDB {
