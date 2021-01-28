@@ -347,6 +347,9 @@ var _ = Describe("MariaDB", func() {
 						md, err := fi.GetMariaDB(mdMeta)
 						Expect(err).NotTo(HaveOccurred())
 						Expect(md.Spec.Init).ShouldNot(BeNil())
+
+						//By("Checking MariaDB crd does not have status.conditions[DataRestored]")
+						//Expect(kmapi.HasCondition(md.Status.Conditions, api.DatabaseDataRestored)).To(BeFalse())
 					}
 					By("Update mariadb to set spec.terminationPolicy = WipeOut")
 					_, err = fi.PatchMariaDB(mdMeta, func(in *api.MariaDB) *api.MariaDB {

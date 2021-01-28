@@ -17,13 +17,13 @@ limitations under the License.
 package mariadb
 
 import (
+	"encoding/json"
 	"fmt"
-	//"github.com/davecgh/go-spew/spew"
- 	"encoding/json"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
 
+	//"github.com/davecgh/go-spew/spew"
 	"github.com/appscode/go/crypto/rand"
 	"github.com/appscode/go/log"
 	"github.com/appscode/go/types"

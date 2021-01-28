@@ -40,14 +40,14 @@ const (
 	CustomSecretSuffix  = "custom-secret"
 
 	// =========================== MongoDB Constants ============================
-	KeyMongoDBUser      = "username"
-	KeyMongoDBPassword  = "password"
-	mongodbUser         = "root"
+	KeyMongoDBUser     = "username"
+	KeyMongoDBPassword = "password"
+	mongodbUser        = "root"
 
 	// =========================== MariaDB Constants ============================
-	KeyMariaDBUser      = "username"
-	KeyMariaDBPassword  = "password"
-	mariadbUser         = "root"
+	KeyMariaDBUser     = "username"
+	KeyMariaDBPassword = "password"
+	mariadbUser        = "root"
 )
 
 func (fi *Invocation) ServiceAccount() *core.ServiceAccount {
