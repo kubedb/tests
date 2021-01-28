@@ -34,14 +34,10 @@ import (
 	"xorm.io/xorm"
 )
 
-
 //type KubedbMySQLTable struct {
 //	Id   int64
 //	Name string `xorm:"varchar(25) not null unique 'usr_name' comment('NickName')"`
 //}
-
-
-
 
 func (fi *Invocation) getMariaDBClient(meta metav1.ObjectMeta, tunnel *portforward.Tunnel, dbInfo DatabaseConnectionInfo) (*xorm.Engine, error) {
 	mariadb, err := fi.GetMariaDB(meta)

@@ -30,6 +30,7 @@ import (
 	"github.com/appscode/go/log"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gomodules.xyz/password-generator"
 	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -127,8 +128,6 @@ func (fi *Invocation) GetAuthSecret(meta metav1.ObjectMeta, mangedByKubeDB bool)
 		},
 	}
 }
-
-
 
 func (fi *Invocation) SecretForDatabaseAuthentication(meta metav1.ObjectMeta, mangedByKubeDB bool) *core.Secret {
 	//mangedByKubeDB mimics a secret created and manged by kubedb and not User.

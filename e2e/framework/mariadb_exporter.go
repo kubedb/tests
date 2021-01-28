@@ -33,7 +33,6 @@ import (
 	mona "kmodules.xyz/monitoring-agent-api/api/v1"
 )
 
-
 func (f *Framework) AddMariaDBMonitor(obj *api.MariaDB) {
 	obj.Spec.Monitor = &mona.AgentSpec{
 		Prometheus: &mona.PrometheusSpec{

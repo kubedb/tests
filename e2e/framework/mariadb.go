@@ -19,6 +19,7 @@ package framework
 import (
 	"context"
 	"fmt"
+
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha2/util"
 	"kubedb.dev/tests/e2e/matcher"
@@ -169,8 +170,6 @@ func (fi *Invocation) CreateMariaDBAndWaitForRunning(version string, transformFu
 
 	return md, err
 }
-
-
 
 func (fi *Invocation) EventuallyDBReadyMD(md *api.MariaDB, dbInfo DatabaseConnectionInfo) {
 	if md.Spec.TLS == nil {
