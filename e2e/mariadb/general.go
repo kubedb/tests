@@ -17,7 +17,6 @@ limitations under the License.
 package mariadb
 
 import (
-	"encoding/json"
 	"fmt"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
@@ -33,11 +32,6 @@ import (
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-func prettyPrint(i interface{}) string {
-	s, _ := json.MarshalIndent(i, "", "\t")
-	return string(s)
-}
 
 var _ = Describe("MariaDB", func() {
 	var fi *framework.Invocation
