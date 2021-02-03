@@ -29,6 +29,7 @@ import (
 	_ "kubedb.dev/tests/e2e/elasticsearch"
 	"kubedb.dev/tests/e2e/framework"
 	_ "kubedb.dev/tests/e2e/mariadb"
+	_ "kubedb.dev/tests/e2e/mariadb/backup"
 	_ "kubedb.dev/tests/e2e/mongodb"
 	_ "kubedb.dev/tests/e2e/mongodb/backup"
 	_ "kubedb.dev/tests/e2e/mongodb/initialization"
@@ -86,7 +87,6 @@ func init() {
 	flag.Var(&framework.TestProfiles, "test-profiles", "Test Profiles to test")
 	flag.StringVar(&framework.StashAddonName, "stash-addon-name", "", "Name of the Stash addon to use for testing database backup")
 	flag.StringVar(&framework.StashAddonVersion, "stash-addon-version", "", "Version of the Stash addon to use for testing database backup")
-	framework.TestProfiles = append(framework.TestProfiles, "all")
 }
 
 const (

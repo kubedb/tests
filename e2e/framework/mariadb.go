@@ -143,6 +143,17 @@ func (fi *Invocation) DeleteMariaDB(meta metav1.ObjectMeta) error {
 	return fi.dbClient.KubedbV1alpha2().MariaDBs(meta.Namespace).Delete(context.TODO(), meta.Name, meta_util.DeleteInForeground())
 }
 
+//// SimulateMariaDBDisaster simulates accidental database deletion. It drops the database specified by "dbName" variable.
+//func (fi *Invocation) SimulateMariaDBDisaster(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) {
+//	// Dropping Database
+//	By("Deleting database: " + dbInfo.DatabaseName)
+//	fi.EventuallyDropDatabaseMD(meta, dbInfo).Should(BeTrue())
+//	By("Verifying that database: " +  dbInfo.DatabaseName + " has been removed")
+//	dbExist, err := fi.DatabaseExistsMD(meta, dbInfo)
+//	Expect(err).NotTo(HaveOccurred())
+//	Expect(dbExist).To(BeFalse())
+//}
+
 func (fi *Invocation) CreateMariaDBAndWaitForRunning(version string, transformFuncs ...func(in *api.MariaDB)) (*api.MariaDB, error) {
 	// Generate MariaDB definition
 	md := fi.MariaDBDefinition(version)

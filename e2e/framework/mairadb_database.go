@@ -221,6 +221,136 @@ func (fi *Invocation) EventuallyCreateTableMD(meta metav1.ObjectMeta, dbInfo Dat
 	)
 }
 
+func (fi *Invocation) EventuallyDropDatabaseMD(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) GomegaAsyncAssertion {
+	return Eventually(
+		func() bool {
+			tunnel, err := fi.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
+			if err != nil {
+				return false
+			}
+			defer tunnel.Close()
+
+			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
+			if err != nil {
+				return false
+			}
+			defer en.Close()
+
+			if err := en.Ping(); err != nil {
+				return false
+			}
+
+			return en.DropTables(dbInfo) == nil
+		},
+		Timeout,
+		RetryInterval,
+	)
+}
+
+func (fi *Invocation) EventuallyCreateTestDBMD(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) GomegaAsyncAssertion {
+	queries := []string {
+		`use mysql;`,
+		`CREATE DATABASE testdb;`,
+	}
+	return Eventually(
+		func() bool {
+			tunnel, err := fi.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
+			if err != nil {
+				return false
+			}
+			defer tunnel.Close()
+
+			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
+			if err != nil {
+				return false
+			}
+			defer en.Close()
+
+			if err := en.Ping(); err != nil {
+				return false
+			}
+			for _, query := range queries {
+				if _, err = en.Query(query); err != nil{
+					return false
+				}
+			}
+			return true
+		},
+		Timeout,
+		RetryInterval,
+	)
+}
+
+func (fi *Invocation) EventuallyExistsTestDBMD(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) GomegaAsyncAssertion {
+
+	queries := []string {
+		`use mysql;`,
+	}
+	getDatabasesQuery := `SHOW DATABASES;`
+	return Eventually(
+		func() bool {
+			tunnel, err := fi.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
+			if err != nil {
+				return false
+			}
+			defer tunnel.Close()
+
+			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
+			if err != nil {
+				return false
+			}
+			defer en.Close()
+
+			if err := en.Ping(); err != nil {
+				return false
+			}
+			for _, query := range queries {
+				if _, err = en.Query(query); err != nil{
+					return false
+				}
+			}
+			result, err := en.Query(getDatabasesQuery);
+			if err != nil {
+				return false
+			}
+			if strings.Contains(string(result[0]["Value"]), TestDBMySQL) {
+				return true
+			}
+			return false
+		},
+		Timeout,
+		RetryInterval,
+	)
+}
+
+//func (fi *Invocation) EventuallyDropDatabaseMD(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) GomegaAsyncAssertion {
+//	return Eventually(
+//		func () (bool, error) {
+//			tunnel, err := fi.forwardPort(meta, dbInfo.StatefulSetOrdinal, dbInfo.ClientPodIndex)
+//			if err != nil {
+//				return false, err
+//			}
+//			defer tunnel.Close()
+//
+//			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
+//			if err != nil {
+//				return false, err
+//			}
+//			defer en.Close()
+//
+//			if err := en.Ping(); err != nil {
+//				return false, err
+//			}
+//
+//
+//			return true, nil
+//		},
+//		time.Minute*5,
+//		time.Second*5,
+//	)
+//}
+
+
 func (fi *Invocation) EventuallyInsertRowMD(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo, total int) GomegaAsyncAssertion {
 	count := 0
 	return Eventually(
