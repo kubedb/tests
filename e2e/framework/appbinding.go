@@ -199,7 +199,6 @@ func (fi *Invocation) GetMariaDBAppBinding(meta metav1.ObjectMeta) (*appcat.AppB
 	return appBinding, err
 }
 
-
 func (f *Framework) GetAppBinding(meta metav1.ObjectMeta) (*appcat.AppBinding, error) {
 	return f.appCatalogClient.AppBindings(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 }

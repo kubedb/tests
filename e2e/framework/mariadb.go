@@ -79,6 +79,8 @@ func (fi *Invocation) PatchMariaDB(meta metav1.ObjectMeta, transform func(*api.M
 	return mariadb, err
 }
 
+
+
 func (fi *Invocation) EventuallyMariaDBPhase(meta metav1.ObjectMeta) GomegaAsyncAssertion {
 	return Eventually(
 		func() api.DatabasePhase {
@@ -144,7 +146,7 @@ func (fi *Invocation) DeleteMariaDB(meta metav1.ObjectMeta) error {
 }
 
 //// SimulateMariaDBDisaster simulates accidental database deletion. It drops the database specified by "dbName" variable.
-//func (fi *Invocation) SimulateMariaDBDisaster(meta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) {
+//func (fi *Invocation) SimulateMariaDBDisaster(meta metav1.ObjectMeta, dbInfo MariaDBInfo) {
 //	// Dropping Database
 //	By("Deleting database: " + dbInfo.DatabaseName)
 //	fi.EventuallyDropDatabaseMD(meta, dbInfo).Should(BeTrue())
@@ -182,11 +184,10 @@ func (fi *Invocation) CreateMariaDBAndWaitForRunning(version string, transformFu
 	return md, err
 }
 
-func (fi *Invocation) EventuallyDBReadyMD(md *api.MariaDB, dbInfo DatabaseConnectionInfo) {
+func (fi *Invocation) EventuallyDBReadyMD(md *api.MariaDB, dbInfo MariaDBInfo) {
 	if md.Spec.TLS == nil {
 		for i := int32(0); i < *md.Spec.Replicas; i++ {
 			By(fmt.Sprintf("Waiting for database to be ready for pod '%s-%d'", md.Name, i))
-			dbInfo.ClientPodIndex = int(i)
 			fi.EventuallyDBConnectionMD(md.ObjectMeta, dbInfo).Should(BeTrue())
 		}
 	} else {
@@ -219,7 +220,7 @@ func (fi *Invocation) EventuallyDBReadyMD(md *api.MariaDB, dbInfo DatabaseConnec
 	}
 }
 
-func (fi *Invocation) EventuallyCheckConnectionRootUserMD(md *api.MariaDB, requireSecureTransport string, dbInfo DatabaseConnectionInfo) {
+func (fi *Invocation) EventuallyCheckConnectionRootUserMD(md *api.MariaDB, requireSecureTransport string, dbInfo MariaDBInfo) {
 	params := []string{
 		fmt.Sprintf("tls=%s", TLSSkibVerify),
 		fmt.Sprintf("tls=%s", TLSCustomConfig),
@@ -233,13 +234,12 @@ func (fi *Invocation) EventuallyCheckConnectionRootUserMD(md *api.MariaDB, requi
 		By(fmt.Sprintf("Checking root User connection with tls: %s", param))
 		for i := int32(0); i < *md.Spec.Replicas; i++ {
 			By(fmt.Sprintf("Waiting for database to be ready for pod '%s-%d'", md.Name, i))
-			dbInfo.ClientPodIndex = int(i)
 			fi.EventuallyDBConnectionMD(md.ObjectMeta, dbInfo).Should(BeTrue())
 		}
 	}
 }
 
-func (fi *Invocation) EventuallyCheckConnectionRequiredSSLUserMD(md *api.MariaDB, dbInfo DatabaseConnectionInfo) {
+func (fi *Invocation) EventuallyCheckConnectionRequiredSSLUserMD(md *api.MariaDB, dbInfo MariaDBInfo) {
 	params := []string{
 		fmt.Sprintf("tls=%s", TLSSkibVerify),
 		fmt.Sprintf("tls=%s", TLSCustomConfig),
@@ -249,8 +249,12 @@ func (fi *Invocation) EventuallyCheckConnectionRequiredSSLUserMD(md *api.MariaDB
 		By(fmt.Sprintf("Checking ssl required User connection with tls: %s", param))
 		for i := int32(0); i < *md.Spec.Replicas; i++ {
 			By(fmt.Sprintf("Waiting for database to be ready for pod '%s-%d'", md.Name, i))
-			dbInfo.ClientPodIndex = int(i)
 			fi.EventuallyDBConnectionMD(md.ObjectMeta, dbInfo).Should(BeTrue())
 		}
 	}
+}
+
+
+func sslEnabledMariaDB(md *api.MariaDB) bool {
+	return md.Spec.TLS != nil
 }

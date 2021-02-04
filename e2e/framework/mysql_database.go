@@ -43,6 +43,7 @@ const (
 	TLSCustomConfig            = "custom"
 	DBMySQL                    = "mysql"
 	MySQLTestDB                = "testdb"
+	TestDBMySQL                = "testdb"
 	MySQLRootUser              = "root"
 	MySQLRequiredSSLUser       = "ssl-User"
 	MySQLRequiredSSLPassword   = "not@secret"
