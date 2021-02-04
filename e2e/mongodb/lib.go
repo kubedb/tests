@@ -25,7 +25,7 @@ import (
 	"kubedb.dev/tests/e2e/framework"
 
 	"github.com/appscode/go/types"
-	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1beta1"
+	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
@@ -140,12 +140,15 @@ func (to *testOptions) shouldTestOpsRequest() {
 	By("Waiting for MongoDB Ops Request Phase to be Successful")
 	to.EventuallyMongoDBOpsRequestPhase(to.mongoOpsReq.ObjectMeta).Should(Equal(dbaapi.OpsRequestPhaseSuccessful))
 
+	By("Checking DB is Resumed")
+	to.EventuallyDatabaseResumed(to.mongodb).Should(BeTrue())
+
+	By("Checking for Ready MongoDB After Successful OpsRequest")
+	to.EventuallyMongoDBReady(to.mongodb.ObjectMeta).Should(BeTrue())
+
 	// Retrieve Inserted Data
 	By("Checking Inserted Document after update")
 	to.EventuallyDocumentExists(to.mongodb.ObjectMeta, dbName, 3).Should(BeTrue())
-
-	By("Checking DB is Resumed")
-	to.EventuallyDatabaseResumed(to.mongodb).Should(BeTrue())
 }
 
 func (to *testOptions) shouldTestComputeAutoscaler() {

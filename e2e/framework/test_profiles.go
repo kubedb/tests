@@ -56,6 +56,7 @@ const (
 	VerticalScaling   = "vertical_scaling"
 	HorizontalScaling = "horizontal_scaling"
 	Reconfigure       = "reconfigure"
+	ReconfigureTLS    = "reconfigure_tls"
 	VolumeExpansion   = "volume_expansion"
 	Autoscaling       = "autoscaling"
 

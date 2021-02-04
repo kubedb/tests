@@ -355,6 +355,18 @@ func (f *Framework) EventuallyMongoDBReady(meta metav1.ObjectMeta) GomegaAsyncAs
 	)
 }
 
+func (f *Framework) EventuallyCheckTLSMongoDB(meta metav1.ObjectMeta, sslMode api.SSLMode) GomegaAsyncAssertion {
+	return Eventually(
+		func() bool {
+			mongodb, err := f.dbClient.KubedbV1alpha2().MongoDBs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			return mongodb.Spec.SSLMode == sslMode
+		},
+		time.Minute*1,
+		time.Second*5,
+	)
+}
+
 func (f *Framework) CleanMongoDB() {
 	mongodbList, err := f.dbClient.KubedbV1alpha2().MongoDBs(f.namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {

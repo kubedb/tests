@@ -28,7 +28,7 @@ import (
 
 	"github.com/appscode/go/crypto/rand"
 	"github.com/appscode/go/types"
-	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1beta1"
+	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
 	policy "k8s.io/api/policy/v1beta1"

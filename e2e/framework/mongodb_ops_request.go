@@ -155,6 +155,26 @@ func (fi *Invocation) MongoDBOpsRequestReconfigure(name, namespace string, stand
 	}
 }
 
+func (fi *Invocation) MongoDBOpsRequestReconfigureTLS(name, namespace string, tls *dbaapi.TLSSpec) *dbaapi.MongoDBOpsRequest {
+	return &dbaapi.MongoDBOpsRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      rand.WithUniqSuffix("mor"),
+			Namespace: namespace,
+			Labels: map[string]string{
+				"app": fi.app,
+			},
+		},
+
+		Spec: dbaapi.MongoDBOpsRequestSpec{
+			Type: dbaapi.OpsRequestTypeReconfigureTLSs,
+			DatabaseRef: corev1.LocalObjectReference{
+				Name: name,
+			},
+			TLS: tls,
+		},
+	}
+}
+
 func (fi *Invocation) CreateMongoDBOpsRequest(obj *dbaapi.MongoDBOpsRequest) error {
 	_, err := fi.dbClient.OpsV1alpha1().MongoDBOpsRequests(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
 	return err
