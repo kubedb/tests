@@ -279,8 +279,9 @@ func (fi *Invocation) EventuallyDropDatabaseMD(meta metav1.ObjectMeta, dbInfo Ma
 
 func (fi *Invocation) EventuallyCreateTestDBMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo) GomegaAsyncAssertion {
 	queries := []string{
-		fmt.Sprintf("CREATE DATABASE %s;", TestDBMySQL),
+		fmt.Sprintf("CREATE DATABASE %s;", dbInfo.DatabaseName),
 	}
+	dbInfo.DatabaseName = DBMySQL
 	return Eventually(
 		func() bool {
 			tunnel, err := fi.ForwardPortMD(meta)
@@ -310,7 +311,7 @@ func (fi *Invocation) EventuallyCreateTestDBMD(meta metav1.ObjectMeta, dbInfo Ma
 	)
 }
 
-func (fi *Invocation) EventuallyExistsTestDBMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyExistsDBMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo) GomegaAsyncAssertion {
 	getDatabasesQuery := `SHOW DATABASES;`
 	return Eventually(
 		func() bool {
@@ -334,7 +335,7 @@ func (fi *Invocation) EventuallyExistsTestDBMD(meta metav1.ObjectMeta, dbInfo Ma
 				return false
 			}
 			for _, value := range result {
-				if strings.Compare(string(value["Database"]), TestDBMySQL) == 0 {
+				if strings.Compare(string(value["Database"]), dbInfo.DatabaseName) == 0 {
 					return true
 				}
 			}

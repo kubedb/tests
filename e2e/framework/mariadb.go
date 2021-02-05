@@ -113,7 +113,7 @@ func (fi *Invocation) PopulateMariaDB(md *api.MariaDB, dbInfo MariaDBInfo){
 	}
 
 	By("Checking if test Database exist")
-	fi.EventuallyExistsTestDBMD(md.ObjectMeta, dbInfo).Should(BeTrue())
+	fi.EventuallyExistsDBMD(md.ObjectMeta, dbInfo).Should(BeTrue())
 
 	By("Creating Table")
 	fi.EventuallyCreateTableMD(md.ObjectMeta, dbInfo).Should(BeTrue())

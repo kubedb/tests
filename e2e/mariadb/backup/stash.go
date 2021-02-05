@@ -102,13 +102,13 @@ var _ = FDescribe("Stash Backup For MariaDB", func() {
 				fi.EventuallyDropDatabaseMD(md.ObjectMeta, testdbInfo).Should(BeTrue())
 
 				By("Checking if test Database exist")
-				fi.EventuallyExistsTestDBMD(md.ObjectMeta, testdbInfo).Should(BeFalse())
+				fi.EventuallyExistsDBMD(md.ObjectMeta, testdbInfo).Should(BeFalse())
 
 				// Restore the database
 				fi.RestoreDatabase(appBinding, repo)
 
 				By("Checking if test Database restored")
-				fi.EventuallyExistsTestDBMD(md.ObjectMeta, testdbInfo).Should(BeTrue())
+				fi.EventuallyExistsDBMD(md.ObjectMeta, testdbInfo).Should(BeTrue())
 
 				By("Checking Row Count of Table")
 				fi.EventuallyCountRowMD(md.ObjectMeta, testdbInfo).Should(Equal(3))
