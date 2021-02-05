@@ -87,9 +87,7 @@ var _ = Describe("MariaDB", func() {
 					})
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
-					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
+					dbInfo := framework.MariaDBInfo{
 						DatabaseName:       framework.DBMySQL,
 						User:               framework.MySQLRootUser,
 						Param:              "",

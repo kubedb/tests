@@ -255,6 +255,6 @@ func (fi *Invocation) EventuallyCheckConnectionRequiredSSLUserMD(md *api.MariaDB
 }
 
 
-func sslEnabledMariaDB(md *api.MariaDB) bool {
+func SslEnabledMariaDB(md *api.MariaDB) bool {
 	return md.Spec.TLS != nil
 }

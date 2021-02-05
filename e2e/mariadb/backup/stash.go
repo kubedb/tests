@@ -39,22 +39,22 @@ var _ = FDescribe("Stash Backup For MariaDB", func() {
 			Skip(fmt.Sprintf("Profile: %q is not covered by the test profiles: %v.", framework.StashBackup, framework.TestProfiles))
 		}
 
-		// If Stash operator hasn't been installed, then skip running the backup tests
-		//if !fi.StashInstalled() {
-		//	Skip("Stash is not running in the cluster. Please install Stash to run the backup tests.")
-		//}
-		//
-		//// Skip if addon name or addon version is missing
-		//if framework.StashAddonName == "" || framework.StashAddonVersion == "" {
-		//	Skip("Missing Stash addon name or version")
-		//}
-		//
-		//// If the provided addon does not exist, then skip running the test
-		//exist, err := fi.AddonExist()
-		//Expect(err).NotTo(HaveOccurred())
-		//if !exist {
-		//	Skip(fmt.Sprintf("Stash addon name: %s version: %s does not exist", framework.StashAddonName, framework.StashAddonVersion))
-		//}
+		//If Stash operator hasn't been installed, then skip running the backup tests
+		if !fi.StashInstalled() {
+			Skip("Stash is not running in the cluster. Please install Stash to run the backup tests.")
+		}
+
+		// Skip if addon name or addon version is missing
+		if framework.StashAddonName == "" || framework.StashAddonVersion == "" {
+			Skip("Missing Stash addon name or version")
+		}
+
+		// If the provided addon does not exist, then skip running the test
+		exist, err := fi.AddonExist()
+		Expect(err).NotTo(HaveOccurred())
+		if !exist {
+			Skip(fmt.Sprintf("Stash addon name: %s version: %s does not exist", framework.StashAddonName, framework.StashAddonVersion))
+		}
 	})
 
 	JustAfterEach(func() {
@@ -88,53 +88,56 @@ var _ = FDescribe("Stash Backup For MariaDB", func() {
 				dbInfo := framework.GetMariaDBInfo(framework.DBMySQL, framework.MySQLRootUser, "")
 				fi.EventuallyDBReadyMD(md, dbInfo)
 
-				//By("Creating Table")
-				//fi.EventuallyCreateTableMD(mdMeta, dbInfo).Should(BeTrue())
-				//
-				//By("Inserting Rows")
-				//fi.EventuallyInsertRowMD(mdMeta, dbInfo, 3).Should(BeTrue())
-				//
-				//By("Checking Row Count of Table")
-				//fi.EventuallyCountRowMD(mdMeta, dbInfo).Should(Equal(3))
+				By("Creating Table")
+				fi.EventuallyCreateTableMD(mdMeta, dbInfo).Should(BeTrue())
 
-				//By("Get AppBinding for Backup Purpose")
-				//appBinding, err := fi.GetMariaDBAppBinding(mdMeta)
-				//Expect(err).NotTo(HaveOccurred())
+				By("Inserting Rows")
+				fi.EventuallyInsertRowMD(mdMeta, dbInfo, 3).Should(BeTrue())
+
+				By("Checking Row Count of Table")
+				fi.EventuallyCountRowMD(mdMeta, dbInfo).Should(Equal(3))
 
 				By("Creating test Database")
 				fi.EventuallyCreateTestDBMD(mdMeta, dbInfo).Should(BeTrue())
 
 
+				testdbInfo := framework.GetMariaDBInfo(framework.TestDBMySQL, framework.MySQLRootUser, "")
+
 				By("Checking if test Database exist")
-				fi.EventuallyExistsTestDBMD(mdMeta, dbInfo).Should(BeTrue())
+				fi.EventuallyExistsTestDBMD(mdMeta, testdbInfo).Should(BeTrue())
 
 				By("Creating Table")
-				fi.EventuallyTestDBCreateTableMD(mdMeta, dbInfo).Should(BeTrue())
+				fi.EventuallyTestDBCreateTableMD(mdMeta, testdbInfo).Should(BeTrue())
 
 				By("Inserting Rows")
-				fi.EventuallyTestDBInsertRowMD(mdMeta, dbInfo, 3).Should(BeTrue())
+				fi.EventuallyTestDBInsertRowMD(mdMeta, testdbInfo, 3).Should(BeTrue())
 
 				By("Checking Row Count of Table")
-				fi.EventuallyTestDBCountRowMD(mdMeta, dbInfo).Should(Equal(3))
+				fi.EventuallyTestDBCountRowMD(mdMeta, testdbInfo).Should(Equal(3))
+
+
+				By("Get AppBinding for Backup Purpose")
+				appBinding, err := fi.GetMariaDBAppBinding(mdMeta)
+				Expect(err).NotTo(HaveOccurred())
+
+				By("Setup Database Backup")
+				backupConfig, repo, err := fi.SetupDatabaseBackup(appBinding)
+				Expect(err).NotTo(HaveOccurred())
+
+				// Simulate a backup run
+				fi.SimulateBackupRun(backupConfig.ObjectMeta, repo.ObjectMeta, 1)
+
+				By("Simulate disaster by dropping testdb")
+				fi.EventuallyDropDatabaseMD(mdMeta, testdbInfo).Should(BeTrue())
 
 				By("Checking if test Database exist")
-				fi.EventuallyExistsTestDBMD(mdMeta, dbInfo).Should(BeFalse())
+				fi.EventuallyExistsTestDBMD(mdMeta, testdbInfo).Should(BeFalse())
 
-				//By("Setup Database Backup")
-				//backupConfig, repo, err := fi.SetupDatabaseBackup(appBinding)
-				//Expect(err).NotTo(HaveOccurred())
-				//
-				//// Simulate a backup run
-				//fi.SimulateBackupRun(backupConfig.ObjectMeta, repo.ObjectMeta, 1)
-				//
-				//// Delete sample data
-				//fi.SimulateMariaDBDisaster(md.ObjectMeta, dbInfo)
-				//
-				//// Restore the database
-				//fi.RestoreDatabase(appBinding, repo)
-				//
-				//// Verify restored data
-				//fi.VerifyMongoDBRestore(md.ObjectMeta, framework.SampleDB)
+				// Restore the database
+				fi.RestoreDatabase(appBinding, repo)
+
+				By("Checking if test Database restored")
+				fi.EventuallyExistsTestDBMD(mdMeta, testdbInfo).Should(BeTrue())
 
 			})
 		})

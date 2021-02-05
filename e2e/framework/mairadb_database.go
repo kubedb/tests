@@ -42,7 +42,7 @@ type MariaDBInfo struct {
 }
 
 
-func (fi *Invocation) getMariaDBClient(meta metav1.ObjectMeta, tunnel *portforward.Tunnel, dbInfo MariaDBInfo) (*xorm.Engine, error) {
+func (fi *Invocation) GetMariaDBClient(meta metav1.ObjectMeta, tunnel *portforward.Tunnel, dbInfo MariaDBInfo) (*xorm.Engine, error) {
 	md, err := fi.GetMariaDB(meta)
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func (fi *Invocation) getMariaDBClient(meta metav1.ObjectMeta, tunnel *portforwa
 		return nil, err
 	}
 
-	if sslEnabledMariaDB(md) {
+	if SslEnabledMariaDB(md) {
 		serverSecret, err := fi.kubeClient.CoreV1().Secrets(fi.Namespace()).Get(context.TODO(), md.MustCertSecretName(api.MariaDBServerCert), metav1.GetOptions{})
 		if err != nil {
 			return nil, err
@@ -104,7 +104,7 @@ func (fi *Invocation) getMariaDBClient(meta metav1.ObjectMeta, tunnel *portforwa
 
 }
 
-func (fi *Invocation) forwardPortWithSVC(meta metav1.ObjectMeta) (*portforward.Tunnel, error) {
+func (fi *Invocation) ForwardPortMD(meta metav1.ObjectMeta) (*portforward.Tunnel, error) {
 	db, err := fi.GetMariaDB(meta)
 	if err != nil{
 		return nil, err
@@ -130,13 +130,13 @@ func (fi *Invocation) EventuallyCreateUserWithRequiredSSLMD(meta metav1.ObjectMe
 	flush := "FLUSH PRIVILEGES;"
 	return Eventually(
 		func() bool {
-			tunnel, err := fi.forwardPort(meta)
+			tunnel, err := fi.ForwardPortMD(meta)
 			if err != nil {
 				return false
 			}
 			defer tunnel.Close()
 
-			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
+			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return false
 			}
@@ -171,13 +171,13 @@ func (fi *Invocation) EventuallyCheckSSLSettingsMD(meta metav1.ObjectMeta, dbInf
 	sql := fmt.Sprintf("SHOW VARIABLES LIKE '%s';", sslConfigVarPair[0])
 	return Eventually(
 		func() []map[string][]byte {
-			tunnel, err := fi.forwardPortWithSVC(meta)
+			tunnel, err := fi.ForwardPortMD(meta)
 			if err != nil {
 				return nil
 			}
 			defer tunnel.Close()
 
-			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
+			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return nil
 			}
@@ -197,13 +197,13 @@ func (fi *Invocation) EventuallyCheckSSLSettingsMD(meta metav1.ObjectMeta, dbInf
 func (fi *Invocation) EventuallyDBConnectionMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			tunnel, err := fi.forwardPortWithSVC(meta)
+			tunnel, err := fi.ForwardPortMD(meta)
 			if err != nil {
 				return false
 			}
 			defer tunnel.Close()
 
-			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
+			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return false
 			}
@@ -222,13 +222,13 @@ func (fi *Invocation) EventuallyDBConnectionMD(meta metav1.ObjectMeta, dbInfo Ma
 func (fi *Invocation) EventuallyCreateTableMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			tunnel, err := fi.forwardPortWithSVC(meta)
+			tunnel, err := fi.ForwardPortMD(meta)
 			if err != nil {
 				return false
 			}
 			defer tunnel.Close()
 
-			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
+			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return false
 			}
@@ -250,13 +250,13 @@ func (fi *Invocation) EventuallyTestDBCreateTableMD(meta metav1.ObjectMeta, dbIn
 	}
 	return Eventually(
 		func() bool {
-			tunnel, err := fi.forwardPortWithSVC(meta)
+			tunnel, err := fi.ForwardPortMD(meta)
 			if err != nil {
 				return false
 			}
 			defer tunnel.Close()
 
-			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
+			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return false
 			}
@@ -278,20 +278,19 @@ func (fi *Invocation) EventuallyTestDBCreateTableMD(meta metav1.ObjectMeta, dbIn
 	)
 }
 
-func (fi *Invocation) EventuallyDropTestDBMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyDropDatabaseMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo) GomegaAsyncAssertion {
 	queries := []string{
-		UseMySQLQuery,
-		fmt.Sprintf("DROP DATABASE %s;", TestDBMySQL),
+		fmt.Sprintf("DROP DATABASE %s;", dbInfo.DatabaseName),
 	}
 	return Eventually(
 		func() bool {
-			tunnel, err := fi.forwardPortWithSVC(meta)
+			tunnel, err := fi.ForwardPortMD(meta)
 			if err != nil {
 				return false
 			}
 			defer tunnel.Close()
 
-			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
+			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return false
 			}
@@ -314,18 +313,17 @@ func (fi *Invocation) EventuallyDropTestDBMD(meta metav1.ObjectMeta, dbInfo Mari
 
 func (fi *Invocation) EventuallyCreateTestDBMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo) GomegaAsyncAssertion {
 	queries := []string{
-		"use mysql;",
 		fmt.Sprintf("CREATE DATABASE %s;", TestDBMySQL),
 	}
 	return Eventually(
 		func() bool {
-			tunnel, err := fi.forwardPortWithSVC(meta)
+			tunnel, err := fi.ForwardPortMD(meta)
 			if err != nil {
 				return false
 			}
 			defer tunnel.Close()
 
-			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
+			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return false
 			}
@@ -347,19 +345,16 @@ func (fi *Invocation) EventuallyCreateTestDBMD(meta metav1.ObjectMeta, dbInfo Ma
 }
 
 func (fi *Invocation) EventuallyExistsTestDBMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo) GomegaAsyncAssertion {
-	queries := []string{
-		UseMySQLQuery,
-	}
 	getDatabasesQuery := `SHOW DATABASES;`
 	return Eventually(
 		func() bool {
-			tunnel, err := fi.forwardPortWithSVC(meta)
+			tunnel, err := fi.ForwardPortMD(meta)
 			if err != nil {
 				return false
 			}
 			defer tunnel.Close()
 
-			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
+			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return false
 			}
@@ -367,11 +362,6 @@ func (fi *Invocation) EventuallyExistsTestDBMD(meta metav1.ObjectMeta, dbInfo Ma
 
 			if err := en.Ping(); err != nil {
 				return false
-			}
-			for _, query := range queries {
-				if _, err = en.Query(query); err != nil {
-					return false
-				}
 			}
 			result, err := en.Query(getDatabasesQuery)
 			if err != nil {
@@ -393,13 +383,13 @@ func (fi *Invocation) EventuallyInsertRowMD(meta metav1.ObjectMeta, dbInfo Maria
 	count := 0
 	return Eventually(
 		func() bool {
-			tunnel, err := fi.forwardPortWithSVC(meta)
+			tunnel, err := fi.ForwardPortMD(meta)
 			if err != nil {
 				return false
 			}
 			defer tunnel.Close()
 
-			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
+			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return false
 			}
@@ -426,19 +416,16 @@ func (fi *Invocation) EventuallyInsertRowMD(meta metav1.ObjectMeta, dbInfo Maria
 }
 
 func (fi *Invocation) EventuallyTestDBInsertRowMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo, total int) GomegaAsyncAssertion {
-	queries := []string{
-		fmt.Sprintf("use %s;", TestDBMySQL),
-	}
 	count := 0
 	return Eventually(
 		func() bool {
-			tunnel, err := fi.forwardPortWithSVC(meta)
+			tunnel, err := fi.ForwardPortMD(meta)
 			if err != nil {
 				return false
 			}
 			defer tunnel.Close()
 
-			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
+			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return false
 			}
@@ -446,11 +433,6 @@ func (fi *Invocation) EventuallyTestDBInsertRowMD(meta metav1.ObjectMeta, dbInfo
 
 			if err := en.Ping(); err != nil {
 				return false
-			}
-			for _, query := range queries {
-				if _, err = en.Query(query); err != nil {
-					return false
-				}
 			}
 
 			for i := count; i < total; i++ {
@@ -472,13 +454,13 @@ func (fi *Invocation) EventuallyTestDBInsertRowMD(meta metav1.ObjectMeta, dbInfo
 func (fi *Invocation) EventuallyCountRowMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo) GomegaAsyncAssertion {
 	return Eventually(
 		func() int {
-			tunnel, err := fi.forwardPortWithSVC(meta)
+			tunnel, err := fi.ForwardPortMD(meta)
 			if err != nil {
 				return -1
 			}
 			defer tunnel.Close()
 
-			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
+			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return -1
 			}
@@ -501,18 +483,15 @@ func (fi *Invocation) EventuallyCountRowMD(meta metav1.ObjectMeta, dbInfo MariaD
 }
 
 func (fi *Invocation) EventuallyTestDBCountRowMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo) GomegaAsyncAssertion {
-	queries := []string{
-		fmt.Sprintf("use %s;", TestDBMySQL),
-	}
 	return Eventually(
 		func() int {
-			tunnel, err := fi.forwardPortWithSVC(meta)
+			tunnel, err := fi.ForwardPortMD(meta)
 			if err != nil {
 				return -1
 			}
 			defer tunnel.Close()
 
-			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
+			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return -1
 			}
@@ -520,11 +499,6 @@ func (fi *Invocation) EventuallyTestDBCountRowMD(meta metav1.ObjectMeta, dbInfo 
 
 			if err := en.Ping(); err != nil {
 				return -1
-			}
-			for _, query := range queries {
-				if _, err = en.Query(query); err != nil {
-					return -1
-				}
 			}
 
 			kubedb := new(KubedbTable)
@@ -539,84 +513,19 @@ func (fi *Invocation) EventuallyTestDBCountRowMD(meta metav1.ObjectMeta, dbInfo 
 	)
 }
 
-func (fi *Invocation) EventuallyONLINEMembersCountMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo) GomegaAsyncAssertion {
-	return Eventually(
-		func() int {
-			tunnel, err := fi.forwardPortWithSVC(meta)
-			if err != nil {
-				return -1
-			}
-			defer tunnel.Close()
-
-			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
-			if err != nil {
-				return -1
-			}
-			defer en.Close()
-
-			if err := en.Ping(); err != nil {
-				return -1
-			}
-
-			var cnt int
-			_, err = en.SQL("select count(MEMBER_STATE) from performance_schema.replication_group_members where MEMBER_STATE = ?", "ONLINE").Get(&cnt)
-			if err != nil {
-				return -1
-			}
-			return cnt
-		},
-		Timeout,
-		RetryInterval,
-	)
-}
-
-func (fi *Invocation) EventuallyDatabaseVersionUpdatedMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo, targetedVersion string) GomegaAsyncAssertion {
-	query := `SHOW VARIABLES LIKE "version";`
-	return Eventually(
-		func() bool {
-			tunnel, err := fi.forwardPortWithSVC(meta)
-			if err != nil {
-				return false
-			}
-			defer tunnel.Close()
-
-			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
-			if err != nil {
-				return false
-			}
-			defer en.Close()
-
-			if err := en.Ping(); err != nil {
-				return false
-			}
-
-			r, err := en.QueryString(query)
-			if err != nil {
-				return false
-			}
-
-			if strings.Contains(string(r[0]["Value"]), targetedVersion) {
-				return true
-			}
-			return false
-		},
-		Timeout,
-		RetryInterval,
-	)
-}
 
 func (fi *Invocation) EventuallyMariaDBVariable(meta metav1.ObjectMeta, dbInfo MariaDBInfo, config string) GomegaAsyncAssertion {
 	configPair := strings.Split(config, "=")
 	sql := fmt.Sprintf("SHOW VARIABLES LIKE '%s';", configPair[0])
 	return Eventually(
 		func() []map[string][]byte {
-			tunnel, err := fi.forwardPortWithSVC(meta)
+			tunnel, err := fi.ForwardPortMD(meta)
 			if err != nil {
 				return nil
 			}
 			defer tunnel.Close()
 
-			en, err := fi.getMariaDBClient(meta, tunnel, dbInfo)
+			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
 			if err != nil {
 				return nil
 			}

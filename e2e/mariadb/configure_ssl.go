@@ -104,13 +104,7 @@ var _ = Describe("MariaDB TLS/SSL", func() {
 						fi.AddMariaDBMonitor(in)
 					})
 					Expect(err).NotTo(HaveOccurred())
-					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
-					}
+					dbInfo := framework.GetMariaDBInfo(framework.DBMySQL, framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig))
 					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Verify exporter")
@@ -162,13 +156,7 @@ var _ = Describe("MariaDB TLS/SSL", func() {
 						fi.AddMariaDBMonitor(in)
 					})
 					Expect(err).NotTo(HaveOccurred())
-					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
-					}
+					dbInfo := framework.GetMariaDBInfo(framework.DBMySQL, framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig))
 					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Verify exporter")
@@ -221,13 +209,8 @@ var _ = Describe("MariaDB TLS/SSL", func() {
 							}
 						})
 						Expect(err).NotTo(HaveOccurred())
-						dbInfo := framework.DatabaseConnectionInfo{
-							StatefulSetOrdinal: 0,
-							ClientPodIndex:     0,
-							DatabaseName:       framework.DBMySQL,
-							User:               framework.MySQLRootUser,
-							Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
-						}
+						dbInfo := framework.GetMariaDBInfo(framework.DBMySQL, framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig))
+
 						fi.EventuallyDBReadyMD(md, dbInfo)
 
 						// Create a mariadb User with required SSL
@@ -288,13 +271,8 @@ var _ = Describe("MariaDB TLS/SSL", func() {
 							}
 						})
 						Expect(err).NotTo(HaveOccurred())
-						dbInfo := framework.DatabaseConnectionInfo{
-							StatefulSetOrdinal: 0,
-							ClientPodIndex:     0,
-							DatabaseName:       framework.DBMySQL,
-							User:               framework.MySQLRootUser,
-							Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
-						}
+						dbInfo := framework.GetMariaDBInfo(framework.DBMySQL, framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig))
+
 						fi.EventuallyDBReadyMD(md, dbInfo)
 
 						// Create a mysql User with required SSL
@@ -356,13 +334,8 @@ var _ = Describe("MariaDB TLS/SSL", func() {
 							}
 						})
 						Expect(err).NotTo(HaveOccurred())
-						dbInfo := framework.DatabaseConnectionInfo{
-							StatefulSetOrdinal: 0,
-							ClientPodIndex:     0,
-							DatabaseName:       framework.DBMySQL,
-							User:               framework.MySQLRootUser,
-							Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
-						}
+						dbInfo := framework.GetMariaDBInfo(framework.DBMySQL, framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig))
+
 						fi.EventuallyDBReadyMD(md, dbInfo)
 
 						// Create a mysql User with required SSL
@@ -422,13 +395,8 @@ var _ = Describe("MariaDB TLS/SSL", func() {
 							}
 						})
 						Expect(err).NotTo(HaveOccurred())
-						dbInfo := framework.DatabaseConnectionInfo{
-							StatefulSetOrdinal: 0,
-							ClientPodIndex:     0,
-							DatabaseName:       framework.DBMySQL,
-							User:               framework.MySQLRootUser,
-							Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
-						}
+						dbInfo := framework.GetMariaDBInfo(framework.DBMySQL, framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig))
+
 						fi.EventuallyDBReadyMD(md, dbInfo)
 
 						// Create a mysql User with required SSL

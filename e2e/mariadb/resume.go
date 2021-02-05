@@ -73,13 +73,8 @@ var _ = Describe("MariaDB", func() {
 					})
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
-					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              "",
-					}
+					dbInfo := framework.GetMariaDBInfo(framework.DBMySQL, framework.MySQLRootUser, "")
+
 					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Creating Table")
@@ -146,13 +141,8 @@ var _ = Describe("MariaDB", func() {
 					})
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
-					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              "",
-					}
+					dbInfo := framework.GetMariaDBInfo(framework.DBMySQL, framework.MySQLRootUser, "")
+
 					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Creating Table")
@@ -216,13 +206,8 @@ var _ = Describe("MariaDB", func() {
 					})
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
-					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              "",
-					}
+					dbInfo := framework.GetMariaDBInfo(framework.DBMySQL, framework.MySQLRootUser, "")
+
 					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Checking Row Count of Table")
@@ -298,13 +283,8 @@ var _ = Describe("MariaDB", func() {
 					})
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
-					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              "",
-					}
+					dbInfo := framework.GetMariaDBInfo(framework.DBMySQL, framework.MySQLRootUser, "")
+
 					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Checking Row Count of Table")
