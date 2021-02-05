@@ -243,40 +243,6 @@ func (fi *Invocation) EventuallyCreateTableMD(meta metav1.ObjectMeta, dbInfo Mar
 		RetryInterval,
 	)
 }
-func (fi *Invocation) EventuallyTestDBCreateTableMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo) GomegaAsyncAssertion {
-	queries := []string{
-		fmt.Sprintf("use %s;", TestDBMySQL),
-
-	}
-	return Eventually(
-		func() bool {
-			tunnel, err := fi.ForwardPortMD(meta)
-			if err != nil {
-				return false
-			}
-			defer tunnel.Close()
-
-			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
-			if err != nil {
-				return false
-			}
-			defer en.Close()
-
-			for _, query := range queries {
-				if _, err = en.Query(query); err != nil {
-					return false
-				}
-			}
-
-			if err := en.Ping(); err != nil {
-				return false
-			}
-			return en.Charset("utf8mb4").StoreEngine("InnoDB").Sync2(new(KubedbTable)) == nil
-		},
-		Timeout,
-		RetryInterval,
-	)
-}
 
 func (fi *Invocation) EventuallyDropDatabaseMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo) GomegaAsyncAssertion {
 	queries := []string{
@@ -415,74 +381,7 @@ func (fi *Invocation) EventuallyInsertRowMD(meta metav1.ObjectMeta, dbInfo Maria
 	)
 }
 
-func (fi *Invocation) EventuallyTestDBInsertRowMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo, total int) GomegaAsyncAssertion {
-	count := 0
-	return Eventually(
-		func() bool {
-			tunnel, err := fi.ForwardPortMD(meta)
-			if err != nil {
-				return false
-			}
-			defer tunnel.Close()
-
-			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
-			if err != nil {
-				return false
-			}
-			defer en.Close()
-
-			if err := en.Ping(); err != nil {
-				return false
-			}
-
-			for i := count; i < total; i++ {
-				if _, err := en.Insert(&KubedbTable{
-					//Id:   int64(fi),
-					Name: fmt.Sprintf("KubedbName-%v", i),
-				}); err != nil {
-					return false
-				}
-				count++
-			}
-			return true
-		},
-		Timeout,
-		RetryInterval,
-	)
-}
-
 func (fi *Invocation) EventuallyCountRowMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo) GomegaAsyncAssertion {
-	return Eventually(
-		func() int {
-			tunnel, err := fi.ForwardPortMD(meta)
-			if err != nil {
-				return -1
-			}
-			defer tunnel.Close()
-
-			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
-			if err != nil {
-				return -1
-			}
-			defer en.Close()
-
-			if err := en.Ping(); err != nil {
-				return -1
-			}
-
-			kubedb := new(KubedbTable)
-			total, err := en.Count(kubedb)
-			if err != nil {
-				return -1
-			}
-			return int(total)
-		},
-		Timeout,
-		RetryInterval,
-	)
-}
-
-func (fi *Invocation) EventuallyTestDBCountRowMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo) GomegaAsyncAssertion {
 	return Eventually(
 		func() int {
 			tunnel, err := fi.ForwardPortMD(meta)

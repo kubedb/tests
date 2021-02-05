@@ -24,8 +24,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gomodules.xyz/x/crypto/rand"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = FDescribe("Stash Backup For MariaDB", func() {
@@ -68,56 +66,29 @@ var _ = FDescribe("Stash Backup For MariaDB", func() {
 		Expect(err).NotTo(HaveOccurred())
 	})
 
-	Context("For Standalone MairaDB", func() {
+	Context("For Standalone MariaDB", func() {
 		Context("With SSL Disabled", func() {
 			It("should backup and restore in the same database", func() {
-				// Deploy a MairaDB instance
-				mdMeta := metav1.ObjectMeta{
-					Name:      rand.WithUniqSuffix("mairadb"),
-					Namespace: fi.Namespace(),
-				}
+
+				// Deploy a MariaDB instance
 				md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
-					in.Name = mdMeta.Name
-					in.Namespace = mdMeta.Namespace
-					// Set termination policy Halt to leave the PVCs and secrets intact for reuse
 					in.Spec.TerminationPolicy = api.TerminationPolicyDelete
 				})
 				Expect(err).NotTo(HaveOccurred())
-				// Database connection information
 
+				// Database connection information
 				dbInfo := framework.GetMariaDBInfo(framework.DBMySQL, framework.MySQLRootUser, "")
+
 				fi.EventuallyDBReadyMD(md, dbInfo)
 
-				By("Creating Table")
-				fi.EventuallyCreateTableMD(mdMeta, dbInfo).Should(BeTrue())
-
-				By("Inserting Rows")
-				fi.EventuallyInsertRowMD(mdMeta, dbInfo, 3).Should(BeTrue())
-
-				By("Checking Row Count of Table")
-				fi.EventuallyCountRowMD(mdMeta, dbInfo).Should(Equal(3))
-
-				By("Creating test Database")
-				fi.EventuallyCreateTestDBMD(mdMeta, dbInfo).Should(BeTrue())
-
+				fi.PopulateMariaDB(md, dbInfo)
 
 				testdbInfo := framework.GetMariaDBInfo(framework.TestDBMySQL, framework.MySQLRootUser, "")
 
-				By("Checking if test Database exist")
-				fi.EventuallyExistsTestDBMD(mdMeta, testdbInfo).Should(BeTrue())
-
-				By("Creating Table")
-				fi.EventuallyTestDBCreateTableMD(mdMeta, testdbInfo).Should(BeTrue())
-
-				By("Inserting Rows")
-				fi.EventuallyTestDBInsertRowMD(mdMeta, testdbInfo, 3).Should(BeTrue())
-
-				By("Checking Row Count of Table")
-				fi.EventuallyTestDBCountRowMD(mdMeta, testdbInfo).Should(Equal(3))
-
+				fi.PopulateMariaDB(md, testdbInfo)
 
 				By("Get AppBinding for Backup Purpose")
-				appBinding, err := fi.GetMariaDBAppBinding(mdMeta)
+				appBinding, err := fi.Framework.GetAppBinding(md.ObjectMeta)
 				Expect(err).NotTo(HaveOccurred())
 
 				By("Setup Database Backup")
@@ -128,16 +99,19 @@ var _ = FDescribe("Stash Backup For MariaDB", func() {
 				fi.SimulateBackupRun(backupConfig.ObjectMeta, repo.ObjectMeta, 1)
 
 				By("Simulate disaster by dropping testdb")
-				fi.EventuallyDropDatabaseMD(mdMeta, testdbInfo).Should(BeTrue())
+				fi.EventuallyDropDatabaseMD(md.ObjectMeta, testdbInfo).Should(BeTrue())
 
 				By("Checking if test Database exist")
-				fi.EventuallyExistsTestDBMD(mdMeta, testdbInfo).Should(BeFalse())
+				fi.EventuallyExistsTestDBMD(md.ObjectMeta, testdbInfo).Should(BeFalse())
 
 				// Restore the database
 				fi.RestoreDatabase(appBinding, repo)
 
 				By("Checking if test Database restored")
-				fi.EventuallyExistsTestDBMD(mdMeta, testdbInfo).Should(BeTrue())
+				fi.EventuallyExistsTestDBMD(md.ObjectMeta, testdbInfo).Should(BeTrue())
+
+				By("Checking Row Count of Table")
+				fi.EventuallyCountRowMD(md.ObjectMeta, testdbInfo).Should(Equal(3))
 
 			})
 		})

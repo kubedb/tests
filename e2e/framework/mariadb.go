@@ -105,6 +105,28 @@ func (fi *Invocation) EventuallyMariaDBReady(meta metav1.ObjectMeta) GomegaAsync
 	)
 }
 
+func (fi *Invocation) PopulateMariaDB(md *api.MariaDB, dbInfo MariaDBInfo){
+
+	if dbInfo.DatabaseName != DBMySQL {
+		By("Creating test Database")
+		fi.EventuallyCreateTestDBMD(md.ObjectMeta, dbInfo).Should(BeTrue())
+	}
+
+	By("Checking if test Database exist")
+	fi.EventuallyExistsTestDBMD(md.ObjectMeta, dbInfo).Should(BeTrue())
+
+	By("Creating Table")
+	fi.EventuallyCreateTableMD(md.ObjectMeta, dbInfo).Should(BeTrue())
+
+	By("Inserting Rows")
+	fi.EventuallyInsertRowMD(md.ObjectMeta, dbInfo, 3).Should(BeTrue())
+
+	By("Checking Row Count of Table")
+	fi.EventuallyCountRowMD(md.ObjectMeta, dbInfo).Should(Equal(3))
+
+
+}
+
 func (f *Framework) CleanMariaDB() {
 	mariadbList, err := f.dbClient.KubedbV1alpha2().MariaDBs(f.namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
