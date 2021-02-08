@@ -18,7 +18,6 @@ package backup
 
 import (
 	"fmt"
-
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
 
@@ -26,7 +25,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = FDescribe("Stash Backup For MariaDB", func() {
+var _ = Describe("Stash Backup For MariaDB", func() {
 	var fi *framework.Invocation
 
 	BeforeEach(func() {
@@ -66,14 +65,11 @@ var _ = FDescribe("Stash Backup For MariaDB", func() {
 		Expect(err).NotTo(HaveOccurred())
 	})
 
-	Context("For Standalone MariaDB", func() {
+	FContext("For Standalone MariaDB", func() {
 		Context("With SSL Disabled", func() {
 			It("should backup and restore in the same database", func() {
-
 				// Deploy a MariaDB instance
-				md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
-					in.Spec.TerminationPolicy = api.TerminationPolicyDelete
-				})
+				md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion)
 				Expect(err).NotTo(HaveOccurred())
 
 				// Database connection information
@@ -83,9 +79,9 @@ var _ = FDescribe("Stash Backup For MariaDB", func() {
 
 				fi.PopulateMariaDB(md, dbInfo)
 
-				testdbInfo := framework.GetMariaDBInfo(framework.TestDBMySQL, framework.MySQLRootUser, "")
+				dbInfo.DatabaseName = framework.TestDBMySQL
 
-				fi.PopulateMariaDB(md, testdbInfo)
+				fi.PopulateMariaDB(md, dbInfo)
 
 				By("Get AppBinding for Backup Purpose")
 				appBinding, err := fi.Framework.GetAppBinding(md.ObjectMeta)
@@ -99,20 +95,81 @@ var _ = FDescribe("Stash Backup For MariaDB", func() {
 				fi.SimulateBackupRun(backupConfig.ObjectMeta, repo.ObjectMeta, 1)
 
 				By("Simulate disaster by dropping testdb")
-				fi.EventuallyDropDatabaseMD(md.ObjectMeta, testdbInfo).Should(BeTrue())
+				fi.EventuallyDropDatabaseMD(md.ObjectMeta, dbInfo).Should(BeTrue())
 
 				By("Checking if test Database exist")
-				fi.EventuallyExistsDBMD(md.ObjectMeta, testdbInfo).Should(BeFalse())
+				fi.EventuallyExistsDBMD(md.ObjectMeta, dbInfo).Should(BeFalse())
 
 				// Restore the database
 				fi.RestoreDatabase(appBinding, repo)
 
 				By("Checking if test Database restored")
-				fi.EventuallyExistsDBMD(md.ObjectMeta, testdbInfo).Should(BeTrue())
+				fi.EventuallyExistsDBMD(md.ObjectMeta, dbInfo).Should(BeTrue())
 
 				By("Checking Row Count of Table")
-				fi.EventuallyCountRowMD(md.ObjectMeta, testdbInfo).Should(Equal(3))
+				fi.EventuallyCountRowMD(md.ObjectMeta, dbInfo).Should(Equal(3))
 
+			})
+		})
+
+		Context("With SSL Enabled", func() {
+			BeforeEach(func() {
+				if !framework.SSLEnabled {
+					Skip("Skipping test. Reason: SSL is disabled")
+				}
+			})
+
+			Context("With requireSSL true", func() {
+				It("should backup & restore in the same database", func() {
+
+					// Deploy a MariaDB instance
+					md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+						fi.EnableSSLMariaDB(in, true)
+					})
+					Expect(err).NotTo(HaveOccurred())
+
+					dbInfo := framework.GetMariaDBInfo(framework.DBMySQL, framework.MySQLRootUser, fmt.Sprintf("tls=%s", framework.TLSCustomConfig))
+
+					fi.EventuallyDBReadyMD(md, dbInfo)
+
+					dbInfo.User = framework.MySQLRequiredSSLUser
+					// Create a mariadb User with required SSL
+					By("Create mysql User with required SSL")
+					fi.EventuallyCreateUserWithRequiredSSLMD(md.ObjectMeta, dbInfo).Should(BeTrue())
+					fi.EventuallyCheckConnectionRequiredSSLUserMD(md, dbInfo)
+
+					fi.PopulateMariaDB(md, dbInfo)
+
+					dbInfo.DatabaseName = framework.TestDBMySQL
+					fi.PopulateMariaDB(md, dbInfo)
+
+					By("Get AppBinding for Backup Purpose")
+					appBinding, err := fi.Framework.GetAppBinding(md.ObjectMeta)
+					Expect(err).NotTo(HaveOccurred())
+
+					By("Setup Database Backup")
+					backupConfig, repo, err := fi.SetupDatabaseBackup(appBinding)
+					Expect(err).NotTo(HaveOccurred())
+
+					// Simulate a backup run
+					fi.SimulateBackupRun(backupConfig.ObjectMeta, repo.ObjectMeta, 1)
+
+					By("Simulate disaster by dropping testdb")
+					fi.EventuallyDropDatabaseMD(md.ObjectMeta, dbInfo).Should(BeTrue())
+
+					By("Checking if test Database exist")
+					fi.EventuallyExistsDBMD(md.ObjectMeta, dbInfo).Should(BeFalse())
+
+					// Restore the database
+					fi.RestoreDatabase(appBinding, repo)
+
+					By("Checking if test Database restored")
+					fi.EventuallyExistsDBMD(md.ObjectMeta, dbInfo).Should(BeTrue())
+
+					By("Checking Row Count of Table")
+					fi.EventuallyCountRowMD(md.ObjectMeta, dbInfo).Should(Equal(3))
+
+				})
 			})
 		})
 	})

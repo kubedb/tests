@@ -105,6 +105,8 @@ func (fi *Invocation) EventuallyMariaDBReady(meta metav1.ObjectMeta) GomegaAsync
 	)
 }
 
+// Don't call this if the db is already created(except mysql)
+
 func (fi *Invocation) PopulateMariaDB(md *api.MariaDB, dbInfo MariaDBInfo){
 
 	if dbInfo.DatabaseName != DBMySQL {
@@ -123,8 +125,19 @@ func (fi *Invocation) PopulateMariaDB(md *api.MariaDB, dbInfo MariaDBInfo){
 
 	By("Checking Row Count of Table")
 	fi.EventuallyCountRowMD(md.ObjectMeta, dbInfo).Should(Equal(3))
+}
 
+func (fi *Invocation) EnableSSLMariaDB(md *api.MariaDB, requiredSSL bool, transformFuncs ...func(in *api.MariaDB)){
+	// Create Issuer
+	issuer, err := fi.EnsureIssuer(md.ObjectMeta, api.ResourceKindMariaDB)
+	Expect(err).NotTo(HaveOccurred())
 
+	// Enable SSL in MariaDB
+	md.Spec.RequireSSL = true
+	md.Spec.TLS = NewTLSConfiguration(issuer)
+	for _, fn := range transformFuncs {
+		fn(md)
+	}
 }
 
 func (f *Framework) CleanMariaDB() {

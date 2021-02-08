@@ -96,8 +96,8 @@ func (fi *Invocation) GetMariaDBClient(meta metav1.ObjectMeta, tunnel *portforwa
 			}
 		}
 	}
-
 	cnnstr := fmt.Sprintf("%v:%v@tcp(127.0.0.1:%v)/%s?%s", dbInfo.User, pass, tunnel.Local, dbInfo.DatabaseName, dbInfo.Param)
+	fmt.Println(cnnstr)
 	en, err := xorm.NewEngine("mysql", cnnstr)
 	en.ShowSQL(true)
 	return en, err

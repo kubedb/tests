@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"time"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
@@ -118,6 +119,22 @@ func NewTLSConfiguration(issuer *cm_api.Issuer, transformFuncs ...func(tls *kmap
 			Name:     issuer.Name,
 			Kind:     "Issuer",
 			APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
+		},
+		Certificates: []kmapi.CertificateSpec{
+			{
+				Alias: string(api.MariaDBServerCert),
+				Subject: &kmapi.X509Subject{
+					Organizations: []string{
+						"kubedb:server",
+					},
+				},
+				DNSNames: []string{
+					"localhost",
+				},
+				IPAddresses: []string{
+					"127.0.0.1",
+				},
+			},
 		},
 	}
 
