@@ -27,6 +27,7 @@ import (
 
 	"github.com/appscode/go/log"
 	"github.com/google/go-cmp/cmp"
+	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	apps "k8s.io/api/apps/v1"
@@ -41,6 +42,7 @@ type testOptions struct {
 	skipMessage         string
 	configSecret        *core.Secret
 	elasticsearchOpsReq *dbaapi.ElasticsearchOpsRequest
+	issuer              *cm_api.Issuer
 	esAutoscaler        *v1alpha1.ElasticsearchAutoscaler
 }
 

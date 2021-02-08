@@ -27,11 +27,13 @@ import (
 
 	"github.com/appscode/go/crypto/rand"
 	"github.com/appscode/go/types"
+	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kmapi "kmodules.xyz/client-go/api/v1"
 )
 
 var _ = Describe("MySQL", func() {
@@ -68,7 +70,7 @@ var _ = Describe("MySQL", func() {
 					Name:      rand.WithUniqSuffix("mysql"),
 					Namespace: fi.Namespace(),
 				}
-				issuer, err := fi.InsureIssuer(issuerMeta, api.MySQL{}.ResourceFQN())
+				issuer, err := fi.EnsureIssuer(issuerMeta, api.MySQL{}.ResourceFQN())
 				Expect(err).NotTo(HaveOccurred())
 				// Create MySQL Group Replication with SSL secured and wait for running
 				my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -134,7 +136,7 @@ var _ = Describe("MySQL", func() {
 					Name:      rand.WithUniqSuffix("mysql"),
 					Namespace: fi.Namespace(),
 				}
-				issuer, err := fi.InsureIssuer(issuerMeta, api.MySQL{}.ResourceFQN())
+				issuer, err := fi.EnsureIssuer(issuerMeta, api.MySQL{}.ResourceFQN())
 				Expect(err).NotTo(HaveOccurred())
 				// Create MySQL standalone with SSL secured and wait for running
 				my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, framework.AddTLSConfig(issuer.ObjectMeta))
@@ -187,7 +189,7 @@ var _ = Describe("MySQL", func() {
 					Name:      rand.WithUniqSuffix("mysql"),
 					Namespace: fi.Namespace(),
 				}
-				issuer, err := fi.InsureIssuer(issuerMeta, api.MySQL{}.ResourceFQN())
+				issuer, err := fi.EnsureIssuer(issuerMeta, api.MySQL{}.ResourceFQN())
 				Expect(err).NotTo(HaveOccurred())
 				// Create MySQL Group Replication with tls secured and wait for running
 				my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {

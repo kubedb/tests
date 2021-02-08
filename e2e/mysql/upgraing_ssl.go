@@ -19,6 +19,7 @@ package mysql
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	opsapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
@@ -26,9 +27,12 @@ import (
 
 	"github.com/appscode/go/crypto/rand"
 	"github.com/appscode/go/types"
+	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kmapi "kmodules.xyz/client-go/api/v1"
 )
 
 var _ = Describe("MySQL", func() {
@@ -66,7 +70,7 @@ var _ = Describe("MySQL", func() {
 					Name:      rand.WithUniqSuffix("mysql"),
 					Namespace: fi.Namespace(),
 				}
-				issuer, err := fi.InsureIssuer(issuerMeta, api.MySQL{}.ResourceFQN())
+				issuer, err := fi.EnsureIssuer(issuerMeta, api.MySQL{}.ResourceFQN())
 				Expect(err).NotTo(HaveOccurred())
 				// Create MySQL standalone with tls secured and wait for running
 				my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, framework.AddTLSConfig(issuer.ObjectMeta))
@@ -111,7 +115,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(issuerMeta, api.MySQL{}.ResourceFQN())
+					issuer, err := fi.EnsureIssuer(issuerMeta, api.MySQL{}.ResourceFQN())
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL Group Replication with tls secured and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {

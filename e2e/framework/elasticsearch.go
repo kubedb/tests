@@ -419,7 +419,7 @@ func (f *Framework) CleanElasticsearchAutoscalers() {
 	}
 }
 
-func (f *Framework) GetElasticsearchClientPodName(elasticsearch *api.Elasticsearch) string {
+func (f *Framework) GetElasticsearchIngestPodName(elasticsearch *api.Elasticsearch) string {
 	if elasticsearch.Spec.Topology != nil {
 		return fmt.Sprintf("%v-0", elasticsearch.IngestStatefulSetName())
 	}
@@ -431,9 +431,9 @@ func (f *Framework) GetElasticClient(meta metav1.ObjectMeta) (es.ESClient, *port
 	if err != nil {
 		return nil, nil, err
 	}
-	clientPodName := f.GetElasticsearchClientPodName(db)
+	ingestPodName := f.GetElasticsearchIngestPodName(db)
 
-	tunnel, err := f.ForwardPort(meta, string(core.ResourcePods), clientPodName, api.ElasticsearchRestPort)
+	tunnel, err := f.ForwardPort(meta, string(core.ResourcePods), ingestPodName, api.ElasticsearchRestPort)
 	if err != nil {
 		return nil, nil, err
 	}
