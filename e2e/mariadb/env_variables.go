@@ -90,9 +90,9 @@ var _ = Describe("MariaDB", func() {
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.MariaDBInfo{
-						DatabaseName:       dbName,
-						User:               framework.MySQLRootUser,
-						Param:              "",
+						DatabaseName: dbName,
+						User:         framework.MySQLRootUser,
+						Param:        "",
 					}
 					fi.EventuallyDBReadyMD(md, dbInfo)
 
@@ -164,9 +164,9 @@ var _ = Describe("MariaDB", func() {
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.MariaDBInfo{
-						DatabaseName:       dbName,
-						User:               framework.MySQLRootUser,
-						Param:              "",
+						DatabaseName: dbName,
+						User:         framework.MySQLRootUser,
+						Param:        "",
 					}
 					fi.EventuallyDBReadyMD(md, dbInfo)
 

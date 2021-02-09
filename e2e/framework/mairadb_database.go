@@ -21,26 +21,26 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	core "k8s.io/api/core/v1"
 	"strings"
 	"time"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 
+	"github.com/davecgh/go-spew/spew"
 	_ "github.com/go-sql-driver/mysql"
 	sql_driver "github.com/go-sql-driver/mysql"
 	. "github.com/onsi/gomega"
+	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kmodules.xyz/client-go/tools/portforward"
 	"xorm.io/xorm"
 )
 
 type MariaDBInfo struct {
-	DatabaseName       string
-	User               string
-	Param              string
+	DatabaseName string
+	User         string
+	Param        string
 }
-
 
 func (fi *Invocation) GetMariaDBClient(meta metav1.ObjectMeta, tunnel *portforward.Tunnel, dbInfo MariaDBInfo) (*xorm.Engine, error) {
 	md, err := fi.GetMariaDB(meta)
@@ -106,7 +106,7 @@ func (fi *Invocation) GetMariaDBClient(meta metav1.ObjectMeta, tunnel *portforwa
 
 func (fi *Invocation) ForwardPortMD(meta metav1.ObjectMeta) (*portforward.Tunnel, error) {
 	db, err := fi.GetMariaDB(meta)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	tunnel := portforward.NewTunnel(portforward.TunnelOptions{
@@ -126,7 +126,7 @@ func (fi *Invocation) ForwardPortMD(meta metav1.ObjectMeta) (*portforward.Tunnel
 
 func (fi *Invocation) EventuallyCreateUserWithRequiredSSLMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo) GomegaAsyncAssertion {
 	sql := fmt.Sprintf("CREATE USER '%s'@'%s' IDENTIFIED BY '%s' REQUIRE SSL;", MySQLRequiredSSLUser, "%", MySQLRequiredSSLPassword)
-	privilege := fmt.Sprintf("GRANT ALL ON mysql.* TO '%s'@'%s';", MySQLRequiredSSLUser, "%")
+	privilege := fmt.Sprintf("GRANT ALL ON *.* TO '%s'@'%s';", MySQLRequiredSSLUser, "%")
 	flush := "FLUSH PRIVILEGES;"
 	return Eventually(
 		func() bool {
@@ -291,16 +291,19 @@ func (fi *Invocation) EventuallyCreateTestDBMD(meta metav1.ObjectMeta, dbInfo Ma
 			defer tunnel.Close()
 
 			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
+
 			if err != nil {
 				return false
 			}
-			defer en.Close()
 
 			if err := en.Ping(); err != nil {
 				return false
 			}
 			for _, query := range queries {
-				if _, err = en.Query(query); err != nil {
+				if r, err := en.Query(query); err != nil {
+					spew.Dump(r)
+					fmt.Println(err)
+					fmt.Println(query)
 					return false
 				}
 			}
@@ -413,7 +416,6 @@ func (fi *Invocation) EventuallyCountRowMD(meta metav1.ObjectMeta, dbInfo MariaD
 	)
 }
 
-
 func (fi *Invocation) EventuallyMariaDBVariable(meta metav1.ObjectMeta, dbInfo MariaDBInfo, config string) GomegaAsyncAssertion {
 	configPair := strings.Split(config, "=")
 	sql := fmt.Sprintf("SHOW VARIABLES LIKE '%s';", configPair[0])
@@ -446,11 +448,10 @@ func (fi *Invocation) EventuallyMariaDBVariable(meta metav1.ObjectMeta, dbInfo M
 	)
 }
 
-
-func GetMariaDBInfo(dbName string, dbUser string, dbParam string) MariaDBInfo{
+func GetMariaDBInfo(dbName string, dbUser string, dbParam string) MariaDBInfo {
 	return MariaDBInfo{
 		DatabaseName: dbName,
-		User: dbUser,
-		Param: dbParam,
+		User:         dbUser,
+		Param:        dbParam,
 	}
 }

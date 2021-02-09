@@ -44,6 +44,7 @@ const (
 	DBMySQL                    = "mysql"
 	MySQLTestDB                = "testdb"
 	TestDBMySQL                = "testdb"
+	AnotherDBMySQL             = "anotherdb"
 	MySQLRootUser              = "root"
 	MySQLRequiredSSLUser       = "ssl-User"
 	MySQLRequiredSSLPassword   = "not@secret"

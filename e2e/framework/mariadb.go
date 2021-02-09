@@ -79,8 +79,6 @@ func (fi *Invocation) PatchMariaDB(meta metav1.ObjectMeta, transform func(*api.M
 	return mariadb, err
 }
 
-
-
 func (fi *Invocation) EventuallyMariaDBPhase(meta metav1.ObjectMeta) GomegaAsyncAssertion {
 	return Eventually(
 		func() api.DatabasePhase {
@@ -106,8 +104,8 @@ func (fi *Invocation) EventuallyMariaDBReady(meta metav1.ObjectMeta) GomegaAsync
 }
 
 // Don't call this if the db is already created(except mysql)
-
-func (fi *Invocation) PopulateMariaDB(md *api.MariaDB, dbInfo MariaDBInfo){
+// Don't call this more than once for any db
+func (fi *Invocation) PopulateMariaDB(md *api.MariaDB, dbInfo MariaDBInfo) {
 
 	if dbInfo.DatabaseName != DBMySQL {
 		By("Creating test Database")
@@ -127,7 +125,7 @@ func (fi *Invocation) PopulateMariaDB(md *api.MariaDB, dbInfo MariaDBInfo){
 	fi.EventuallyCountRowMD(md.ObjectMeta, dbInfo).Should(Equal(3))
 }
 
-func (fi *Invocation) EnableSSLMariaDB(md *api.MariaDB, requiredSSL bool, transformFuncs ...func(in *api.MariaDB)){
+func (fi *Invocation) EnableSSLMariaDB(md *api.MariaDB, requiredSSL bool, transformFuncs ...func(in *api.MariaDB)) {
 	// Create Issuer
 	issuer, err := fi.EnsureIssuer(md.ObjectMeta, api.ResourceKindMariaDB)
 	Expect(err).NotTo(HaveOccurred())
@@ -288,7 +286,6 @@ func (fi *Invocation) EventuallyCheckConnectionRequiredSSLUserMD(md *api.MariaDB
 		}
 	}
 }
-
 
 func SslEnabledMariaDB(md *api.MariaDB) bool {
 	return md.Spec.TLS != nil
