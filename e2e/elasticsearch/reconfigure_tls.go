@@ -27,6 +27,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gomodules.xyz/oneliners"
+	"gomodules.xyz/pointer"
+	kmapi "kmodules.xyz/client-go/api/v1"
 )
 
 var _ = Describe("Reconfigure TLS", func() {
@@ -73,6 +75,8 @@ var _ = Describe("Reconfigure TLS", func() {
 		to.CleanElasticsearchOpsRequests()
 		By("Delete left over workloads if exists any")
 		to.CleanWorkloadLeftOvers(api.Elasticsearch{}.ResourceFQN())
+		By("Delete left over secrets if exists any")
+		to.CleanSecrets()
 	})
 
 	JustAfterEach(func() {
@@ -88,19 +92,217 @@ var _ = Describe("Reconfigure TLS", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 		})
 
+		Context("EnableSSL:false --> EnableSSL: true/false", func() {
+
+			It("Default TLS to Cert-Manager Managed TLS; Only Transport Cert", func() {
+				to.db = to.transformElasticsearch(to.StandaloneElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
+					in.Spec.EnableSSL = false
+					return in
+				})
+				to.createElasticsearchAndWaitForBeingReady()
+				indicesCount := to.insertData()
+				to.elasticsearchOpsReq = to.GetElasticsearchOpsRequestReconfigureTLS(to.db.ObjectMeta, &dbaapi.TLSSpec{
+					TLSConfig: *framework.NewTLSConfiguration(to.issuer),
+				})
+				to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
+				to.checkUpdatedCertificates()
+				to.verifyData(indicesCount)
+			})
+
+			It("Default TLS to Cert-Manager Managed TLS; Add all certs", func() {
+				to.db = to.transformElasticsearch(to.ClusterElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
+					in.Spec.EnableSSL = false
+					in.Spec.TLS = framework.NewTLSConfiguration(to.issuer)
+					return in
+				})
+				to.createElasticsearchAndWaitForBeingReady()
+				indicesCount := to.insertData()
+				to.elasticsearchOpsReq = to.GetElasticsearchOpsRequestReconfigureTLS(to.db.ObjectMeta, &dbaapi.TLSSpec{
+					TLSConfig: kmapi.TLSConfig{
+						Certificates: []kmapi.CertificateSpec{
+							{
+								Alias:   "http",
+								Subject: &kmapi.X509Subject{Organizations: []string{"appscode.com"}},
+							},
+						},
+					},
+				})
+				oneliners.PrettyJson(to.elasticsearchOpsReq)
+				to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
+				to.checkUpdatedCertificates()
+				Expect(to.db.Spec.EnableSSL).Should(BeTrue())
+				to.verifyData(indicesCount)
+			})
+		})
+
 		Context("EnableSSL:true --> EnableSSL: true", func() {
 
 			It("Default TLS to Cert-Manager Managed TLS ", func() {
 				to.db = to.transformElasticsearch(to.StandaloneElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
 					in.Spec.EnableSSL = true
+					in.Spec.Replicas = pointer.Int32P(3)
 					return in
 				})
 				to.createElasticsearchAndWaitForBeingReady()
+				indicesCount := to.insertData()
 				to.elasticsearchOpsReq = to.GetElasticsearchOpsRequestReconfigureTLS(to.db.ObjectMeta, &dbaapi.TLSSpec{
 					TLSConfig: *framework.NewTLSConfiguration(to.issuer),
 				})
-				oneliners.PrettyJson(to.elasticsearchOpsReq)
 				to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
+				to.checkUpdatedCertificates()
+				to.verifyData(indicesCount)
+			})
+
+		})
+	})
+
+	Context("Remove TLS", func() {
+
+		It("Combined cluster", func() {
+			to.db = to.transformElasticsearch(to.StandaloneElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
+				in.Spec.EnableSSL = true
+				in.Spec.Replicas = pointer.Int32P(2)
+				in.Spec.TLS = framework.NewTLSConfiguration(to.issuer)
+				return in
+			})
+			to.createElasticsearchAndWaitForBeingReady()
+			indicesCount := to.insertData()
+			to.elasticsearchOpsReq = to.GetElasticsearchOpsRequestReconfigureTLS(to.db.ObjectMeta, &dbaapi.TLSSpec{
+				Remove: true,
+			})
+			to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
+			to.checkUpdatedCertificates()
+			Expect(to.db.Spec.EnableSSL).Should(BeFalse())
+			to.verifyData(indicesCount)
+		})
+
+		It("Topology cluster", func() {
+			to.db = to.transformElasticsearch(to.ClusterElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
+				in.Spec.EnableSSL = true
+				in.Spec.TLS = framework.NewTLSConfiguration(to.issuer)
+				return in
+			})
+			to.createElasticsearchAndWaitForBeingReady()
+			indicesCount := to.insertData()
+			to.elasticsearchOpsReq = to.GetElasticsearchOpsRequestReconfigureTLS(to.db.ObjectMeta, &dbaapi.TLSSpec{
+				Remove: true,
+			})
+			to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
+			to.checkUpdatedCertificates()
+			Expect(to.db.Spec.EnableSSL).Should(BeFalse())
+			to.verifyData(indicesCount)
+		})
+
+	})
+
+	Context("Rotate TLS", func() {
+
+		Context("EnableSSL:true; All Certificates", func() {
+
+			It("Combined Cluster", func() {
+				to.db = to.transformElasticsearch(to.StandaloneElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
+					in.Spec.EnableSSL = true
+					in.Spec.Replicas = pointer.Int32P(2)
+					in.Spec.TLS = framework.NewTLSConfiguration(to.issuer)
+					return in
+				})
+				to.createElasticsearchAndWaitForBeingReady()
+				indicesCount := to.insertData()
+				to.elasticsearchOpsReq = to.GetElasticsearchOpsRequestReconfigureTLS(to.db.ObjectMeta, &dbaapi.TLSSpec{
+					RotateCertificates: true,
+				})
+				to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
+				to.checkUpdatedCertificates()
+				to.verifyData(indicesCount)
+			})
+
+		})
+
+		Context("EnableSSL:false; Only Transport Certificate", func() {
+
+			It("Topology Cluster", func() {
+				to.db = to.transformElasticsearch(to.ClusterElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
+					in.Spec.EnableSSL = false
+					in.Spec.TLS = framework.NewTLSConfiguration(to.issuer)
+					return in
+				})
+				to.createElasticsearchAndWaitForBeingReady()
+				indicesCount := to.insertData()
+				to.elasticsearchOpsReq = to.GetElasticsearchOpsRequestReconfigureTLS(to.db.ObjectMeta, &dbaapi.TLSSpec{
+					RotateCertificates: true,
+				})
+				to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
+				to.checkUpdatedCertificates()
+				Expect(to.db.Spec.EnableSSL).Should(BeFalse())
+				to.verifyData(indicesCount)
+			})
+
+		})
+	})
+
+	Context("Update TLS", func() {
+
+		Context("EnableSSL: false; Only Transport Certificate", func() {
+			It("Topology Cluster", func() {
+				to.db = to.transformElasticsearch(to.ClusterElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
+					in.Spec.EnableSSL = false
+					in.Spec.TLS = framework.NewTLSConfiguration(to.issuer)
+					return in
+				})
+				to.createElasticsearchAndWaitForBeingReady()
+				indicesCount := to.insertData()
+				to.elasticsearchOpsReq = to.GetElasticsearchOpsRequestReconfigureTLS(to.db.ObjectMeta, &dbaapi.TLSSpec{
+					TLSConfig: kmapi.TLSConfig{
+						Certificates: []kmapi.CertificateSpec{
+							{
+								Alias: "transport",
+								Subject: &kmapi.X509Subject{
+									Organizations:       []string{"mydb.com"},
+									OrganizationalUnits: []string{"engineering"},
+								},
+							},
+						},
+					},
+				})
+				to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
+				to.checkUpdatedCertificates()
+				Expect(to.db.Spec.EnableSSL).Should(BeFalse())
+				to.verifyData(indicesCount)
+			})
+		})
+
+		Context("EnableSSL: true; Both HTTP & Transport Certificates", func() {
+			It("Combined Cluster", func() {
+				to.db = to.transformElasticsearch(to.StandaloneElasticsearch(), func(in *api.Elasticsearch) *api.Elasticsearch {
+					in.Spec.EnableSSL = true
+					in.Spec.Replicas = pointer.Int32P(2)
+					in.Spec.TLS = framework.NewTLSConfiguration(to.issuer)
+					return in
+				})
+				to.createElasticsearchAndWaitForBeingReady()
+				indicesCount := to.insertData()
+				to.elasticsearchOpsReq = to.GetElasticsearchOpsRequestReconfigureTLS(to.db.ObjectMeta, &dbaapi.TLSSpec{
+					TLSConfig: kmapi.TLSConfig{
+						Certificates: []kmapi.CertificateSpec{
+							{
+								Alias: "transport",
+								Subject: &kmapi.X509Subject{
+									Organizations:       []string{"mydb.com"},
+									OrganizationalUnits: []string{"engineering"},
+								},
+							},
+							{
+								Alias: "http",
+								Subject: &kmapi.X509Subject{
+									Organizations: []string{"mydb-server.com"},
+								},
+							},
+						},
+					},
+				})
+				to.createElasticsearchOpsRequestAndWaitForBeingSuccessful()
+				to.checkUpdatedCertificates()
+				to.verifyData(indicesCount)
 			})
 		})
 	})

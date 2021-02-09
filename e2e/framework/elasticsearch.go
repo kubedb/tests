@@ -484,3 +484,9 @@ func (f *Framework) GetAuthSecretForElasticsearch(es *api.Elasticsearch, mangedB
 		Data:       data,
 	}
 }
+
+func (f *Framework) CleanSecrets() {
+	if err := f.kubeClient.CoreV1().Secrets(f.namespace).DeleteCollection(context.TODO(), meta_util.DeleteInForeground(), metav1.ListOptions{}); err != nil {
+		fmt.Printf("error in deletion of secrets. Error: %v", err)
+	}
+}
