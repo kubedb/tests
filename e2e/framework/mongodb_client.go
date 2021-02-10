@@ -47,8 +47,8 @@ type KubedbTable struct {
 	FirstName string
 	LastName  string
 	// for MySQL
-	Id   int64
-	Name string `xorm:"varchar(25) not null unique 'usr_name' comment('NickName')"`
+	Id   int64  `xorm:"pk autoincr"`
+	Name string `xorm:"varchar(25) not null 'usr_name' comment('NickName')"`
 }
 
 const (

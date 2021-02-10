@@ -355,17 +355,20 @@ func (fi *Invocation) EventuallyInsertRowMD(meta metav1.ObjectMeta, dbInfo Maria
 		func() bool {
 			tunnel, err := fi.ForwardPortMD(meta)
 			if err != nil {
+				fmt.Println(err)
 				return false
 			}
 			defer tunnel.Close()
 
 			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
 			if err != nil {
+				fmt.Println(err)
 				return false
 			}
 			defer en.Close()
 
 			if err := en.Ping(); err != nil {
+				fmt.Println(err)
 				return false
 			}
 
@@ -374,6 +377,7 @@ func (fi *Invocation) EventuallyInsertRowMD(meta metav1.ObjectMeta, dbInfo Maria
 					//Id:   int64(fi),
 					Name: fmt.Sprintf("KubedbName-%v", i),
 				}); err != nil {
+					fmt.Println(err)
 					return false
 				}
 				count++

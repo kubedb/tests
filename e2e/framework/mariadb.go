@@ -108,6 +108,7 @@ func (fi *Invocation) EventuallyMariaDBReady(meta metav1.ObjectMeta) GomegaAsync
 func (fi *Invocation) PopulateMariaDB(md *api.MariaDB, dbInfo MariaDBInfo) {
 
 	if dbInfo.DatabaseName != DBMySQL {
+		// mysql db is created by default
 		By("Creating test Database")
 		fi.EventuallyCreateTestDBMD(md.ObjectMeta, dbInfo).Should(BeTrue())
 	}
