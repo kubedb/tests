@@ -33,7 +33,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = Describe("MariaDB", func() {
+var _ = FDescribe("MariaDB", func() {
 	var fi *framework.Invocation
 
 	BeforeEach(func() {
@@ -58,17 +58,9 @@ var _ = Describe("MariaDB", func() {
 
 	Context("General", func() {
 
-		Context("-", func() {
+		FContext("-", func() {
 			It("should run successfully", func() {
-				// MariaDB ObjectMeta
-				mdMeta := metav1.ObjectMeta{
-					Name:      rand.WithUniqSuffix("md"),
-					Namespace: fi.Namespace(),
-				}
-				// Create MariaDB standalone and wait for running
 				md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
-					in.Name = mdMeta.Name
-					in.Namespace = mdMeta.Namespace
 					// Set termination policy Halt to leave the PVCs and secrets intact for reuse
 					in.Spec.TerminationPolicy = api.TerminationPolicyHalt
 				})
@@ -78,26 +70,21 @@ var _ = Describe("MariaDB", func() {
 
 				fi.EventuallyDBReadyMD(md, dbInfo)
 
-				By("Creating Table")
-				fi.EventuallyCreateTableMD(mdMeta, dbInfo).Should(BeTrue())
+				fi.PopulateMariaDB(md, dbInfo)
 
-				By("Inserting Rows")
-				fi.EventuallyInsertRowMD(mdMeta, dbInfo, 3).Should(BeTrue())
-
-				By("Checking Row Count of Table")
-				fi.EventuallyCountRowMD(mdMeta, dbInfo).Should(Equal(3))
-
-				By("Delete mariadb: " + mdMeta.Namespace + "/" + mdMeta.Name)
-				err = fi.DeleteMariaDB(mdMeta)
+				By("Delete mariadb: " + md.ObjectMeta.Namespace + "/" + md.ObjectMeta.Name)
+				err = fi.DeleteMariaDB(md.ObjectMeta)
 				Expect(err).NotTo(HaveOccurred())
 
+				// Keep the mariadb name for recreating
+				mdName := md.ObjectMeta.Name
+
 				By("Wait for mariadb to be deleted")
-				fi.EventuallyMariaDB(mdMeta).Should(BeFalse())
+				fi.EventuallyMariaDB(md.ObjectMeta).Should(BeFalse())
 
 				// Create MariaDB object again to resume it
 				md, err = fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
-					in.Name = mdMeta.Name
-					in.Namespace = mdMeta.Namespace
+					in.Name = mdName
 					// Set termination policy WipeOut to delete all mysql resources permanently
 					in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				})
@@ -105,7 +92,7 @@ var _ = Describe("MariaDB", func() {
 				fi.EventuallyDBReadyMD(md, dbInfo)
 
 				By("Checking Row Count of Table")
-				fi.EventuallyCountRowMD(mdMeta, dbInfo).Should(Equal(3))
+				fi.EventuallyCountRowMD(md.ObjectMeta, dbInfo).Should(Equal(3))
 			})
 		})
 
