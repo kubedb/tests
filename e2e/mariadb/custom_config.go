@@ -87,11 +87,7 @@ var _ = Describe("MariaDB", func() {
 					})
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
-					dbInfo := framework.MariaDBInfo{
-						DatabaseName: framework.DBMySQL,
-						User:         framework.MySQLRootUser,
-						Param:        "",
-					}
+					dbInfo := framework.GetMariaDBInfo(framework.DBMySQL, framework.MySQLRootUser, "")
 					fi.EventuallyDBReadyMD(md, dbInfo)
 
 					By("Checking mariadb configured from provided custom configuration")

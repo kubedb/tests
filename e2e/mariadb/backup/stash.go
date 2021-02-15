@@ -18,7 +18,6 @@ package backup
 
 import (
 	"fmt"
-
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
 
@@ -115,7 +114,7 @@ var _ = Describe("Stash Backup For MariaDB", func() {
 			})
 		})
 
-		XContext("With SSL Enabled", func() {
+		Context("With SSL Enabled", func() {
 			BeforeEach(func() {
 				if !framework.SSLEnabled {
 					Skip("Skipping test. Reason: SSL is disabled")

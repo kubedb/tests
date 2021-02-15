@@ -33,7 +33,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = FDescribe("MariaDB", func() {
+var _ = Describe("MariaDB", func() {
 	var fi *framework.Invocation
 
 	BeforeEach(func() {
@@ -58,7 +58,7 @@ var _ = FDescribe("MariaDB", func() {
 
 	Context("General", func() {
 
-		FContext("-", func() {
+		Context("-", func() {
 			It("should run successfully", func() {
 				md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
 					// Set termination policy Halt to leave the PVCs and secrets intact for reuse
