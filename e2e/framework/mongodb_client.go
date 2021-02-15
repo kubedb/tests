@@ -18,6 +18,8 @@ package framework
 
 import (
 	"context"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"strconv"
 	"strings"
@@ -800,6 +802,44 @@ func (f *Framework) FillDisk(db *api.MongoDB, storage *v1alpha1.MongoDBStorageAu
 	return nil
 }
 
+func (f *Framework) getCertificateFromShell(db *api.MongoDB, certType string) (string, error) {
+	var (
+		podName string
+		pod     *core.Pod
+		err     error
+	)
+
+	if db.Spec.ShardTopology == nil {
+		podName = fmt.Sprintf("%v-0", db.OffshootName())
+	} else {
+		podName = fmt.Sprintf("%v-0", db.ConfigSvrNodeName())
+	}
+
+	pod, err = f.kubeClient.CoreV1().Pods(f.namespace).Get(context.TODO(), podName, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	path := "/var/run/mongodb/tls/client.pem"
+	if certType == "ca" {
+		path = "/var/run/mongodb/tls/ca.crt"
+	}
+
+	command := []string{"cat", path}
+	return exec.ExecIntoPod(f.restConfig, pod, exec.Command(command...))
+}
+
+func (f *Framework) GetCertificate(db *api.MongoDB, certType string) (*x509.Certificate, error) {
+	certContent, err := f.getCertificateFromShell(db, certType)
+	if err != nil {
+		return nil, err
+	}
+
+	blk, _ := pem.Decode([]byte(certContent))
+
+	return x509.ParseCertificate(blk.Bytes)
+}
+
 func (f *Framework) EventuallyVolumeExpanded(db *api.MongoDB, storage *v1alpha1.MongoDBStorageAutoscalerSpec) GomegaAsyncAssertion {
 	return Eventually(
 		func() (bool, error) {
@@ -857,6 +897,34 @@ func (f *Framework) EventuallyDatabaseResumed(db *api.MongoDB) GomegaAsyncAssert
 			if v1.IsConditionTrue(db.Status.Conditions, api.DatabasePaused) {
 				return false, nil
 			}
+			return true, nil
+		},
+		time.Minute*5,
+		time.Second*5,
+	)
+}
+
+func (f *Framework) EventuallyTLSUserCreated(db *api.MongoDB) GomegaAsyncAssertion {
+	return Eventually(
+		func() (bool, error) {
+			svcName := f.GetPrimaryService(db.ObjectMeta)
+			client, tunnel, err := f.ConnectAndPing(db.ObjectMeta, string(core.ResourceServices), svcName, true)
+			if err != nil {
+				return false, err
+			}
+			defer tunnel.Close()
+
+			res := make(map[string]interface{})
+			err = client.Database("$external").RunCommand(context.Background(), bson.D{{Key: "usersInfo", Value: "CN=root,OU=client,O=kubedb"}}).Decode(&res)
+			if err != nil {
+				log.Error("Failed to run command. error: ", err)
+				return false, err
+			}
+			users, ok := res["users"].(primitive.A)
+			if ok && len(users) == 0 {
+				return false, nil
+			}
+
 			return true, nil
 		},
 		time.Minute*5,

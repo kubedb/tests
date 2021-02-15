@@ -133,13 +133,15 @@ func (fi *Invocation) SecretForDatabaseAuthentication(meta metav1.ObjectMeta, ma
 }
 
 func (f *Framework) SelfSignedCASecret(meta metav1.ObjectMeta, fqn string) *core.Secret {
+	caSecretName := rand.WithUniqSuffix(meta.Name + "-self-signed-ca")
+
 	labelMap := map[string]string{
 		meta_util.NameLabelKey:     fqn,
 		meta_util.InstanceLabelKey: meta.Name,
 	}
 	return &core.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      meta.Name + "-self-signed-ca",
+			Name:      caSecretName,
 			Namespace: meta.Namespace,
 			Labels:    labelMap,
 		},

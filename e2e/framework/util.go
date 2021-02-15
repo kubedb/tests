@@ -33,7 +33,7 @@ import (
 	"github.com/appscode/go/log"
 	"github.com/aws/aws-sdk-go/aws"
 	shell "github.com/codeskyblue/go-sh"
-	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1beta1"
+	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	. "github.com/onsi/ginkgo"
 	promClient "github.com/prometheus/client_model/go"
 	"github.com/prometheus/prom2json"
