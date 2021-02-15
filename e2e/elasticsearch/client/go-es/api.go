@@ -36,6 +36,11 @@ import (
 
 type ESClient interface {
 	ClusterStatus() (string, error)
+	CreateIndex(_index string) error
+	GetIndices(indices ...string) (map[string]interface{}, error)
+	DeleteIndex(indices ...string) error
+	PutData(_index, _type, _id string, data map[string]interface{}) error
+	GetData(_index, _type, _id string) (map[string]interface{}, error)
 }
 
 var response map[string]interface{}

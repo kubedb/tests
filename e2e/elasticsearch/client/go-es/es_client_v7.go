@@ -17,9 +17,13 @@ limitations under the License.
 package go_es
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	esv7 "github.com/elastic/go-elasticsearch/v7"
+	"github.com/elastic/go-elasticsearch/v7/esapi"
 	"github.com/pkg/errors"
 )
 
@@ -43,4 +47,124 @@ func (es *ESClientV7) ClusterStatus() (string, error) {
 		return value.(string), nil
 	}
 	return "", errors.New("status is missing")
+}
+
+func (es *ESClientV7) CreateIndex(_index string) error {
+	req := esapi.IndicesCreateRequest{
+		Index:  _index,
+		Pretty: true,
+		Human:  true,
+	}
+
+	res, err := req.Do(context.Background(), es.client)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return errors.New(fmt.Sprintf("received status code: %d", res.StatusCode))
+	}
+
+	return nil
+}
+
+func (es *ESClientV7) GetIndices(indices ...string) (map[string]interface{}, error) {
+	req := esapi.IndicesGetRequest{
+		Index:  indices,
+		Pretty: true,
+		Human:  true,
+	}
+
+	res, err := req.Do(context.Background(), es.client)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return nil, errors.New(fmt.Sprintf("received status code: %d", res.StatusCode))
+	}
+
+	response := make(map[string]interface{})
+	if err = json.NewDecoder(res.Body).Decode(&response); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (es *ESClientV7) DeleteIndex(indices ...string) error {
+	req := esapi.IndicesDeleteRequest{
+		Index:  indices,
+		Pretty: true,
+		Human:  true,
+	}
+
+	res, err := req.Do(context.Background(), es.client)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return errors.New(fmt.Sprintf("received status code: %d", res.StatusCode))
+	}
+	return nil
+}
+
+func (es *ESClientV7) PutData(_index, _type, _id string, data map[string]interface{}) error {
+	var b strings.Builder
+	dataBytes, err := json.Marshal(data)
+	if err != nil {
+		return errors.Wrap(err, "failed to Marshal data")
+	}
+	b.Write(dataBytes)
+
+	req := esapi.CreateRequest{
+		Index:        _index,
+		DocumentType: _type,
+		DocumentID:   _id,
+		Body:         strings.NewReader(b.String()),
+		Pretty:       true,
+		Human:        true,
+	}
+
+	res, err := req.Do(context.Background(), es.client)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return errors.New(fmt.Sprintf("received status code: %d", res.StatusCode))
+	}
+	return nil
+}
+
+func (es *ESClientV7) GetData(_index, _type, _id string) (map[string]interface{}, error) {
+	req := esapi.GetRequest{
+		Index:        _index,
+		DocumentType: _type,
+		DocumentID:   _id,
+		Pretty:       true,
+		Human:        true,
+	}
+
+	res, err := req.Do(context.Background(), es.client)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return nil, errors.New(fmt.Sprintf("received status code: %d", res.StatusCode))
+	}
+
+	response = make(map[string]interface{})
+	if err2 := json.NewDecoder(res.Body).Decode(&response); err2 != nil {
+		return nil, errors.Wrap(err2, "failed to parse the response body")
+	}
+
+	return response, nil
 }
