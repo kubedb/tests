@@ -19,6 +19,8 @@ package framework
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	batch "k8s.io/api/batch/v1beta1"
@@ -34,7 +36,6 @@ import (
 	"stash.appscode.dev/apimachinery/apis/stash"
 	stash_v1alpha1 "stash.appscode.dev/apimachinery/apis/stash/v1alpha1"
 	stash_v1beta1 "stash.appscode.dev/apimachinery/apis/stash/v1beta1"
-	"strings"
 )
 
 const (

@@ -61,7 +61,7 @@ var _ = Describe("MariaDB TLS/SSL", func() {
 	})
 
 	Describe("Test", func() {
-		Context("Exporter", func() {
+		FContext("Exporter", func() {
 			Context("Standalone", func() {
 				It("Should verify Exporter", func() {
 					// MariaDB objectMeta

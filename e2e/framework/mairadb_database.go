@@ -42,6 +42,11 @@ type MariaDBInfo struct {
 	Param        string
 }
 
+type KubedbTableMD struct {
+	Id   int64  `xorm:"pk autoincr"`
+	Name string `xorm:"varchar(25) not null 'usr_name' comment('NickName')"`
+}
+
 func (fi *Invocation) GetMariaDBClient(meta metav1.ObjectMeta, tunnel *portforward.Tunnel, dbInfo MariaDBInfo) (*xorm.Engine, error) {
 	md, err := fi.GetMariaDB(meta)
 	if err != nil {
@@ -236,7 +241,7 @@ func (fi *Invocation) EventuallyCreateTableMD(meta metav1.ObjectMeta, dbInfo Mar
 			if err := en.Ping(); err != nil {
 				return false
 			}
-			return en.Charset("utf8mb4").StoreEngine("InnoDB").Sync2(new(KubedbTable)) == nil
+			return en.Charset("utf8mb4").StoreEngine("InnoDB").Sync2(new(KubedbTableMD)) == nil
 		},
 		Timeout,
 		RetryInterval,
@@ -316,32 +321,35 @@ func (fi *Invocation) EventuallyCreateTestDBMD(meta metav1.ObjectMeta, dbInfo Ma
 func (fi *Invocation) EventuallyExistsDBMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo) GomegaAsyncAssertion {
 	getDatabasesQuery := `SHOW DATABASES;`
 	return Eventually(
-		func() bool {
+		func() int {
 			tunnel, err := fi.ForwardPortMD(meta)
 			if err != nil {
-				return false
+				return -1
 			}
 			defer tunnel.Close()
-
-			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
+			en, err := fi.GetMariaDBClient(meta, tunnel, MariaDBInfo{
+				DatabaseName: DBMySQL,
+				User:         dbInfo.User,
+				Param:        dbInfo.Param,
+			})
 			if err != nil {
-				return false
+				return -1
 			}
 			defer en.Close()
 
 			if err := en.Ping(); err != nil {
-				return false
+				return -1
 			}
 			result, err := en.Query(getDatabasesQuery)
 			if err != nil {
-				return false
+				return -1
 			}
 			for _, value := range result {
 				if strings.Compare(string(value["Database"]), dbInfo.DatabaseName) == 0 {
-					return true
+					return 1
 				}
 			}
-			return false
+			return 0
 		},
 		Timeout,
 		RetryInterval,
@@ -372,8 +380,7 @@ func (fi *Invocation) EventuallyInsertRowMD(meta metav1.ObjectMeta, dbInfo Maria
 			}
 
 			for i := count; i < total; i++ {
-				if _, err := en.Insert(&KubedbTable{
-					//Id:   int64(fi),
+				if _, err := en.Insert(&KubedbTableMD{
 					Name: fmt.Sprintf("KubedbName-%v", i),
 				}); err != nil {
 					fmt.Println(err)
@@ -407,7 +414,7 @@ func (fi *Invocation) EventuallyCountRowMD(meta metav1.ObjectMeta, dbInfo MariaD
 				return -1
 			}
 
-			kubedb := new(KubedbTable)
+			kubedb := new(KubedbTableMD)
 			total, err := en.Count(kubedb)
 			if err != nil {
 				return -1

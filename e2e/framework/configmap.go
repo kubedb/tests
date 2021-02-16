@@ -43,7 +43,7 @@ func (f *Framework) ConfigMapForMyInitScript() (*core.ConfigMap, error) {
 	execOut.Reset()
 
 	sh.ShowCMD = true
-	if err := sh.Command(curlLoc, "-fsSL", "https://github.com/kubedb/mysql-init-scripts/raw/master/init.sql").Run(); err != nil {
+	if err := sh.Command(curlLoc, "-fsSL", "https://raw.githubusercontent.com/kubedb/mysql-init-scripts/mariadb/md-init.sql").Run(); err != nil {
 		return nil, err
 	}
 

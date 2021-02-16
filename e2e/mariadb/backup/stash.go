@@ -18,6 +18,7 @@ package backup
 
 import (
 	"fmt"
+
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
 
@@ -100,13 +101,13 @@ var _ = Describe("Stash Backup For MariaDB", func() {
 				fi.EventuallyDropDatabaseMD(md.ObjectMeta, testdbInfo).Should(BeTrue())
 
 				By("Checking if test Database exist")
-				fi.EventuallyExistsDBMD(md.ObjectMeta, testdbInfo).Should(BeFalse())
+				fi.EventuallyExistsDBMD(md.ObjectMeta, testdbInfo).Should(Equal(0))
 
 				// Restore the database
 				fi.RestoreDatabase(appBinding, repo)
 
 				By("Checking if test Database restored")
-				fi.EventuallyExistsDBMD(md.ObjectMeta, testdbInfo).Should(BeTrue())
+				fi.EventuallyExistsDBMD(md.ObjectMeta, testdbInfo).Should(Equal(1))
 
 				By("Checking Row Count of Table")
 				fi.EventuallyCountRowMD(md.ObjectMeta, testdbInfo).Should(Equal(3))
@@ -160,13 +161,13 @@ var _ = Describe("Stash Backup For MariaDB", func() {
 					fi.EventuallyDropDatabaseMD(md.ObjectMeta, testdbinfo).Should(BeTrue())
 
 					By("Checking if test Database exist")
-					fi.EventuallyExistsDBMD(md.ObjectMeta, testdbinfo).Should(BeFalse())
+					fi.EventuallyExistsDBMD(md.ObjectMeta, testdbinfo).Should(Equal(0))
 
 					// Restore the database
 					fi.RestoreDatabase(appBinding, repo)
 
 					By("Checking if test Database restored")
-					fi.EventuallyExistsDBMD(md.ObjectMeta, testdbinfo).Should(BeTrue())
+					fi.EventuallyExistsDBMD(md.ObjectMeta, testdbinfo).Should(Equal(1))
 
 					By("Checking Row Count of Table")
 					fi.EventuallyCountRowMD(md.ObjectMeta, testdbinfo).Should(Equal(3))
@@ -214,10 +215,10 @@ var _ = Describe("Stash Backup For MariaDB", func() {
 				fi.RestoreDatabase(appBinding, repo)
 
 				By("Verifying that db: " + framework.TestDBMySQL + " has been restored")
-				fi.EventuallyExistsDBMD(md.ObjectMeta, testdbInfo).Should(BeTrue())
+				fi.EventuallyExistsDBMD(md.ObjectMeta, testdbInfo).Should(Equal(1))
 
 				By("Verifying that db: " + framework.AnotherDBMySQL + " hasn't been restored")
-				fi.EventuallyExistsDBMD(md.ObjectMeta, anotherdbInfo).Should(BeFalse())
+				fi.EventuallyExistsDBMD(md.ObjectMeta, anotherdbInfo).Should(Equal(0))
 
 				By("Checking Row Count of " + framework.TestDBMySQL + "'s Table")
 				fi.EventuallyCountRowMD(md.ObjectMeta, testdbInfo).Should(Equal(3))
@@ -397,20 +398,20 @@ var _ = Describe("Stash Backup For MariaDB", func() {
 				fi.EventuallyDropDatabaseMD(md.ObjectMeta, testdbInfo).Should(BeTrue())
 
 				By("Checking if test Database exist")
-				fi.EventuallyExistsDBMD(md.ObjectMeta, testdbInfo).Should(BeFalse())
+				fi.EventuallyExistsDBMD(md.ObjectMeta, testdbInfo).Should(Equal(0))
 
 				// Restore the database
 				fi.RestoreDatabase(appBinding, repo)
 
 				By("Checking if test Database restored")
-				fi.EventuallyExistsDBMD(md.ObjectMeta, testdbInfo).Should(BeTrue())
+				fi.EventuallyExistsDBMD(md.ObjectMeta, testdbInfo).Should(Equal(1))
 
 				By("Checking Row Count of Table")
 				fi.EventuallyCountRowMD(md.ObjectMeta, testdbInfo).Should(Equal(3))
 			})
 		})
 
-		XContext("With SSL Enabled", func() {
+		Context("With SSL Enabled", func() {
 			BeforeEach(func() {
 				if !framework.SSLEnabled {
 					Skip("Skipping test. Reason: SSL is disabled")
@@ -456,13 +457,13 @@ var _ = Describe("Stash Backup For MariaDB", func() {
 					fi.EventuallyDropDatabaseMD(md.ObjectMeta, testdbinfo).Should(BeTrue())
 
 					By("Checking if test Database exist")
-					fi.EventuallyExistsDBMD(md.ObjectMeta, testdbinfo).Should(BeFalse())
+					fi.EventuallyExistsDBMD(md.ObjectMeta, testdbinfo).Should(Equal(0))
 
 					// Restore the database
 					fi.RestoreDatabase(appBinding, repo)
 
 					By("Checking if test Database restored")
-					fi.EventuallyExistsDBMD(md.ObjectMeta, testdbinfo).Should(BeTrue())
+					fi.EventuallyExistsDBMD(md.ObjectMeta, testdbinfo).Should(Equal(1))
 
 					By("Checking Row Count of Table")
 					fi.EventuallyCountRowMD(md.ObjectMeta, testdbinfo).Should(Equal(3))
