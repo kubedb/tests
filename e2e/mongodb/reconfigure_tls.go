@@ -39,7 +39,7 @@ import (
 	meta_util "kmodules.xyz/client-go/meta"
 )
 
-var _ = FDescribe("Reconfigure TLS", func() {
+var _ = Describe("Reconfigure TLS", func() {
 	to := testOptions{}
 	testName := framework.ReconfigureTLS
 	BeforeEach(func() {
