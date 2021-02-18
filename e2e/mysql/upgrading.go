@@ -19,7 +19,6 @@ package mysql
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	opsapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
@@ -37,10 +36,10 @@ var _ = Describe("MySQL", func() {
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
 
-		if !runTestDatabaseType() {
+		if !RunTestDatabaseType() {
 			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
 		}
-		if !runTestEnterprise(framework.Upgrade) {
+		if !RunTestEnterprise(framework.Upgrade) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.Upgrade))
 		}
 	})
@@ -63,22 +62,12 @@ var _ = Describe("MySQL", func() {
 				Expect(err).NotTo(HaveOccurred())
 				// Database connection information
 				dbInfo := framework.DatabaseConnectionInfo{
-					StatefulSetOrdinal: 0,
-					ClientPodIndex:     0,
-					DatabaseName:       framework.DBMySQL,
-					User:               framework.MySQLRootUser,
-					Param:              "",
+					DatabaseName: framework.DBMySQL,
+					User:         framework.MySQLRootUser,
+					Param:        "",
 				}
 				fi.EventuallyDBReady(my, dbInfo)
-
-				By("Creating Table")
-				fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
-
-				By("Inserting Rows")
-				fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
-
-				By("Checking Row Count of Table")
-				fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+				fi.PopulateMySQL(my.ObjectMeta, dbInfo)
 
 				// Upgrade MySQL Version and waiting for success
 				myOR := fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
@@ -108,30 +97,19 @@ var _ = Describe("MySQL", func() {
 						in.Spec.Topology = &api.MySQLClusterTopology{
 							Mode: &clusterMode,
 							Group: &api.MySQLGroupSpec{
-								Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
-								BaseServerID: types.Int64P(api.MySQLDefaultBaseServerID),
+								Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
 							},
 						}
 					})
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              "",
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        "",
 					}
 					fi.EventuallyDBReady(my, dbInfo)
-
-					By("Creating Table")
-					fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
-
-					By("Inserting Rows")
-					fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
-
-					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+					fi.PopulateMySQL(my.ObjectMeta, dbInfo)
 
 					// Upgrade MySQL Version and waiting for success
 					myOR := fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
@@ -144,10 +122,6 @@ var _ = Describe("MySQL", func() {
 					By("Checking MySQL version upgraded")
 					targetedVersion, err := fi.DBClient().CatalogV1alpha1().MySQLVersions().Get(context.TODO(), myOR.Spec.Upgrade.TargetVersion, metav1.GetOptions{})
 					Expect(err).NotTo(HaveOccurred())
-					// for major version upgrading, StatefulSet ordinal will be changed
-					if strings.Compare(strings.Split(framework.DBVersion, ".")[0], strings.Split(framework.DBUpdatedVersion, ".")[0]) != 0 {
-						dbInfo.StatefulSetOrdinal = 1
-					}
 					fi.EventuallyDatabaseVersionUpdated(my.ObjectMeta, dbInfo, targetedVersion.Spec.Version).Should(BeTrue())
 
 					// Retrieve Inserted Data

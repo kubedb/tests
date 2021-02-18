@@ -38,10 +38,10 @@ var _ = Describe("MySQL", func() {
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
 
-		if !runTestDatabaseType() {
+		if !RunTestDatabaseType() {
 			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
 		}
-		if !runTestCommunity(framework.General) {
+		if !RunTestCommunity(framework.General) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.General))
 		}
 	})
@@ -75,22 +75,12 @@ var _ = Describe("MySQL", func() {
 				Expect(err).NotTo(HaveOccurred())
 				// Database connection information
 				dbInfo := framework.DatabaseConnectionInfo{
-					StatefulSetOrdinal: 0,
-					ClientPodIndex:     0,
-					DatabaseName:       framework.DBMySQL,
-					User:               framework.MySQLRootUser,
-					Param:              "",
+					DatabaseName: framework.DBMySQL,
+					User:         framework.MySQLRootUser,
+					Param:        "",
 				}
 				fi.EventuallyDBReady(my, dbInfo)
-
-				By("Creating Table")
-				fi.EventuallyCreateTable(myMeta, dbInfo).Should(BeTrue())
-
-				By("Inserting Rows")
-				fi.EventuallyInsertRow(myMeta, dbInfo, 3).Should(BeTrue())
-
-				By("Checking Row Count of Table")
-				fi.EventuallyCountRow(myMeta, dbInfo).Should(Equal(3))
+				fi.PopulateMySQL(my.ObjectMeta, dbInfo)
 
 				By("Delete mysql: " + myMeta.Namespace + "/" + myMeta.Name)
 				err = fi.DeleteMySQL(myMeta)
@@ -176,6 +166,9 @@ var _ = Describe("MySQL", func() {
 				_, err = fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
 					in.Name = myMeta.Name
 					in.Namespace = myMeta.Namespace
+					in.Spec.AuthSecret = &core.LocalObjectReference{
+						Name: customSecret.Name,
+					}
 					// Set termination policy WipeOut to delete all mysql resources permanently
 					in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 				})

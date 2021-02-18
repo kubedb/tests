@@ -43,10 +43,10 @@ var _ = Describe("MySQL", func() {
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
 
-		if !runTestDatabaseType() {
+		if !RunTestDatabaseType() {
 			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
 		}
-		if !runTestCommunity(framework.EnvironmentVariable) {
+		if !RunTestCommunity(framework.EnvironmentVariable) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.EnvironmentVariable))
 		}
 	})
@@ -90,22 +90,12 @@ var _ = Describe("MySQL", func() {
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       dbName,
-						User:               framework.MySQLRootUser,
-						Param:              "",
+						DatabaseName: dbName,
+						User:         framework.MySQLRootUser,
+						Param:        "",
 					}
 					fi.EventuallyDBReady(my, dbInfo)
-
-					By("Creating Table")
-					fi.EventuallyCreateTable(myMeta, dbInfo).Should(BeTrue())
-
-					By("Inserting Rows")
-					fi.EventuallyInsertRow(myMeta, dbInfo, 3).Should(BeTrue())
-
-					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(myMeta, dbInfo).Should(Equal(3))
+					fi.PopulateMySQL(my.ObjectMeta, dbInfo)
 
 					By("Delete mysql: " + myMeta.Namespace + "/" + myMeta.Name)
 					err = fi.DeleteMySQL(myMeta)
@@ -166,22 +156,12 @@ var _ = Describe("MySQL", func() {
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       dbName,
-						User:               framework.MySQLRootUser,
-						Param:              "",
+						DatabaseName: dbName,
+						User:         framework.MySQLRootUser,
+						Param:        "",
 					}
 					fi.EventuallyDBReady(my, dbInfo)
-
-					By("Creating Table")
-					fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
-
-					By("Inserting Rows")
-					fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
-
-					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+					fi.PopulateMySQL(my.ObjectMeta, dbInfo)
 
 					By("Patching EnvVar")
 					_, _, err = util.PatchMySQL(context.TODO(), fi.DBClient().KubedbV1alpha2(), my, func(in *api.MySQL) *api.MySQL {
