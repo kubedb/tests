@@ -27,13 +27,11 @@ import (
 
 	"github.com/appscode/go/crypto/rand"
 	"github.com/appscode/go/types"
-	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	kmapi "kmodules.xyz/client-go/api/v1"
 )
 
 var _ = Describe("MySQL", func() {
@@ -42,10 +40,10 @@ var _ = Describe("MySQL", func() {
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
 
-		if !runTestDatabaseType() {
+		if !RunTestDatabaseType() {
 			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
 		}
-		if !runTestEnterprise(framework.Scale) {
+		if !RunTestEnterprise(framework.Scale) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.Scale))
 		}
 		if !framework.SSLEnabled {
@@ -66,11 +64,11 @@ var _ = Describe("MySQL", func() {
 		Context("Horizontal scale", func() {
 			It("Should horizontal scale MySQL", func() {
 				// MySQL objectMeta
-				myMeta := metav1.ObjectMeta{
+				issuerMeta := metav1.ObjectMeta{
 					Name:      rand.WithUniqSuffix("mysql"),
 					Namespace: fi.Namespace(),
 				}
-				issuer, err := fi.InsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
+				issuer, err := fi.InsureIssuer(issuerMeta, api.MySQL{}.ResourceFQN())
 				Expect(err).NotTo(HaveOccurred())
 				// Create MySQL Group Replication with SSL secured and wait for running
 				my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -79,43 +77,15 @@ var _ = Describe("MySQL", func() {
 					in.Spec.Topology = &api.MySQLClusterTopology{
 						Mode: &clusterMode,
 						Group: &api.MySQLGroupSpec{
-							Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
-							BaseServerID: types.Int64P(api.MySQLDefaultBaseServerID),
+							Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
 						},
 					}
-					// configure TLS issuer to MySQL CRD
-					in.Spec.RequireSSL = true
-					in.Spec.TLS = &kmapi.TLSConfig{
-						IssuerRef: &core.TypedLocalObjectReference{
-							Name:     issuer.Name,
-							Kind:     "Issuer",
-							APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
-						},
-						Certificates: []kmapi.CertificateSpec{
-							{
-								Alias: string(api.MySQLServerCert),
-								Subject: &kmapi.X509Subject{
-									Organizations: []string{
-										"kubedb:server",
-									},
-								},
-								DNSNames: []string{
-									"localhost",
-								},
-								IPAddresses: []string{
-									"127.0.0.1",
-								},
-							},
-						},
-					}
-				})
+				}, framework.AddTLSConfig(issuer.ObjectMeta))
 				Expect(err).NotTo(HaveOccurred())
 				dbInfo := framework.DatabaseConnectionInfo{
-					StatefulSetOrdinal: 0,
-					ClientPodIndex:     0,
-					DatabaseName:       framework.DBMySQL,
-					User:               framework.MySQLRootUser,
-					Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+					DatabaseName: framework.DBMySQL,
+					User:         framework.MySQLRootUser,
+					Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 				}
 
 				// Create a mysql User with required SSL
@@ -123,15 +93,7 @@ var _ = Describe("MySQL", func() {
 				fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
 				dbInfo.User = framework.MySQLRequiredSSLUser
 				fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
-
-				By("Creating Table")
-				fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
-
-				By("Inserting Rows")
-				fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
-
-				By("Checking Row Count of Table")
-				fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+				fi.PopulateMySQL(my.ObjectMeta, dbInfo)
 
 				By("Configuring MySQL group member scaled up")
 				myORUp := fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
@@ -142,13 +104,9 @@ var _ = Describe("MySQL", func() {
 					}
 				})
 
+				dbInfo.User = framework.MySQLRootUser
 				By("Checking MySQL horizontal scaled up")
-				for i := int32(0); i < *myORUp.Spec.HorizontalScaling.Member; i++ {
-					By(fmt.Sprintf("Checking ONLINE member count from Pod '%s-%d'", my.Name, i))
-					dbInfo.ClientPodIndex = int(1)
-					dbInfo.User = framework.MySQLRootUser
-					fi.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*myORUp.Spec.HorizontalScaling.Member)))
-				}
+				fi.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*myORUp.Spec.HorizontalScaling.Member)))
 
 				By("Configuring MySQL group member scaled down")
 				myORDown := fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
@@ -160,17 +118,11 @@ var _ = Describe("MySQL", func() {
 				})
 
 				By("Checking MySQL horizontal scaled down")
-				for i := int32(0); i < *myORDown.Spec.HorizontalScaling.Member; i++ {
-					By(fmt.Sprintf("Checking ONLINE member count from Pod '%s-%d'", my.Name, i))
-					dbInfo.ClientPodIndex = int(i)
-					dbInfo.User = framework.MySQLRootUser
-					fi.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*myORDown.Spec.HorizontalScaling.Member)))
-				}
+				fi.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*myORDown.Spec.HorizontalScaling.Member)))
 
 				// Retrieve Inserted Data
-				By("Checking Row Count of Table")
-				dbInfo.ClientPodIndex = int(3)
 				dbInfo.User = framework.MySQLRequiredSSLUser
+				By("Checking Row Count of Table")
 				fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 			})
 		})
@@ -178,48 +130,19 @@ var _ = Describe("MySQL", func() {
 		Context("Vertical scale", func() {
 			It("Should vertical scale MySQL standalone", func() {
 				// MySQL objectMeta
-				myMeta := metav1.ObjectMeta{
+				issuerMeta := metav1.ObjectMeta{
 					Name:      rand.WithUniqSuffix("mysql"),
 					Namespace: fi.Namespace(),
 				}
-				issuer, err := fi.InsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
+				issuer, err := fi.InsureIssuer(issuerMeta, api.MySQL{}.ResourceFQN())
 				Expect(err).NotTo(HaveOccurred())
 				// Create MySQL standalone with SSL secured and wait for running
-				my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-					in.Name = myMeta.Name
-					// configure TLS issuer to MySQL CRD
-					in.Spec.RequireSSL = true
-					in.Spec.TLS = &kmapi.TLSConfig{
-						IssuerRef: &core.TypedLocalObjectReference{
-							Name:     issuer.Name,
-							Kind:     "Issuer",
-							APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
-						},
-						Certificates: []kmapi.CertificateSpec{
-							{
-								Alias: string(api.MySQLServerCert),
-								Subject: &kmapi.X509Subject{
-									Organizations: []string{
-										"kubedb:server",
-									},
-								},
-								DNSNames: []string{
-									"localhost",
-								},
-								IPAddresses: []string{
-									"127.0.0.1",
-								},
-							},
-						},
-					}
-				})
+				my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, framework.AddTLSConfig(issuer.ObjectMeta))
 				Expect(err).NotTo(HaveOccurred())
 				dbInfo := framework.DatabaseConnectionInfo{
-					StatefulSetOrdinal: 0,
-					ClientPodIndex:     0,
-					DatabaseName:       framework.DBMySQL,
-					User:               framework.MySQLRootUser,
-					Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+					DatabaseName: framework.DBMySQL,
+					User:         framework.MySQLRootUser,
+					Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 				}
 				fi.EventuallyDBReady(my, dbInfo)
 
@@ -228,15 +151,7 @@ var _ = Describe("MySQL", func() {
 				fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
 				dbInfo.User = framework.MySQLRequiredSSLUser
 				fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
-
-				By("Creating Table")
-				fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
-
-				By("Inserting Rows")
-				fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
-
-				By("Checking Row Count of Table")
-				fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+				fi.PopulateMySQL(my.ObjectMeta, dbInfo)
 
 				// Vertical Scaling MySQL resources
 				myOR := fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
@@ -244,12 +159,12 @@ var _ = Describe("MySQL", func() {
 					in.Spec.VerticalScaling = &opsapi.MySQLVerticalScalingSpec{
 						MySQL: &core.ResourceRequirements{
 							Limits: core.ResourceList{
-								core.ResourceMemory: resource.MustParse("300Mi"),
-								core.ResourceCPU:    resource.MustParse("200m"),
+								core.ResourceMemory: resource.MustParse("1200Mi"),
+								core.ResourceCPU:    resource.MustParse("600m"),
 							},
 							Requests: core.ResourceList{
-								core.ResourceMemory: resource.MustParse("200Mi"),
-								core.ResourceCPU:    resource.MustParse("100m"),
+								core.ResourceMemory: resource.MustParse("1200Mi"),
+								core.ResourceCPU:    resource.MustParse("600m"),
 							},
 						},
 					}
@@ -265,14 +180,14 @@ var _ = Describe("MySQL", func() {
 				fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 			})
 		})
-		Context("Vertical scale", func() {
+		FContext("Vertical scale", func() {
 			It("Should vertical scale MySQL Group Replication", func() {
 				// MySQL objectMeta
-				myMeta := metav1.ObjectMeta{
+				issuerMeta := metav1.ObjectMeta{
 					Name:      rand.WithUniqSuffix("mysql"),
 					Namespace: fi.Namespace(),
 				}
-				issuer, err := fi.InsureIssuer(myMeta, api.MySQL{}.ResourceFQN())
+				issuer, err := fi.InsureIssuer(issuerMeta, api.MySQL{}.ResourceFQN())
 				Expect(err).NotTo(HaveOccurred())
 				// Create MySQL Group Replication with tls secured and wait for running
 				my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -281,43 +196,15 @@ var _ = Describe("MySQL", func() {
 					in.Spec.Topology = &api.MySQLClusterTopology{
 						Mode: &clusterMode,
 						Group: &api.MySQLGroupSpec{
-							Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
-							BaseServerID: types.Int64P(api.MySQLDefaultBaseServerID),
+							Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
 						},
 					}
-					// configure TLS issuer to MySQL CRD
-					in.Spec.RequireSSL = true
-					in.Spec.TLS = &kmapi.TLSConfig{
-						IssuerRef: &core.TypedLocalObjectReference{
-							Name:     issuer.Name,
-							Kind:     "Issuer",
-							APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
-						},
-						Certificates: []kmapi.CertificateSpec{
-							{
-								Alias: string(api.MySQLServerCert),
-								Subject: &kmapi.X509Subject{
-									Organizations: []string{
-										"kubedb:server",
-									},
-								},
-								DNSNames: []string{
-									"localhost",
-								},
-								IPAddresses: []string{
-									"127.0.0.1",
-								},
-							},
-						},
-					}
-				})
+				}, framework.AddTLSConfig(issuer.ObjectMeta))
 				Expect(err).NotTo(HaveOccurred())
 				dbInfo := framework.DatabaseConnectionInfo{
-					StatefulSetOrdinal: 0,
-					ClientPodIndex:     0,
-					DatabaseName:       framework.DBMySQL,
-					User:               framework.MySQLRootUser,
-					Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+					DatabaseName: framework.DBMySQL,
+					User:         framework.MySQLRootUser,
+					Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 				}
 				fi.EventuallyDBReady(my, dbInfo)
 
@@ -326,15 +213,7 @@ var _ = Describe("MySQL", func() {
 				fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
 				dbInfo.User = framework.MySQLRequiredSSLUser
 				fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
-
-				By("Creating Table")
-				fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
-
-				By("Inserting Rows")
-				fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
-
-				By("Checking Row Count of Table")
-				fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+				fi.PopulateMySQL(my.ObjectMeta, dbInfo)
 
 				// Vertical Scaling MySQL resources
 				myOR := fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
@@ -342,12 +221,12 @@ var _ = Describe("MySQL", func() {
 					in.Spec.VerticalScaling = &opsapi.MySQLVerticalScalingSpec{
 						MySQL: &core.ResourceRequirements{
 							Limits: core.ResourceList{
-								core.ResourceMemory: resource.MustParse("300Mi"),
-								core.ResourceCPU:    resource.MustParse("200m"),
+								core.ResourceMemory: resource.MustParse("1200Mi"),
+								core.ResourceCPU:    resource.MustParse("600m"),
 							},
 							Requests: core.ResourceList{
-								core.ResourceMemory: resource.MustParse("200Mi"),
-								core.ResourceCPU:    resource.MustParse("100m"),
+								core.ResourceMemory: resource.MustParse("1200Mi"),
+								core.ResourceCPU:    resource.MustParse("600m"),
 							},
 						},
 					}

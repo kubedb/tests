@@ -33,10 +33,10 @@ var _ = Describe("MySQL", func() {
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
 
-		if !runTestDatabaseType() {
+		if !RunTestDatabaseType() {
 			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
 		}
-		if !runTestCommunity(framework.StorageType) {
+		if !RunTestCommunity(framework.StorageType) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.StorageType))
 		}
 	})
@@ -65,22 +65,12 @@ var _ = Describe("MySQL", func() {
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              "",
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        "",
 					}
 					fi.EventuallyDBReady(my, dbInfo)
-
-					By("Creating Table")
-					fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
-
-					By("Inserting Rows")
-					fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
-
-					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+					fi.PopulateMySQL(my.ObjectMeta, dbInfo)
 				})
 			})
 			Context("With TerminationPolicyHalt", func() {

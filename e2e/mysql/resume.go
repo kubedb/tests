@@ -18,6 +18,7 @@ package mysql
 
 import (
 	"fmt"
+	"time"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
@@ -36,10 +37,10 @@ var _ = Describe("MySQL", func() {
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
 
-		if !runTestDatabaseType() {
+		if !RunTestDatabaseType() {
 			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
 		}
-		if !runTestCommunity(framework.Resume) {
+		if !RunTestCommunity(framework.Resume) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.Resume))
 		}
 	})
@@ -75,22 +76,12 @@ var _ = Describe("MySQL", func() {
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              "",
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        "",
 					}
 					fi.EventuallyDBReady(my, dbInfo)
-
-					By("Creating Table")
-					fi.EventuallyCreateTable(myMeta, dbInfo).Should(BeTrue())
-
-					By("Inserting Rows")
-					fi.EventuallyInsertRow(myMeta, dbInfo, 3).Should(BeTrue())
-
-					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(myMeta, dbInfo).Should(Equal(3))
+					fi.PopulateMySQL(my.ObjectMeta, dbInfo)
 
 					By("Delete mysql: " + myMeta.Namespace + "/" + myMeta.Name)
 					err = fi.DeleteMySQL(myMeta)
@@ -148,22 +139,12 @@ var _ = Describe("MySQL", func() {
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              "",
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        "",
 					}
 					fi.EventuallyDBReady(my, dbInfo)
-
-					By("Creating Table")
-					fi.EventuallyCreateTable(myMeta, dbInfo).Should(BeTrue())
-
-					By("Inserting Rows")
-					fi.EventuallyInsertRow(myMeta, dbInfo, 3).Should(BeTrue())
-
-					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(myMeta, dbInfo).Should(Equal(3))
+					fi.PopulateMySQL(my.ObjectMeta, dbInfo)
 
 					By("Delete mysql: " + myMeta.Namespace + "/" + myMeta.Name)
 					err = fi.DeleteMySQL(myMeta)
@@ -218,11 +199,9 @@ var _ = Describe("MySQL", func() {
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              "",
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        "",
 					}
 					fi.EventuallyDBReady(my, dbInfo)
 
@@ -264,8 +243,10 @@ var _ = Describe("MySQL", func() {
 					Expect(err).NotTo(HaveOccurred())
 					Expect(my.Spec.Init).NotTo(BeNil())
 
+					time.Sleep(2 * time.Minute)
+
 					By("Checking MySQL crd does not have status.conditions[DataRestored]")
-					Expect(kmapi.HasCondition(my.Status.Conditions, api.DatabaseDataRestored)).To(BeFalse())
+					Expect(kmapi.HasCondition(my.Status.Conditions, api.DatabaseDataRestored)).To(BeTrue())
 				})
 			})
 
@@ -276,7 +257,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					// insure initScriptConfigMap
+					// insure initScriptSecret
 					cm, err := fi.EnsureMyInitScriptConfigMap()
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL standalone and wait for running
@@ -300,11 +281,9 @@ var _ = Describe("MySQL", func() {
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              "",
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        "",
 					}
 					fi.EventuallyDBReady(my, dbInfo)
 
@@ -350,7 +329,7 @@ var _ = Describe("MySQL", func() {
 						Expect(my.Spec.Init).ShouldNot(BeNil())
 
 						By("Checking MySQL crd does not have status.conditions[DataRestored]")
-						Expect(kmapi.HasCondition(my.Status.Conditions, api.DatabaseDataRestored)).To(BeFalse())
+						Expect(kmapi.HasCondition(my.Status.Conditions, api.DatabaseDataRestored)).To(BeTrue())
 					}
 					By("Update mysql to set spec.terminationPolicy = WipeOut")
 					_, err = fi.PatchMySQL(myMeta, func(in *api.MySQL) *api.MySQL {
