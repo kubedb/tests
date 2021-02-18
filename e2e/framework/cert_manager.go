@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"time"
 
+	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
+
 	"github.com/appscode/go/crypto/rand"
 	"github.com/appscode/go/log"
 	"github.com/appscode/go/types"
@@ -32,7 +34,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	kmapi "kmodules.xyz/client-go/api/v1"
 	meta_util "kmodules.xyz/client-go/meta"
-	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 )
 
 const (

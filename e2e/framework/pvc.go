@@ -52,7 +52,7 @@ func (f *Framework) EventuallyPVCCount(meta metav1.ObjectMeta, fqn string) Gomeg
 	)
 }
 
-func (fi *Invocation) GetPersistentVolumeClaim() *core.PersistentVolumeClaim {
+func (fi *Invocation) PersistentVolumeClaim() *core.PersistentVolumeClaim {
 	return &core.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fi.app,
