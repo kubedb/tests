@@ -26,12 +26,10 @@ import (
 
 	"github.com/appscode/go/crypto/rand"
 	"github.com/appscode/go/types"
-	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	kmapi "kmodules.xyz/client-go/api/v1"
 )
 
 var _ = Describe("MySQL", func() {
@@ -50,10 +48,10 @@ var _ = Describe("MySQL", func() {
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
 
-		if !runTestDatabaseType() {
+		if !RunTestDatabaseType() {
 			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
 		}
-		if !runTestEnterprise(framework.Reconfigure) {
+		if !RunTestEnterprise(framework.Reconfigure) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.Reconfigure))
 		}
 		if !framework.SSLEnabled {
@@ -78,55 +76,28 @@ var _ = Describe("MySQL", func() {
 					customConfigName := rand.WithUniqSuffix("mysql")
 					cm, err := fi.CustomConfigForMySQL(customConfigs, customConfigName)
 					Expect(err).NotTo(HaveOccurred())
-					// MySQL objectMeta
-					myMeta := metav1.ObjectMeta{
+
+					issuerMeta := metav1.ObjectMeta{
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(myMeta, api.ResourceKindMySQL)
+					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL standalone and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
 						in.Spec.ConfigSecret = &core.LocalObjectReference{
 							Name: cm.Name,
 						}
 						// Set termination policy WipeOut to delete all mysql resources permanently
 						in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-						// configure TLS issuer to MySQL CRD
-						in.Spec.RequireSSL = true
-						in.Spec.TLS = &kmapi.TLSConfig{
-							IssuerRef: &core.TypedLocalObjectReference{
-								Name:     issuer.Name,
-								Kind:     "Issuer",
-								APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
-							},
-							Certificates: []kmapi.CertificateSpec{
-								{
-									Alias: string(api.MySQLServerCert),
-									Subject: &kmapi.X509Subject{
-										Organizations: []string{
-											"kubedb:server",
-										},
-									},
-									DNSNames: []string{
-										"localhost",
-									},
-									IPAddresses: []string{
-										"127.0.0.1",
-									},
-								},
-							},
-						}
-					})
+
+					}, framework.AddTLSConfig(issuer.ObjectMeta))
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 					}
 					fi.EventuallyDBReady(my, dbInfo)
 
@@ -156,55 +127,27 @@ var _ = Describe("MySQL", func() {
 					customConfigName := rand.WithUniqSuffix("mysql")
 					cm, err := fi.CustomConfigForMySQL(customConfigs, customConfigName)
 					Expect(err).NotTo(HaveOccurred())
-					// MySQL objectMeta
-					myMeta := metav1.ObjectMeta{
+
+					issuerMeta := metav1.ObjectMeta{
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(myMeta, api.ResourceKindMySQL)
+					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL standalone and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
 						in.Spec.ConfigSecret = &core.LocalObjectReference{
 							Name: cm.Name,
 						}
-						// configure TLS issuer to MySQL CRD
-						in.Spec.RequireSSL = true
-						in.Spec.TLS = &kmapi.TLSConfig{
-							IssuerRef: &core.TypedLocalObjectReference{
-								Name:     issuer.Name,
-								Kind:     "Issuer",
-								APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
-							},
-							Certificates: []kmapi.CertificateSpec{
-								{
-									Alias: string(api.MySQLServerCert),
-									Subject: &kmapi.X509Subject{
-										Organizations: []string{
-											"kubedb:server",
-										},
-									},
-									DNSNames: []string{
-										"localhost",
-									},
-									IPAddresses: []string{
-										"127.0.0.1",
-									},
-								},
-							},
-						}
 						// Set termination policy WipeOut to delete all mysql resources permanently
 						in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-					})
+					}, framework.AddTLSConfig(issuer.ObjectMeta))
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 					}
 					fi.EventuallyDBReady(my, dbInfo)
 
@@ -239,54 +182,26 @@ var _ = Describe("MySQL", func() {
 					customConfigName := rand.WithUniqSuffix("mysql")
 					cm, err := fi.CustomConfigForMySQL(customConfigs, customConfigName)
 					Expect(err).NotTo(HaveOccurred())
-					// MySQL objectMeta
-					myMeta := metav1.ObjectMeta{
+
+					issuerMeta := metav1.ObjectMeta{
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(myMeta, api.ResourceKindMySQL)
+					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					// Create MySQL standalone and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
 						in.Spec.ConfigSecret = &core.LocalObjectReference{
 							Name: cm.Name,
 						}
-						// configure TLS issuer to MySQL CRD
-						in.Spec.RequireSSL = true
-						in.Spec.TLS = &kmapi.TLSConfig{
-							IssuerRef: &core.TypedLocalObjectReference{
-								Name:     issuer.Name,
-								Kind:     "Issuer",
-								APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
-							},
-							Certificates: []kmapi.CertificateSpec{
-								{
-									Alias: string(api.MySQLServerCert),
-									Subject: &kmapi.X509Subject{
-										Organizations: []string{
-											"kubedb:server",
-										},
-									},
-									DNSNames: []string{
-										"localhost",
-									},
-									IPAddresses: []string{
-										"127.0.0.1",
-									},
-								},
-							},
-						}
 						// Set termination policy WipeOut to delete all mysql resources permanently
 						in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-					})
+					}, framework.AddTLSConfig(issuer.ObjectMeta))
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 					}
 					fi.EventuallyDBReady(my, dbInfo)
 
@@ -324,15 +239,14 @@ var _ = Describe("MySQL", func() {
 					customConfigName := rand.WithUniqSuffix("mysql")
 					cm, err := fi.CustomConfigForMySQL(customConfigs, customConfigName)
 					Expect(err).NotTo(HaveOccurred())
-					// MySQL objectMeta
-					myMeta := metav1.ObjectMeta{
+
+					issuerMeta := metav1.ObjectMeta{
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(myMeta, api.ResourceKindMySQL)
+					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					// Create MySQL Group Replication and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
 						in.Spec.Replicas = types.Int32P(api.MySQLDefaultGroupSize)
 						clusterMode := api.MySQLClusterModeGroup
 						in.Spec.Topology = &api.MySQLClusterTopology{
@@ -345,40 +259,13 @@ var _ = Describe("MySQL", func() {
 						in.Spec.ConfigSecret = &core.LocalObjectReference{
 							Name: cm.Name,
 						}
-						// configure TLS issuer to MySQL CRD
-						in.Spec.RequireSSL = true
-						in.Spec.TLS = &kmapi.TLSConfig{
-							IssuerRef: &core.TypedLocalObjectReference{
-								Name:     issuer.Name,
-								Kind:     "Issuer",
-								APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
-							},
-							Certificates: []kmapi.CertificateSpec{
-								{
-									Alias: string(api.MySQLServerCert),
-									Subject: &kmapi.X509Subject{
-										Organizations: []string{
-											"kubedb:server",
-										},
-									},
-									DNSNames: []string{
-										"localhost",
-									},
-									IPAddresses: []string{
-										"127.0.0.1",
-									},
-								},
-							},
-						}
-					})
+					}, framework.AddTLSConfig(issuer.ObjectMeta))
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 					}
 					fi.EventuallyDBReady(my, dbInfo)
 
@@ -408,15 +295,14 @@ var _ = Describe("MySQL", func() {
 					customConfigName := rand.WithUniqSuffix("mysql")
 					cm, err := fi.CustomConfigForMySQL(customConfigs, customConfigName)
 					Expect(err).NotTo(HaveOccurred())
-					// MySQL objectMeta
-					myMeta := metav1.ObjectMeta{
+
+					issuerMeta := metav1.ObjectMeta{
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(myMeta, api.ResourceKindMySQL)
+					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					// Create MySQL Group Replication and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
 						in.Spec.Replicas = types.Int32P(api.MySQLDefaultGroupSize)
 						clusterMode := api.MySQLClusterModeGroup
 						in.Spec.Topology = &api.MySQLClusterTopology{
@@ -429,40 +315,13 @@ var _ = Describe("MySQL", func() {
 						in.Spec.ConfigSecret = &core.LocalObjectReference{
 							Name: cm.Name,
 						}
-						// configure TLS issuer to MySQL CRD
-						in.Spec.RequireSSL = true
-						in.Spec.TLS = &kmapi.TLSConfig{
-							IssuerRef: &core.TypedLocalObjectReference{
-								Name:     issuer.Name,
-								Kind:     "Issuer",
-								APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
-							},
-							Certificates: []kmapi.CertificateSpec{
-								{
-									Alias: string(api.MySQLServerCert),
-									Subject: &kmapi.X509Subject{
-										Organizations: []string{
-											"kubedb:server",
-										},
-									},
-									DNSNames: []string{
-										"localhost",
-									},
-									IPAddresses: []string{
-										"127.0.0.1",
-									},
-								},
-							},
-						}
-					})
+					}, framework.AddTLSConfig(issuer.ObjectMeta))
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 					}
 					fi.EventuallyDBReady(my, dbInfo)
 
@@ -496,15 +355,14 @@ var _ = Describe("MySQL", func() {
 					customConfigName := rand.WithUniqSuffix("mysql")
 					cm, err := fi.CustomConfigForMySQL(customConfigs, customConfigName)
 					Expect(err).NotTo(HaveOccurred())
-					// MySQL objectMeta
-					myMeta := metav1.ObjectMeta{
+
+					issuerMeta := metav1.ObjectMeta{
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(myMeta, api.ResourceKindMySQL)
+					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					// Create MySQL Group Replication and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
 						in.Spec.Replicas = types.Int32P(api.MySQLDefaultGroupSize)
 						clusterMode := api.MySQLClusterModeGroup
 						in.Spec.Topology = &api.MySQLClusterTopology{
@@ -517,40 +375,13 @@ var _ = Describe("MySQL", func() {
 						in.Spec.ConfigSecret = &core.LocalObjectReference{
 							Name: cm.Name,
 						}
-						// configure TLS issuer to MySQL CRD
-						in.Spec.RequireSSL = true
-						in.Spec.TLS = &kmapi.TLSConfig{
-							IssuerRef: &core.TypedLocalObjectReference{
-								Name:     issuer.Name,
-								Kind:     "Issuer",
-								APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
-							},
-							Certificates: []kmapi.CertificateSpec{
-								{
-									Alias: string(api.MySQLServerCert),
-									Subject: &kmapi.X509Subject{
-										Organizations: []string{
-											"kubedb:server",
-										},
-									},
-									DNSNames: []string{
-										"localhost",
-									},
-									IPAddresses: []string{
-										"127.0.0.1",
-									},
-								},
-							},
-						}
-					})
+					}, framework.AddTLSConfig(issuer.ObjectMeta))
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 					}
 					fi.EventuallyDBReady(my, dbInfo)
 

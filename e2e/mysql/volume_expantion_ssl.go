@@ -43,10 +43,10 @@ var _ = Describe("MySQL", func() {
 		if !fi.IsGKE() {
 			Skip("volume expansion testing is only supported in GKE")
 		}
-		if !runTestDatabaseType() {
+		if !RunTestDatabaseType() {
 			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
 		}
-		if !runTestEnterprise(framework.VolumeExpansion) {
+		if !RunTestEnterprise(framework.VolumeExpansion) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.VolumeExpansion))
 		}
 		if !framework.SSLEnabled {
@@ -117,11 +117,9 @@ var _ = Describe("MySQL", func() {
 				Expect(err).NotTo(HaveOccurred())
 				// Database connection information
 				dbInfo := framework.DatabaseConnectionInfo{
-					StatefulSetOrdinal: 0,
-					ClientPodIndex:     0,
-					DatabaseName:       framework.DBMySQL,
-					User:               framework.MySQLRootUser,
-					Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+					DatabaseName: framework.DBMySQL,
+					User:         framework.MySQLRootUser,
+					Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 				}
 				fi.EventuallyDBReady(my, dbInfo)
 
@@ -220,11 +218,9 @@ var _ = Describe("MySQL", func() {
 				Expect(err).NotTo(HaveOccurred())
 				// Database connection information
 				dbInfo := framework.DatabaseConnectionInfo{
-					StatefulSetOrdinal: 0,
-					ClientPodIndex:     0,
-					DatabaseName:       framework.DBMySQL,
-					User:               framework.MySQLRootUser,
-					Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+					DatabaseName: framework.DBMySQL,
+					User:         framework.MySQLRootUser,
+					Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 				}
 				fi.EventuallyDBReady(my, dbInfo)
 

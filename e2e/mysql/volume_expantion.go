@@ -39,10 +39,10 @@ var _ = Describe("MySQL", func() {
 		if !fi.IsGKE() {
 			Skip("volume expansion testing is only supported in GKE")
 		}
-		if !runTestDatabaseType() {
+		if !RunTestDatabaseType() {
 			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
 		}
-		if !runTestEnterprise(framework.VolumeExpansion) {
+		if !RunTestEnterprise(framework.VolumeExpansion) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.VolumeExpansion))
 		}
 	})
@@ -79,11 +79,9 @@ var _ = Describe("MySQL", func() {
 				Expect(err).NotTo(HaveOccurred())
 				// Database connection information
 				dbInfo := framework.DatabaseConnectionInfo{
-					StatefulSetOrdinal: 0,
-					ClientPodIndex:     0,
-					DatabaseName:       framework.DBMySQL,
-					User:               framework.MySQLRootUser,
-					Param:              "",
+					DatabaseName: framework.DBMySQL,
+					User:         framework.MySQLRootUser,
+					Param:        "",
 				}
 				fi.EventuallyDBReady(my, dbInfo)
 
@@ -151,11 +149,9 @@ var _ = Describe("MySQL", func() {
 				Expect(err).NotTo(HaveOccurred())
 				// Database connection information
 				dbInfo := framework.DatabaseConnectionInfo{
-					StatefulSetOrdinal: 0,
-					ClientPodIndex:     0,
-					DatabaseName:       framework.DBMySQL,
-					User:               framework.MySQLRootUser,
-					Param:              "",
+					DatabaseName: framework.DBMySQL,
+					User:         framework.MySQLRootUser,
+					Param:        "",
 				}
 				fi.EventuallyDBReady(my, dbInfo)
 

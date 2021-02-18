@@ -23,7 +23,6 @@ import (
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	opsapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
-	"kubedb.dev/apimachinery/pkg/util"
 	"kubedb.dev/tests/e2e/framework"
 	"kubedb.dev/tests/e2e/matcher"
 
@@ -43,10 +42,10 @@ var _ = Describe("MySQL", func() {
 	BeforeEach(func() {
 		fi = framework.NewInvocation()
 
-		if !runTestDatabaseType() {
+		if !RunTestDatabaseType() {
 			Skip(fmt.Sprintf("Provide test for database `%s`", api.ResourceSingularMySQL))
 		}
-		if !runTestEnterprise(framework.ReconfigureTLS) {
+		if !RunTestEnterprise(framework.ReconfigureTLS) {
 			Skip(fmt.Sprintf("Provide test profile `%s` or `all` or `enterprise` to test this.", framework.ReconfigureTLS))
 		}
 		if !framework.SSLEnabled {
@@ -107,11 +106,9 @@ var _ = Describe("MySQL", func() {
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 					}
 					fi.EventuallyDBReady(my, dbInfo)
 
@@ -142,14 +139,6 @@ var _ = Describe("MySQL", func() {
 					// we need to set `User` and `Param` to access database without TLSCustom config.
 					dbInfo.User = framework.MySQLRootUser
 					dbInfo.Param = ""
-					By("Checking MySQL TLS config have removed")
-					my, err = fi.DBClient().KubedbV1alpha2().MySQLs(fi.Namespace()).Get(context.TODO(), my.Name, metav1.GetOptions{})
-					Expect(err).NotTo(HaveOccurred())
-					sts, err := fi.KubeClient().AppsV1().StatefulSets(fi.Namespace()).Get(context.TODO(), my.OffshootName(), metav1.GetOptions{})
-					Expect(err).NotTo(HaveOccurred())
-					util.CheckMySQLTLSConfigRemoved(my, sts)
-
-					// Retrieve Inserted Data
 					By("Checking Row Count of Table")
 					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 				})
@@ -171,11 +160,9 @@ var _ = Describe("MySQL", func() {
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              "",
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        "",
 					}
 					fi.EventuallyDBReady(my, dbInfo)
 
@@ -208,14 +195,6 @@ var _ = Describe("MySQL", func() {
 					// we need to set `User` and `Param` to access database with TLSCustom config.
 					dbInfo.User = framework.MySQLRootUser
 					dbInfo.Param = fmt.Sprintf("tls=%s", framework.TLSCustomConfig)
-					By("Checking MySQL TLS config have added")
-					my, err = fi.DBClient().KubedbV1alpha2().MySQLs(fi.Namespace()).Get(context.TODO(), my.Name, metav1.GetOptions{})
-					Expect(err).NotTo(HaveOccurred())
-					sts, err := fi.KubeClient().AppsV1().StatefulSets(fi.Namespace()).Get(context.TODO(), my.OffshootName(), metav1.GetOptions{})
-					Expect(err).NotTo(HaveOccurred())
-					util.CheckMySQLTLSConfigAdded(my, sts)
-
-					// Retrieve Inserted Data
 					By("Checking Row Count of Table")
 					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 				})
@@ -271,11 +250,9 @@ var _ = Describe("MySQL", func() {
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 					}
 					fi.EventuallyDBReady(my, dbInfo)
 
@@ -307,14 +284,6 @@ var _ = Describe("MySQL", func() {
 					// we need to set `User` and `Param` to access database without TLSCustom config.
 					dbInfo.User = framework.MySQLRootUser
 					dbInfo.Param = ""
-					By("Checking MySQL TLS config have removed")
-					my, err = fi.DBClient().KubedbV1alpha2().MySQLs(fi.Namespace()).Get(context.TODO(), my.Name, metav1.GetOptions{})
-					Expect(err).NotTo(HaveOccurred())
-					sts, err := fi.KubeClient().AppsV1().StatefulSets(fi.Namespace()).Get(context.TODO(), my.OffshootName(), metav1.GetOptions{})
-					Expect(err).NotTo(HaveOccurred())
-					util.CheckMySQLTLSConfigRemoved(my, sts)
-
-					// Retrieve Inserted Data
 					By("Checking Row Count of Table")
 					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 				})
@@ -337,11 +306,9 @@ var _ = Describe("MySQL", func() {
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              "",
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        "",
 					}
 					fi.EventuallyDBReady(my, dbInfo)
 
@@ -381,16 +348,6 @@ var _ = Describe("MySQL", func() {
 
 					// ReconfigureTLS OpsRequest is succeeded, That's why TLS configuration have been added.
 					// we need to set `User` and `Param` to access database with TLSCustom config.
-					dbInfo.User = framework.MySQLRootUser
-					dbInfo.Param = fmt.Sprintf("tls=%s", framework.TLSCustomConfig)
-					By("Checking MySQL TLS config have added")
-					my, err = fi.DBClient().KubedbV1alpha2().MySQLs(fi.Namespace()).Get(context.TODO(), my.Name, metav1.GetOptions{})
-					Expect(err).NotTo(HaveOccurred())
-					sts, err := fi.KubeClient().AppsV1().StatefulSets(fi.Namespace()).Get(context.TODO(), my.OffshootName(), metav1.GetOptions{})
-					Expect(err).NotTo(HaveOccurred())
-					util.CheckMySQLTLSConfigAdded(my, sts)
-
-					// Retrieve Inserted Data
 					By("Checking Row Count of Table")
 					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 				})
@@ -445,11 +402,9 @@ var _ = Describe("MySQL", func() {
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 					}
 					fi.EventuallyDBReady(my, dbInfo)
 
@@ -561,11 +516,9 @@ var _ = Describe("MySQL", func() {
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
-						StatefulSetOrdinal: 0,
-						ClientPodIndex:     0,
-						DatabaseName:       framework.DBMySQL,
-						User:               framework.MySQLRootUser,
-						Param:              fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
 					}
 					fi.EventuallyDBReady(my, dbInfo)
 
