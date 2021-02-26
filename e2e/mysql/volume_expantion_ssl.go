@@ -184,7 +184,6 @@ var _ = Describe("MySQL", func() {
 						Mode: &clusterMode,
 						Group: &api.MySQLGroupSpec{
 							Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
-							BaseServerID: types.Int64P(api.MySQLDefaultBaseServerID),
 						},
 					}
 					// configure TLS issuer to MySQL CRD

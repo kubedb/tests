@@ -18,7 +18,6 @@ package mysql
 
 import (
 	"fmt"
-
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	opsapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
@@ -65,7 +64,7 @@ var _ = Describe("MySQL", func() {
 
 	})
 
-	FContext("Reconfigure Database", func() {
+	Context("Reconfigure Database", func() {
 		Context("MySQL Standalone", func() {
 			Context("Remove custom configuration", func() {
 				It("Should remove custom configuration", func() {
@@ -225,7 +224,6 @@ var _ = Describe("MySQL", func() {
 							Mode: &clusterMode,
 							Group: &api.MySQLGroupSpec{
 								Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
-								BaseServerID: types.Int64P(api.MySQLDefaultBaseServerID),
 							},
 						}
 						in.Spec.ConfigSecret = &core.LocalObjectReference{
@@ -275,7 +273,6 @@ var _ = Describe("MySQL", func() {
 							Mode: &clusterMode,
 							Group: &api.MySQLGroupSpec{
 								Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
-								BaseServerID: types.Int64P(api.MySQLDefaultBaseServerID),
 							},
 						}
 						in.Spec.ConfigSecret = &core.LocalObjectReference{
@@ -330,7 +327,6 @@ var _ = Describe("MySQL", func() {
 							Mode: &clusterMode,
 							Group: &api.MySQLGroupSpec{
 								Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
-								BaseServerID: types.Int64P(api.MySQLDefaultBaseServerID),
 							},
 						}
 						in.Spec.ConfigSecret = &core.LocalObjectReference{

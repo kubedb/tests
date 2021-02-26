@@ -68,41 +68,14 @@ var _ = Describe("MySQL", func() {
 			Context("Remove TLS/SSL", func() {
 				It("Should remove TLS/SSL", func() {
 					// MySQL objectMeta
-					myMeta := metav1.ObjectMeta{
+					issuerMeta := metav1.ObjectMeta{
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(myMeta, api.ResourceKindMySQL)
+					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL standalone with tls secured and wait for running
-					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
-						// configure TLS issuer to MySQL CRD
-						in.Spec.RequireSSL = true
-						in.Spec.TLS = &kmapi.TLSConfig{
-							IssuerRef: &core.TypedLocalObjectReference{
-								Name:     issuer.Name,
-								Kind:     "Issuer",
-								APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
-							},
-							Certificates: []kmapi.CertificateSpec{
-								{
-									Alias: string(api.MySQLServerCert),
-									Subject: &kmapi.X509Subject{
-										Organizations: []string{
-											"kubedb:server",
-										},
-									},
-									DNSNames: []string{
-										"localhost",
-									},
-									IPAddresses: []string{
-										"127.0.0.1",
-									},
-								},
-							},
-						}
-					})
+					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion,  framework.AddTLSConfig(issuer.ObjectMeta))
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
@@ -117,15 +90,8 @@ var _ = Describe("MySQL", func() {
 					fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
 					dbInfo.User = framework.MySQLRequiredSSLUser
 					fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
+					fi.PopulateMySQL(my.ObjectMeta, dbInfo)
 
-					By("Creating Table")
-					fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
-
-					By("Inserting Rows")
-					fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
-
-					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 					// Removing TLS/SSL and waiting for the success
 					_ = fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
 						in.Spec.Type = opsapi.OpsRequestTypeReconfigureTLSs
@@ -145,7 +111,7 @@ var _ = Describe("MySQL", func() {
 			})
 
 			Context("Add TLS/SSL", func() {
-				It("Should remove TLS/SSL", func() {
+				It("Should add TLS/SSL", func() {
 					// MySQL objectMeta
 					myMeta := metav1.ObjectMeta{
 						Name:      rand.WithUniqSuffix("mysql"),
@@ -165,15 +131,8 @@ var _ = Describe("MySQL", func() {
 						Param:        "",
 					}
 					fi.EventuallyDBReady(my, dbInfo)
+					fi.PopulateMySQL(my.ObjectMeta, dbInfo)
 
-					By("Creating Table")
-					fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
-
-					By("Inserting Rows")
-					fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
-
-					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 					// Adding TLS/SSL and waiting for the success
 					requireSSL := true
 					_ = fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
@@ -204,11 +163,11 @@ var _ = Describe("MySQL", func() {
 			Context("Remove TLS/SSL", func() {
 				It("Should remove TLS/SSL", func() {
 					// MySQL objectMeta
-					myMeta := metav1.ObjectMeta{
+					issuerMeta := metav1.ObjectMeta{
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(myMeta, api.ResourceKindMySQL)
+					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL Group Replication with tls secured and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -218,35 +177,9 @@ var _ = Describe("MySQL", func() {
 							Mode: &clusterMode,
 							Group: &api.MySQLGroupSpec{
 								Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
-								BaseServerID: types.Int64P(api.MySQLDefaultBaseServerID),
 							},
 						}
-						// configure TLS issuer to MySQL CRD
-						in.Spec.RequireSSL = true
-						in.Spec.TLS = &kmapi.TLSConfig{
-							IssuerRef: &core.TypedLocalObjectReference{
-								Name:     issuer.Name,
-								Kind:     "Issuer",
-								APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
-							},
-							Certificates: []kmapi.CertificateSpec{
-								{
-									Alias: string(api.MySQLServerCert),
-									Subject: &kmapi.X509Subject{
-										Organizations: []string{
-											"kubedb:server",
-										},
-									},
-									DNSNames: []string{
-										"localhost",
-									},
-									IPAddresses: []string{
-										"127.0.0.1",
-									},
-								},
-							},
-						}
-					})
+					}, framework.AddTLSConfig(issuer.ObjectMeta))
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
@@ -261,15 +194,7 @@ var _ = Describe("MySQL", func() {
 					fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
 					dbInfo.User = framework.MySQLRequiredSSLUser
 					fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
-
-					By("Creating Table")
-					fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
-
-					By("Inserting Rows")
-					fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
-
-					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+					fi.PopulateMySQL(my.ObjectMeta, dbInfo)
 
 					// Removing TLS/SSL and waiting for the success
 					_ = fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
@@ -299,7 +224,6 @@ var _ = Describe("MySQL", func() {
 							Mode: &clusterMode,
 							Group: &api.MySQLGroupSpec{
 								Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
-								BaseServerID: types.Int64P(api.MySQLDefaultBaseServerID),
 							},
 						}
 					})
@@ -311,15 +235,7 @@ var _ = Describe("MySQL", func() {
 						Param:        "",
 					}
 					fi.EventuallyDBReady(my, dbInfo)
-
-					By("Creating Table")
-					fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
-
-					By("Inserting Rows")
-					fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
-
-					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+					fi.PopulateMySQL(my.ObjectMeta, dbInfo)
 
 					issuerMeta := metav1.ObjectMeta{
 						Name:      rand.WithUniqSuffix("mysql"),
@@ -347,7 +263,8 @@ var _ = Describe("MySQL", func() {
 					})
 
 					// ReconfigureTLS OpsRequest is succeeded, That's why TLS configuration have been added.
-					// we need to set `User` and `Param` to access database with TLSCustom config.
+					// we need to set `Param` to access database with TLSCustom config for `root` user.
+					dbInfo.Param = fmt.Sprintf("tls=%s", framework.TLSCustomConfig)
 					By("Checking Row Count of Table")
 					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 				})
@@ -356,11 +273,11 @@ var _ = Describe("MySQL", func() {
 			Context("Rotate TLS/SSL Certificates", func() {
 				It("Should rotate TLS/SSL Certificates", func() {
 					// MySQL objectMeta
-					myMeta := metav1.ObjectMeta{
+					issuerMeta := metav1.ObjectMeta{
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(myMeta, api.ResourceKindMySQL)
+					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL Group Replication with tls secured and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -370,35 +287,9 @@ var _ = Describe("MySQL", func() {
 							Mode: &clusterMode,
 							Group: &api.MySQLGroupSpec{
 								Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
-								BaseServerID: types.Int64P(api.MySQLDefaultBaseServerID),
 							},
 						}
-						// configure TLS issuer to MySQL CRD
-						in.Spec.RequireSSL = true
-						in.Spec.TLS = &kmapi.TLSConfig{
-							IssuerRef: &core.TypedLocalObjectReference{
-								Name:     issuer.Name,
-								Kind:     "Issuer",
-								APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
-							},
-							Certificates: []kmapi.CertificateSpec{
-								{
-									Alias: string(api.MySQLServerCert),
-									Subject: &kmapi.X509Subject{
-										Organizations: []string{
-											"kubedb:server",
-										},
-									},
-									DNSNames: []string{
-										"localhost",
-									},
-									IPAddresses: []string{
-										"127.0.0.1",
-									},
-								},
-							},
-						}
-					})
+					}, framework.AddTLSConfig(issuer.ObjectMeta))
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
@@ -413,15 +304,7 @@ var _ = Describe("MySQL", func() {
 					fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
 					dbInfo.User = framework.MySQLRequiredSSLUser
 					fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
-
-					By("Creating Table")
-					fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
-
-					By("Inserting Rows")
-					fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
-
-					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+					fi.PopulateMySQL(my.ObjectMeta, dbInfo)
 
 					// Collect certs revision to verify next that certs issuing are updated
 					revisions, err := fi.GetAllCertsRevision(my)
@@ -470,11 +353,11 @@ var _ = Describe("MySQL", func() {
 			Context("Set require secure transport OFF", func() {
 				It("Should set secure require transport OFF", func() {
 					// MySQL objectMeta
-					myMeta := metav1.ObjectMeta{
+					issuerMeta := metav1.ObjectMeta{
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(myMeta, api.ResourceKindMySQL)
+					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL Group Replication with tls secured and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -484,35 +367,9 @@ var _ = Describe("MySQL", func() {
 							Mode: &clusterMode,
 							Group: &api.MySQLGroupSpec{
 								Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
-								BaseServerID: types.Int64P(api.MySQLDefaultBaseServerID),
 							},
 						}
-						// configure TLS issuer to MySQL CRD
-						in.Spec.RequireSSL = true
-						in.Spec.TLS = &kmapi.TLSConfig{
-							IssuerRef: &core.TypedLocalObjectReference{
-								Name:     issuer.Name,
-								Kind:     "Issuer",
-								APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
-							},
-							Certificates: []kmapi.CertificateSpec{
-								{
-									Alias: string(api.MySQLServerCert),
-									Subject: &kmapi.X509Subject{
-										Organizations: []string{
-											"kubedb:server",
-										},
-									},
-									DNSNames: []string{
-										"localhost",
-									},
-									IPAddresses: []string{
-										"127.0.0.1",
-									},
-								},
-							},
-						}
-					})
+					}, framework.AddTLSConfig(issuer.ObjectMeta))
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
@@ -527,15 +384,7 @@ var _ = Describe("MySQL", func() {
 					fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
 					dbInfo.User = framework.MySQLRequiredSSLUser
 					fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
-
-					By("Creating Table")
-					fi.EventuallyCreateTable(my.ObjectMeta, dbInfo).Should(BeTrue())
-
-					By("Inserting Rows")
-					fi.EventuallyInsertRow(my.ObjectMeta, dbInfo, 3).Should(BeTrue())
-
-					By("Checking Row Count of Table")
-					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+					fi.PopulateMySQL(my.ObjectMeta, dbInfo)
 
 					// Set require secure transport OFF and waiting for the success
 					requireSSL := false
