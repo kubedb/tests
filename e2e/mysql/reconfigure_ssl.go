@@ -75,7 +75,7 @@ var _ = Describe("MySQL", func() {
 					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL standalone with tls secured and wait for running
-					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion,  framework.AddTLSConfig(issuer.ObjectMeta))
+					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, framework.AddTLSConfig(issuer.ObjectMeta))
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
@@ -113,16 +113,14 @@ var _ = Describe("MySQL", func() {
 			Context("Add TLS/SSL", func() {
 				It("Should add TLS/SSL", func() {
 					// MySQL objectMeta
-					myMeta := metav1.ObjectMeta{
+					issuerMeta := metav1.ObjectMeta{
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(myMeta, api.ResourceKindMySQL)
+					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL standalone with tls secured and wait for running
-					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Name = myMeta.Name
-					})
+					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion)
 					Expect(err).NotTo(HaveOccurred())
 					// Database connection information
 					dbInfo := framework.DatabaseConnectionInfo{
@@ -176,7 +174,7 @@ var _ = Describe("MySQL", func() {
 						in.Spec.Topology = &api.MySQLClusterTopology{
 							Mode: &clusterMode,
 							Group: &api.MySQLGroupSpec{
-								Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
+								Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
 							},
 						}
 					}, framework.AddTLSConfig(issuer.ObjectMeta))
@@ -223,7 +221,7 @@ var _ = Describe("MySQL", func() {
 						in.Spec.Topology = &api.MySQLClusterTopology{
 							Mode: &clusterMode,
 							Group: &api.MySQLGroupSpec{
-								Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
+								Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
 							},
 						}
 					})
@@ -286,7 +284,7 @@ var _ = Describe("MySQL", func() {
 						in.Spec.Topology = &api.MySQLClusterTopology{
 							Mode: &clusterMode,
 							Group: &api.MySQLGroupSpec{
-								Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
+								Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
 							},
 						}
 					}, framework.AddTLSConfig(issuer.ObjectMeta))
@@ -350,6 +348,169 @@ var _ = Describe("MySQL", func() {
 				})
 			})
 
+			Context("Partial update TLS/SSL Certificates", func() {
+				It("Should update TLS/SSL Certificates", func() {
+					// MySQL objectMeta
+					issuerMeta := metav1.ObjectMeta{
+						Name:      rand.WithUniqSuffix("mysql"),
+						Namespace: fi.Namespace(),
+					}
+					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					Expect(err).NotTo(HaveOccurred())
+					// Create MySQL Group Replication with tls secured and wait for running
+					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
+						in.Spec.Replicas = types.Int32P(api.MySQLDefaultGroupSize)
+						clusterMode := api.MySQLClusterModeGroup
+						in.Spec.Topology = &api.MySQLClusterTopology{
+							Mode: &clusterMode,
+							Group: &api.MySQLGroupSpec{
+								Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
+							},
+						}
+					}, framework.AddTLSConfig(issuer.ObjectMeta))
+					Expect(err).NotTo(HaveOccurred())
+					// Database connection information
+					dbInfo := framework.DatabaseConnectionInfo{
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+					}
+					fi.EventuallyDBReady(my, dbInfo)
+
+					// Create a mysql User with required SSL
+					By("Create mysql User with required SSL")
+					fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
+					dbInfo.User = framework.MySQLRequiredSSLUser
+					fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
+					fi.PopulateMySQL(my.ObjectMeta, dbInfo)
+
+					// Renew Certificates and waiting for the success
+					duration, err := time.ParseDuration("24h30m")
+					Expect(err).NotTo(HaveOccurred())
+					requireSSL := true
+					_ = fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
+						in.Spec.Type = opsapi.OpsRequestTypeReconfigureTLSs
+						in.Spec.TLS = &opsapi.MySQLTLSSpec{
+							TLSSpec: opsapi.TLSSpec{
+								TLSConfig: kmapi.TLSConfig{
+									Certificates: []kmapi.CertificateSpec{
+										{
+											Alias: string(api.MySQLServerCert),
+											RenewBefore: &metav1.Duration{
+												Duration: duration,
+											},
+											EmailAddresses: []string{
+												"abc@appscode.com",
+												"test@appscode.com",
+											},
+										},
+									},
+								},
+							},
+							RequireSSL: &requireSSL,
+						}
+					})
+
+					// Retrieve Inserted Data
+					By("Checking Row Count of Table")
+					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+				})
+			})
+
+			Context("Update TLS/SSL Issuer", func() {
+				It("Should update TLS/SSL issuer", func() {
+					// issuer objectMeta
+					issuerMeta := metav1.ObjectMeta{
+						Name:      rand.WithUniqSuffix("issuer"),
+						Namespace: fi.Namespace(),
+					}
+					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					Expect(err).NotTo(HaveOccurred())
+					// Create MySQL Group Replication with tls secured and wait for running
+					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
+						in.Spec.Replicas = types.Int32P(api.MySQLDefaultGroupSize)
+						clusterMode := api.MySQLClusterModeGroup
+						in.Spec.Topology = &api.MySQLClusterTopology{
+							Mode: &clusterMode,
+							Group: &api.MySQLGroupSpec{
+								Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
+							},
+						}
+					}, framework.AddTLSConfig(issuer.ObjectMeta))
+					Expect(err).NotTo(HaveOccurred())
+					// Database connection information
+					dbInfo := framework.DatabaseConnectionInfo{
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+					}
+					fi.EventuallyDBReady(my, dbInfo)
+
+					// Create a mysql User with required SSL
+					By("Create mysql User with required SSL")
+					fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
+					dbInfo.User = framework.MySQLRequiredSSLUser
+					fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
+					fi.PopulateMySQL(my.ObjectMeta, dbInfo)
+
+					// Collect certs revision to verify next that certs issuing are updated
+					revisions, err := fi.GetAllCertsRevision(my)
+					Expect(err).NotTo(HaveOccurred())
+
+					// Renew Certificates and waiting for the success
+					duration, err := time.ParseDuration("24h30m")
+					Expect(err).NotTo(HaveOccurred())
+
+					// issuer objectMeta
+					issuerMeta = metav1.ObjectMeta{
+						Name:      rand.WithUniqSuffix("new-issuer"),
+						Namespace: fi.Namespace(),
+					}
+					issuer, err = fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					Expect(err).NotTo(HaveOccurred())
+
+					_ = fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
+						in.Spec.Type = opsapi.OpsRequestTypeReconfigureTLSs
+						in.Spec.TLS = &opsapi.MySQLTLSSpec{
+							TLSSpec: opsapi.TLSSpec{
+								RotateCertificates: true,
+								TLSConfig: kmapi.TLSConfig{
+									IssuerRef: &core.TypedLocalObjectReference{
+										Name:     issuer.Name,
+										Kind:     "Issuer",
+										APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
+									},
+									Certificates: []kmapi.CertificateSpec{
+										{
+											Alias: string(api.MySQLServerCert),
+											RenewBefore: &metav1.Duration{
+												Duration: duration,
+											},
+											EmailAddresses: []string{
+												"abc@appscode.com",
+												"test@appscode.com",
+											},
+										},
+									},
+								},
+							},
+						}
+					})
+
+					By("Verify issuing certs are updated with new revision")
+					my, err = fi.DBClient().KubedbV1alpha2().MySQLs(fi.Namespace()).Get(context.TODO(), my.Name, metav1.GetOptions{})
+					Expect(err).NotTo(HaveOccurred())
+					updatedRevisions, err := fi.GetAllCertsRevision(my)
+					Expect(err).NotTo(HaveOccurred())
+					_, err = fi.CheckAllCertsRevisionUpdated(revisions, updatedRevisions)
+					Expect(err).NotTo(HaveOccurred())
+
+					// Retrieve Inserted Data
+					By("Checking Row Count of Table")
+					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+				})
+			})
+
 			Context("Set require secure transport OFF", func() {
 				It("Should set secure require transport OFF", func() {
 					// MySQL objectMeta
@@ -366,7 +527,7 @@ var _ = Describe("MySQL", func() {
 						in.Spec.Topology = &api.MySQLClusterTopology{
 							Mode: &clusterMode,
 							Group: &api.MySQLGroupSpec{
-								Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
+								Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
 							},
 						}
 					}, framework.AddTLSConfig(issuer.ObjectMeta))
