@@ -186,6 +186,7 @@ var _ = Describe("MySQL", func() {
 
 					// Renew Certificates and waiting for the success
 					duration, err := time.ParseDuration("24h30m")
+					Expect(err).NotTo(HaveOccurred())
 					_ = fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
 						in.Spec.Type = opsapi.OpsRequestTypeReconfigureTLSs
 						in.Spec.TLS = &opsapi.MySQLTLSSpec{
@@ -254,6 +255,7 @@ var _ = Describe("MySQL", func() {
 
 					// Renew Certificates and waiting for the success
 					duration, err := time.ParseDuration("24h30m")
+					Expect(err).NotTo(HaveOccurred())
 					_ = fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
 						in.Spec.Type = opsapi.OpsRequestTypeReconfigureTLSs
 						in.Spec.TLS = &opsapi.MySQLTLSSpec{

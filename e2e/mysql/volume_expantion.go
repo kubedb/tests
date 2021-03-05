@@ -139,7 +139,7 @@ var _ = Describe("MySQL", func() {
 					in.Spec.Topology = &api.MySQLClusterTopology{
 						Mode: &clusterMode,
 						Group: &api.MySQLGroupSpec{
-							Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
+							Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
 						},
 					}
 					// Set termination policy WipeOut to delete all mysql resources permanently

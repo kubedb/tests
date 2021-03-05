@@ -18,6 +18,7 @@ package mysql
 
 import (
 	"fmt"
+
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	opsapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
@@ -223,7 +224,7 @@ var _ = Describe("MySQL", func() {
 						in.Spec.Topology = &api.MySQLClusterTopology{
 							Mode: &clusterMode,
 							Group: &api.MySQLGroupSpec{
-								Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
+								Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
 							},
 						}
 						in.Spec.ConfigSecret = &core.LocalObjectReference{
@@ -272,7 +273,7 @@ var _ = Describe("MySQL", func() {
 						in.Spec.Topology = &api.MySQLClusterTopology{
 							Mode: &clusterMode,
 							Group: &api.MySQLGroupSpec{
-								Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
+								Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
 							},
 						}
 						in.Spec.ConfigSecret = &core.LocalObjectReference{
@@ -326,7 +327,7 @@ var _ = Describe("MySQL", func() {
 						in.Spec.Topology = &api.MySQLClusterTopology{
 							Mode: &clusterMode,
 							Group: &api.MySQLGroupSpec{
-								Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
+								Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
 							},
 						}
 						in.Spec.ConfigSecret = &core.LocalObjectReference{

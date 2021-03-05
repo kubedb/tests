@@ -73,6 +73,7 @@ var _ = Describe("MySQL", func() {
 					Namespace: fi.Namespace(),
 				}
 				issuer, err := fi.InsureIssuer(myMeta, api.ResourceKindMySQL)
+				Expect(err).NotTo(HaveOccurred())
 				// Create MySQL standalone and wait for running
 				my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
 					in.Spec.Storage = &core.PersistentVolumeClaimSpec{
@@ -165,6 +166,7 @@ var _ = Describe("MySQL", func() {
 					Namespace: fi.Namespace(),
 				}
 				issuer, err := fi.InsureIssuer(myMeta, api.ResourceKindMySQL)
+				Expect(err).NotTo(HaveOccurred())
 				// Create MySQL standalone and wait for running
 				my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
 					in.Spec.Storage = &core.PersistentVolumeClaimSpec{
@@ -183,7 +185,7 @@ var _ = Describe("MySQL", func() {
 					in.Spec.Topology = &api.MySQLClusterTopology{
 						Mode: &clusterMode,
 						Group: &api.MySQLGroupSpec{
-							Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
+							Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
 						},
 					}
 					// configure TLS issuer to MySQL CRD

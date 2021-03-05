@@ -188,6 +188,7 @@ var _ = Describe("MySQL", func() {
 						Namespace: fi.Namespace(),
 					}
 					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL standalone and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
 						in.Spec.ConfigSecret = &core.LocalObjectReference{
@@ -245,6 +246,7 @@ var _ = Describe("MySQL", func() {
 						Namespace: fi.Namespace(),
 					}
 					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL Group Replication and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
 						in.Spec.Replicas = types.Int32P(api.MySQLDefaultGroupSize)
@@ -252,7 +254,7 @@ var _ = Describe("MySQL", func() {
 						in.Spec.Topology = &api.MySQLClusterTopology{
 							Mode: &clusterMode,
 							Group: &api.MySQLGroupSpec{
-								Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
+								Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
 							},
 						}
 						in.Spec.ConfigSecret = &core.LocalObjectReference{
@@ -300,6 +302,7 @@ var _ = Describe("MySQL", func() {
 						Namespace: fi.Namespace(),
 					}
 					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL Group Replication and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
 						in.Spec.Replicas = types.Int32P(api.MySQLDefaultGroupSize)
@@ -307,7 +310,7 @@ var _ = Describe("MySQL", func() {
 						in.Spec.Topology = &api.MySQLClusterTopology{
 							Mode: &clusterMode,
 							Group: &api.MySQLGroupSpec{
-								Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
+								Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
 							},
 						}
 						in.Spec.ConfigSecret = &core.LocalObjectReference{
@@ -331,6 +334,7 @@ var _ = Describe("MySQL", func() {
 					// Reconfigure custom configuration and waiting for the success
 					reconfigureCustomConfigName := rand.WithUniqSuffix("reconfigure-mysql")
 					rcm, err := fi.CustomConfigForMySQL(reconfigureCustomConfigs, reconfigureCustomConfigName)
+					Expect(err).NotTo(HaveOccurred())
 					_ = fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
 						in.Spec.Type = opsapi.OpsRequestTypeReconfigure
 						in.Spec.Configuration = &opsapi.MySQLCustomConfigurationSpec{
@@ -359,6 +363,7 @@ var _ = Describe("MySQL", func() {
 						Namespace: fi.Namespace(),
 					}
 					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL Group Replication and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
 						in.Spec.Replicas = types.Int32P(api.MySQLDefaultGroupSize)
@@ -366,7 +371,7 @@ var _ = Describe("MySQL", func() {
 						in.Spec.Topology = &api.MySQLClusterTopology{
 							Mode: &clusterMode,
 							Group: &api.MySQLGroupSpec{
-								Name:         "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
+								Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
 							},
 						}
 						in.Spec.ConfigSecret = &core.LocalObjectReference{
