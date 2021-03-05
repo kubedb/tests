@@ -67,7 +67,7 @@ var _ = Describe("MySQL", func() {
 		Context("MySQL Standalone", func() {
 			Context("Remove TLS/SSL", func() {
 				It("Should remove TLS/SSL", func() {
-					// MySQL objectMeta
+					// issuer objectMeta
 					issuerMeta := metav1.ObjectMeta{
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
@@ -112,7 +112,7 @@ var _ = Describe("MySQL", func() {
 
 			Context("Add TLS/SSL", func() {
 				It("Should add TLS/SSL", func() {
-					// MySQL objectMeta
+					// issuer objectMeta
 					issuerMeta := metav1.ObjectMeta{
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
@@ -152,6 +152,183 @@ var _ = Describe("MySQL", func() {
 					// we need to set `User` and `Param` to access database with TLSCustom config.
 					dbInfo.User = framework.MySQLRootUser
 					dbInfo.Param = fmt.Sprintf("tls=%s", framework.TLSCustomConfig)
+					By("Checking Row Count of Table")
+					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+				})
+			})
+
+			Context("Rotate TLS/SSL Certificates", func() {
+				It("Should rotate TLS/SSL Certificates", func() {
+					// issuer objectMeta
+					issuerMeta := metav1.ObjectMeta{
+						Name:      rand.WithUniqSuffix("mysql"),
+						Namespace: fi.Namespace(),
+					}
+					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					Expect(err).NotTo(HaveOccurred())
+					// Create MySQL standalone with tls secured and wait for running
+					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, framework.AddTLSConfig(issuer.ObjectMeta))
+					Expect(err).NotTo(HaveOccurred())
+					// Database connection information
+					dbInfo := framework.DatabaseConnectionInfo{
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+					}
+					fi.EventuallyDBReady(my, dbInfo)
+
+					// Create a mysql User with required SSL
+					By("Create mysql User with required SSL")
+					fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
+					dbInfo.User = framework.MySQLRequiredSSLUser
+					fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
+					fi.PopulateMySQL(my.ObjectMeta, dbInfo)
+
+					// Renew Certificates and waiting for the success
+					duration, err := time.ParseDuration("24h30m")
+					_ = fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
+						in.Spec.Type = opsapi.OpsRequestTypeReconfigureTLSs
+						in.Spec.TLS = &opsapi.MySQLTLSSpec{
+							TLSSpec: opsapi.TLSSpec{
+								RotateCertificates: true,
+								TLSConfig: kmapi.TLSConfig{
+									Certificates: []kmapi.CertificateSpec{
+										{
+											Alias: string(api.MySQLServerCert),
+											RenewBefore: &metav1.Duration{
+												Duration: duration,
+											},
+											EmailAddresses: []string{
+												"abc@appscode.com",
+												"test@appscode.com",
+											},
+										},
+									},
+								},
+							},
+						}
+					})
+					// ReconfigureTLS OpsRequest is succeeded, That's why TLS configuration have been removed.
+					// we need to set `User` and `Param` to access database without TLSCustom config.
+					dbInfo.User = framework.MySQLRootUser
+					dbInfo.Param = ""
+					By("Checking Row Count of Table")
+					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+				})
+			})
+
+			Context("Update TLS/SSL Issuer", func() {
+				It("Should update TLS/SSL Issuer", func() {
+					// issuer objectMeta
+					issuerMeta := metav1.ObjectMeta{
+						Name:      rand.WithUniqSuffix("mysql"),
+						Namespace: fi.Namespace(),
+					}
+					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					Expect(err).NotTo(HaveOccurred())
+					// Create MySQL standalone with tls secured and wait for running
+					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, framework.AddTLSConfig(issuer.ObjectMeta))
+					Expect(err).NotTo(HaveOccurred())
+					// Database connection information
+					dbInfo := framework.DatabaseConnectionInfo{
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+					}
+					fi.EventuallyDBReady(my, dbInfo)
+
+					// Create a mysql User with required SSL
+					By("Create mysql User with required SSL")
+					fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
+					dbInfo.User = framework.MySQLRequiredSSLUser
+					fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
+					fi.PopulateMySQL(my.ObjectMeta, dbInfo)
+
+					// issuer objectMeta
+					issuerMeta = metav1.ObjectMeta{
+						Name:      rand.WithUniqSuffix("new-issuer"),
+						Namespace: fi.Namespace(),
+					}
+					issuer, err = fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					Expect(err).NotTo(HaveOccurred())
+
+					// Renew Certificates and waiting for the success
+					duration, err := time.ParseDuration("24h30m")
+					_ = fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
+						in.Spec.Type = opsapi.OpsRequestTypeReconfigureTLSs
+						in.Spec.TLS = &opsapi.MySQLTLSSpec{
+							TLSSpec: opsapi.TLSSpec{
+								RotateCertificates: true,
+								TLSConfig: kmapi.TLSConfig{
+									IssuerRef: &core.TypedLocalObjectReference{
+										Name:     issuer.Name,
+										Kind:     "Issuer",
+										APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
+									},
+									Certificates: []kmapi.CertificateSpec{
+										{
+											Alias: string(api.MySQLServerCert),
+											RenewBefore: &metav1.Duration{
+												Duration: duration,
+											},
+											EmailAddresses: []string{
+												"abc@appscode.com",
+												"test@appscode.com",
+											},
+										},
+									},
+								},
+							},
+						}
+					})
+					// ReconfigureTLS OpsRequest is succeeded, That's why TLS configuration have been removed.
+					// we need to set `User` and `Param` to access database without TLSCustom config.
+					dbInfo.User = framework.MySQLRootUser
+					dbInfo.Param = ""
+					By("Checking Row Count of Table")
+					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
+				})
+			})
+
+			Context("Set TLS/SSL mandatory OFF", func() {
+				It("Should TLS/SSL mandatory OFF", func() {
+					// issuer objectMeta
+					issuerMeta := metav1.ObjectMeta{
+						Name:      rand.WithUniqSuffix("mysql"),
+						Namespace: fi.Namespace(),
+					}
+					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					Expect(err).NotTo(HaveOccurred())
+					// Create MySQL standalone with tls secured and wait for running
+					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, framework.AddTLSConfig(issuer.ObjectMeta))
+					Expect(err).NotTo(HaveOccurred())
+					// Database connection information
+					dbInfo := framework.DatabaseConnectionInfo{
+						DatabaseName: framework.DBMySQL,
+						User:         framework.MySQLRootUser,
+						Param:        fmt.Sprintf("tls=%s", framework.TLSCustomConfig),
+					}
+					fi.EventuallyDBReady(my, dbInfo)
+
+					// Create a mysql User with required SSL
+					By("Create mysql User with required SSL")
+					fi.EventuallyCreateUserWithRequiredSSL(my.ObjectMeta, dbInfo).Should(BeTrue())
+					dbInfo.User = framework.MySQLRequiredSSLUser
+					fi.EventuallyCheckConnectionRequiredSSLUser(my, dbInfo)
+					fi.PopulateMySQL(my.ObjectMeta, dbInfo)
+
+					// Set require secure transport OFF and waiting for the success
+					requireSSL := false
+					_ = fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
+						in.Spec.Type = opsapi.OpsRequestTypeReconfigureTLSs
+						in.Spec.TLS = &opsapi.MySQLTLSSpec{
+							RequireSSL: &requireSSL,
+						}
+					})
+					// ReconfigureTLS OpsRequest is succeeded, That's why TLS configuration have been removed.
+					// we need to set `User` and `Param` to access database without TLSCustom config.
+					dbInfo.User = framework.MySQLRootUser
+					dbInfo.Param = ""
 					By("Checking Row Count of Table")
 					fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 				})
@@ -511,8 +688,8 @@ var _ = Describe("MySQL", func() {
 				})
 			})
 
-			Context("Set require secure transport OFF", func() {
-				It("Should set secure require transport OFF", func() {
+			Context("Set TLS/SSL mandatory OFF", func() {
+				It("Should TLS/SSL mandatory OFF", func() {
 					// MySQL objectMeta
 					issuerMeta := metav1.ObjectMeta{
 						Name:      rand.WithUniqSuffix("mysql"),
