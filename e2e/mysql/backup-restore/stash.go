@@ -126,14 +126,13 @@ var _ = Describe("Stash Backup For MySQL", func() {
 				fi.EventuallyDrop(my.ObjectMeta, dbInfo, queries).Should(BeTrue())
 
 				By("Checking if test Database doesn't exist")
-				getDatabasesQuery := `SHOW DATABASES;`
-				fi.EventuallyExists(my.ObjectMeta, dbInfo, getDatabasesQuery).ShouldNot(matcher.HaveExists(framework.MySQLTestDB))
+				fi.EventuallyExists(my.ObjectMeta, dbInfo, framework.ShowDatabases).ShouldNot(matcher.HaveExists(framework.MySQLTestDB))
 
 				// Restore the database
 				fi.RestoreDatabase(appBinding, repo)
 
 				By("Checking if test Database restored")
-				fi.EventuallyExists(my.ObjectMeta, dbInfo, getDatabasesQuery).Should(matcher.HaveExists(framework.MySQLTestDB))
+				fi.EventuallyExists(my.ObjectMeta, dbInfo, framework.ShowDatabases).Should(matcher.HaveExists(framework.MySQLTestDB))
 
 				By("Checking Row Count of Table")
 				dbInfo.DatabaseName = framework.MySQLTestDB
@@ -202,14 +201,13 @@ var _ = Describe("Stash Backup For MySQL", func() {
 					fi.EventuallyDrop(my.ObjectMeta, dbInfo, queries).Should(BeTrue())
 
 					By("Checking if test Database doesn't exist")
-					getDatabasesQuery := `SHOW DATABASES;`
-					fi.EventuallyExists(my.ObjectMeta, dbInfo, getDatabasesQuery).ShouldNot(matcher.HaveExists(framework.MySQLTestDB))
+					fi.EventuallyExists(my.ObjectMeta, dbInfo, framework.ShowDatabases).ShouldNot(matcher.HaveExists(framework.MySQLTestDB))
 
 					// Restore the database
 					fi.RestoreDatabase(appBinding, repo)
 
 					By("Checking if test Database restored")
-					fi.EventuallyExists(my.ObjectMeta, dbInfo, getDatabasesQuery).Should(matcher.HaveExists(framework.MySQLTestDB))
+					fi.EventuallyExists(my.ObjectMeta, dbInfo, framework.ShowDatabases).Should(matcher.HaveExists(framework.MySQLTestDB))
 
 					By("Checking Row Count of Table")
 					dbInfo.DatabaseName = framework.MySQLTestDB
@@ -274,22 +272,21 @@ var _ = Describe("Stash Backup For MySQL", func() {
 				fi.EventuallyDrop(my.ObjectMeta, dbInfo, queries).Should(BeTrue())
 
 				By("Checking if test Database doesn't exist")
-				getDatabasesQuery := `SHOW DATABASES;`
-				fi.EventuallyExists(my.ObjectMeta, dbInfo, getDatabasesQuery).ShouldNot(matcher.HaveExists(framework.MySQLTestDB))
+				fi.EventuallyExists(my.ObjectMeta, dbInfo, framework.ShowDatabases).ShouldNot(matcher.HaveExists(framework.MySQLTestDB))
 
 				By("Checking if another Database doesn't exist")
-				fi.EventuallyExists(my.ObjectMeta, dbInfo, getDatabasesQuery).ShouldNot(matcher.HaveExists(framework.AnotherDB))
+				fi.EventuallyExists(my.ObjectMeta, dbInfo, framework.ShowDatabases).ShouldNot(matcher.HaveExists(framework.AnotherDB))
 
 				// Restore from backup. Since we have backed up only one database,
 				// only "testDB" should be restored.
 				fi.RestoreDatabase(appBinding, repo)
 
 				By("Checking if test Database restored")
-				fi.EventuallyExists(my.ObjectMeta, dbInfo, getDatabasesQuery).Should(matcher.HaveExists(framework.MySQLTestDB))
+				fi.EventuallyExists(my.ObjectMeta, dbInfo, framework.ShowDatabases).Should(matcher.HaveExists(framework.MySQLTestDB))
 
 				// another database will not be restored because we didn't backup another database
 				By("Checking if another Database doesn't restored")
-				fi.EventuallyExists(my.ObjectMeta, dbInfo, getDatabasesQuery).ShouldNot(matcher.HaveExists(framework.AnotherDB))
+				fi.EventuallyExists(my.ObjectMeta, dbInfo, framework.ShowDatabases).ShouldNot(matcher.HaveExists(framework.AnotherDB))
 
 				By("Checking Row Count of Table")
 				dbInfo.DatabaseName = framework.MySQLTestDB
@@ -503,14 +500,13 @@ var _ = Describe("Stash Backup For MySQL", func() {
 				fi.EventuallyDrop(my.ObjectMeta, dbInfo, queries).Should(BeTrue())
 
 				By("Checking if test Database doesn't exist")
-				getDatabasesQuery := `SHOW DATABASES;`
-				fi.EventuallyExists(my.ObjectMeta, dbInfo, getDatabasesQuery).ShouldNot(matcher.HaveExists(framework.MySQLTestDB))
+				fi.EventuallyExists(my.ObjectMeta, dbInfo, framework.ShowDatabases).ShouldNot(matcher.HaveExists(framework.MySQLTestDB))
 
 				// Restore the database
 				fi.RestoreDatabase(appBinding, repo)
 
 				By("Checking if test Database restored")
-				fi.EventuallyExists(my.ObjectMeta, dbInfo, getDatabasesQuery).Should(matcher.HaveExists(framework.MySQLTestDB))
+				fi.EventuallyExists(my.ObjectMeta, dbInfo, framework.ShowDatabases).Should(matcher.HaveExists(framework.MySQLTestDB))
 
 				By("Checking Row Count of Table")
 				dbInfo.DatabaseName = framework.MySQLTestDB
@@ -586,14 +582,13 @@ var _ = Describe("Stash Backup For MySQL", func() {
 					fi.EventuallyDrop(my.ObjectMeta, dbInfo, queries).Should(BeTrue())
 
 					By("Checking if test Database doesn't exist")
-					getDatabasesQuery := `SHOW DATABASES;`
-					fi.EventuallyExists(my.ObjectMeta, dbInfo, getDatabasesQuery).ShouldNot(matcher.HaveExists(framework.MySQLTestDB))
+					fi.EventuallyExists(my.ObjectMeta, dbInfo, framework.ShowDatabases).ShouldNot(matcher.HaveExists(framework.MySQLTestDB))
 
 					// Restore the database
 					fi.RestoreDatabase(appBinding, repo)
 
 					By("Checking if test Database restored")
-					fi.EventuallyExists(my.ObjectMeta, dbInfo, getDatabasesQuery).Should(matcher.HaveExists(framework.MySQLTestDB))
+					fi.EventuallyExists(my.ObjectMeta, dbInfo, framework.ShowDatabases).Should(matcher.HaveExists(framework.MySQLTestDB))
 
 					By("Checking Row Count of Table")
 					dbInfo.DatabaseName = framework.MySQLTestDB
