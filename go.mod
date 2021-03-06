@@ -40,7 +40,7 @@ require (
 	kmodules.xyz/objectstore-api v0.0.0-20210218144135-bfabb80e0362
 	kmodules.xyz/offshoot-api v0.0.0-20210218144050-e1d794cb382a
 	kmodules.xyz/prober v0.0.0-20210218144026-43e923722d81 // indirect
-	kubedb.dev/apimachinery v0.16.2
+	kubedb.dev/apimachinery v0.16.3-0.20210304211208-74561e0d5933
 	sigs.k8s.io/yaml v1.2.0
 	stash.appscode.dev/apimachinery v0.11.9
 	xorm.io/xorm v1.0.5
