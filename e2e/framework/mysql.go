@@ -37,6 +37,11 @@ import (
 	meta_util "kmodules.xyz/client-go/meta"
 )
 
+var (
+	DBDefaultCPUSize    = "500m"
+	DBDefaultMemorySize = "1024Mi"
+)
+
 func (fi *Invocation) MySQLDefinition(version string) *api.MySQL {
 	return &api.MySQL{
 		ObjectMeta: metav1.ObjectMeta{
