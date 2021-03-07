@@ -740,7 +740,7 @@ func (f *Framework) MovePrimary(meta metav1.ObjectMeta, dbName string) error {
 	return nil
 }
 
-func (f *Framework) getDiskSize(db *api.MongoDB, storage *v1alpha1.MongoDBStorageAutoscalerSpec) (float64, error) {
+func (f *Framework) getDiskSizeMongoDB(db *api.MongoDB, storage *v1alpha1.MongoDBStorageAutoscalerSpec) (float64, error) {
 	var (
 		podName string
 		pod     *core.Pod
@@ -773,7 +773,7 @@ func (f *Framework) getDiskSize(db *api.MongoDB, storage *v1alpha1.MongoDBStorag
 	}
 }
 
-func (f *Framework) FillDisk(db *api.MongoDB, storage *v1alpha1.MongoDBStorageAutoscalerSpec) error {
+func (f *Framework) FillDiskMongoDB(db *api.MongoDB, storage *v1alpha1.MongoDBStorageAutoscalerSpec) error {
 	var (
 		podName string
 		pod     *core.Pod
@@ -840,10 +840,10 @@ func (f *Framework) GetCertificate(db *api.MongoDB, certType string) (*x509.Cert
 	return x509.ParseCertificate(blk.Bytes)
 }
 
-func (f *Framework) EventuallyVolumeExpanded(db *api.MongoDB, storage *v1alpha1.MongoDBStorageAutoscalerSpec) GomegaAsyncAssertion {
+func (f *Framework) EventuallyVolumeExpandedMongoDB(db *api.MongoDB, storage *v1alpha1.MongoDBStorageAutoscalerSpec) GomegaAsyncAssertion {
 	return Eventually(
 		func() (bool, error) {
-			size, err := f.getDiskSize(db, storage)
+			size, err := f.getDiskSizeMongoDB(db, storage)
 			if err != nil {
 				return false, err
 			}
@@ -857,7 +857,7 @@ func (f *Framework) EventuallyVolumeExpanded(db *api.MongoDB, storage *v1alpha1.
 	)
 }
 
-func (f *Framework) getCurrentCPU(prevDB *api.MongoDB, compute *v1alpha1.MongoDBComputeAutoscalerSpec) (bool, error) {
+func (f *Framework) getCurrentCPUMongoDB(prevDB *api.MongoDB, compute *v1alpha1.MongoDBComputeAutoscalerSpec) (bool, error) {
 	db, err := f.dbClient.KubedbV1alpha2().MongoDBs(prevDB.Namespace).Get(context.TODO(), prevDB.Name, metav1.GetOptions{})
 	if err != nil {
 		return false, err
@@ -873,13 +873,13 @@ func (f *Framework) getCurrentCPU(prevDB *api.MongoDB, compute *v1alpha1.MongoDB
 	}
 }
 
-func (f *Framework) EventuallyVerticallyScaled(meta metav1.ObjectMeta, compute *v1alpha1.MongoDBComputeAutoscalerSpec) GomegaAsyncAssertion {
+func (f *Framework) EventuallyVerticallyScaledMongoDB(meta metav1.ObjectMeta, compute *v1alpha1.MongoDBComputeAutoscalerSpec) GomegaAsyncAssertion {
 	db, err := f.dbClient.KubedbV1alpha2().MongoDBs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
 	return Eventually(
 		func() (bool, error) {
-			return f.getCurrentCPU(db, compute)
+			return f.getCurrentCPUMongoDB(db, compute)
 		},
 		time.Minute*30,
 		time.Second*5,
