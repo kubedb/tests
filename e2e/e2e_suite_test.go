@@ -33,6 +33,7 @@ import (
 	_ "kubedb.dev/tests/e2e/mongodb/backup"
 	_ "kubedb.dev/tests/e2e/mongodb/initialization"
 	_ "kubedb.dev/tests/e2e/mysql"
+	_ "kubedb.dev/tests/e2e/mysql/backup-restore"
 	_ "kubedb.dev/tests/e2e/redis"
 
 	cm "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"

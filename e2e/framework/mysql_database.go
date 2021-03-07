@@ -46,6 +46,8 @@ const (
 	MySQLRootUser              = "root"
 	MySQLRequiredSSLUser       = "ssl-User"
 	MySQLRequiredSSLPassword   = "not@secret"
+
+	ShowDatabases = `SHOW DATABASES;`
 )
 
 type kubedb_table struct {
