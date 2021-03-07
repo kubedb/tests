@@ -23,18 +23,18 @@ import (
 	"kubedb.dev/tests/e2e/framework"
 )
 
-func runTestCommunity(testProfile string) bool {
+func RunTestCommunity(testProfile string) bool {
 	return strings.Contains(framework.TestProfiles.String(), testProfile) ||
 		framework.TestProfiles.String() == framework.All ||
 		framework.TestProfiles.String() == framework.Community
 }
 
-func runTestEnterprise(testProfile string) bool {
+func RunTestEnterprise(testProfile string) bool {
 	return strings.Contains(framework.TestProfiles.String(), testProfile) ||
 		framework.TestProfiles.String() == framework.All ||
 		framework.TestProfiles.String() == framework.Enterprise
 }
 
-func runTestDatabaseType() bool {
+func RunTestDatabaseType() bool {
 	return strings.Compare(framework.DBType, api.ResourceSingularMySQL) == 0
 }

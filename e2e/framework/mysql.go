@@ -26,12 +26,14 @@ import (
 
 	"github.com/appscode/go/crypto/rand"
 	"github.com/appscode/go/types"
+	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kmapi "kmodules.xyz/client-go/api/v1"
 	meta_util "kmodules.xyz/client-go/meta"
 )
 
@@ -59,6 +61,35 @@ func (fi *Invocation) MySQLDefinition(version string) *api.MySQL {
 				StorageClassName: types.StringP(fi.StorageClass),
 			},
 		},
+	}
+}
+
+func AddTLSConfig(issuerMeta metav1.ObjectMeta) func(in *api.MySQL) {
+	return func(in *api.MySQL) {
+		in.Spec.RequireSSL = true
+		in.Spec.TLS = &kmapi.TLSConfig{
+			IssuerRef: &core.TypedLocalObjectReference{
+				Name:     issuerMeta.Name,
+				Kind:     "Issuer",
+				APIGroup: types.StringP(cm_api.SchemeGroupVersion.Group), //cert-manger.io
+			},
+			Certificates: []kmapi.CertificateSpec{
+				{
+					Alias: string(api.MySQLServerCert),
+					Subject: &kmapi.X509Subject{
+						Organizations: []string{
+							"kubedb:server",
+						},
+					},
+					DNSNames: []string{
+						"localhost",
+					},
+					IPAddresses: []string{
+						"127.0.0.1",
+					},
+				},
+			},
+		}
 	}
 }
 
@@ -154,22 +185,14 @@ func (fi *Invocation) CreateMySQLAndWaitForRunning(version string, transformFunc
 
 func (fi *Invocation) EventuallyDBReady(my *api.MySQL, dbInfo DatabaseConnectionInfo) {
 	if my.Spec.TLS == nil {
-		for i := int32(0); i < *my.Spec.Replicas; i++ {
-			By(fmt.Sprintf("Waiting for database to be ready for pod '%s-%d'", my.Name, i))
-			dbInfo.ClientPodIndex = int(i)
-			fi.EventuallyDBConnection(my.ObjectMeta, dbInfo).Should(BeTrue())
-		}
+		By(fmt.Sprintf("Waiting for database to be ready for db %s", my.Name))
+		fi.EventuallyDBConnection(my.ObjectMeta, dbInfo).Should(BeTrue())
 
 		if my.Spec.Topology != nil && my.Spec.Topology.Mode != nil {
-			for i := int32(0); i < *my.Spec.Replicas; i++ {
-				By(fmt.Sprintf("Checking ONLINE member count from Pod '%s-%d'", my.Name, i))
-				dbInfo.ClientPodIndex = int(i)
-				fi.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*my.Spec.Replicas)))
-			}
+			By(fmt.Sprintf("Checking ONLINE member count from db %s", my.Name))
+			fi.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*my.Spec.Replicas)))
 		}
-	}
-
-	if my.Spec.TLS != nil {
+	} else {
 		requireSecureTransport := func(requireSSL bool) string {
 			if requireSSL {
 				return RequiredSecureTransportON
@@ -211,18 +234,12 @@ func (fi *Invocation) EventuallyCheckConnectionRootUser(my *api.MySQL, requireSe
 	for _, param := range params {
 		dbInfo.Param = param
 		By(fmt.Sprintf("Checking root User connection with tls: %s", param))
-		for i := int32(0); i < *my.Spec.Replicas; i++ {
-			By(fmt.Sprintf("Waiting for database to be ready for pod '%s-%d'", my.Name, i))
-			dbInfo.ClientPodIndex = int(i)
-			fi.EventuallyDBConnection(my.ObjectMeta, dbInfo).Should(BeTrue())
-		}
+		By(fmt.Sprintf("Waiting for database to be ready for pod %s", my.Name))
+		fi.EventuallyDBConnection(my.ObjectMeta, dbInfo).Should(BeTrue())
 
 		if my.Spec.Topology != nil && my.Spec.Topology.Mode != nil {
-			for i := int32(0); i < *my.Spec.Replicas; i++ {
-				By(fmt.Sprintf("Checking ONLINE member count from Pod '%s-%d'", my.Name, i))
-				dbInfo.ClientPodIndex = int(i)
-				fi.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*my.Spec.Replicas)))
-			}
+			By(fmt.Sprintf("Checking ONLINE member count from Pod %s", my.Name))
+			fi.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*my.Spec.Replicas)))
 		}
 	}
 }
@@ -235,19 +252,24 @@ func (fi *Invocation) EventuallyCheckConnectionRequiredSSLUser(my *api.MySQL, db
 	for _, param := range params {
 		dbInfo.Param = param
 		By(fmt.Sprintf("Checking ssl required User connection with tls: %s", param))
-		for i := int32(0); i < *my.Spec.Replicas; i++ {
-			By(fmt.Sprintf("Waiting for database to be ready for pod '%s-%d'", my.Name, i))
-			dbInfo.ClientPodIndex = int(i)
-			fi.EventuallyDBConnection(my.ObjectMeta, dbInfo).Should(BeTrue())
-		}
+		By(fmt.Sprintf("Waiting for database to be ready for pod %s", my.Name))
+		fi.EventuallyDBConnection(my.ObjectMeta, dbInfo).Should(BeTrue())
 
 		if my.Spec.Topology != nil && my.Spec.Topology.Mode != nil {
 			dbInfo.User = MySQLRootUser
-			for i := int32(0); i < *my.Spec.Replicas; i++ {
-				By(fmt.Sprintf("Checking ONLINE member count from Pod '%s-%d'", my.Name, i))
-				dbInfo.ClientPodIndex = int(i)
-				fi.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*my.Spec.Replicas)))
-			}
+			By(fmt.Sprintf("Checking ONLINE member count from Pod %s", my.Name))
+			fi.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*my.Spec.Replicas)))
 		}
 	}
+}
+
+func (fi *Invocation) PopulateMySQL(dbMeta metav1.ObjectMeta, dbInfo DatabaseConnectionInfo) {
+	By("Creating Table")
+	fi.EventuallyCreateTable(dbMeta, dbInfo).Should(BeTrue())
+
+	By("Inserting Rows")
+	fi.EventuallyInsertRow(dbMeta, dbInfo, 3).Should(BeTrue())
+
+	By("Checking Row Count of Table")
+	fi.EventuallyCountRow(dbMeta, dbInfo).Should(Equal(3))
 }
