@@ -43,7 +43,7 @@ func (f *Framework) ConfigMapForMyInitScript() (*core.ConfigMap, error) {
 	execOut.Reset()
 
 	sh.ShowCMD = true
-	if err := sh.Command(curlLoc, "-fsSL", "https://github.com/kubedb/mysql-init-scripts/raw/master/init.sql").Run(); err != nil {
+	if err := sh.Command(curlLoc, "-fsSL", "https://raw.githubusercontent.com/kubedb/mysql-init-scripts/master/init.sql").Run(); err != nil {
 		return nil, err
 	}
 
@@ -81,6 +81,19 @@ func (fi *Invocation) GetCustomConfig(configs []string, name string) *core.Secre
 		},
 		StringData: map[string]string{
 			"mongod.conf": strings.Join(configs, "\n"),
+		},
+	}
+}
+
+func (fi *Invocation) GetCustomConfigForMariaDB(configs []string) *core.Secret {
+	configs = append([]string{"[mysqld]"}, configs...)
+	return &core.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fi.app,
+			Namespace: fi.namespace,
+		},
+		StringData: map[string]string{
+			"my-custom.cnf": strings.Join(configs, "\n"),
 		},
 	}
 }

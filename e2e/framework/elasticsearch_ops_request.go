@@ -29,13 +29,13 @@ import (
 	kmmeta "kmodules.xyz/client-go/meta"
 )
 
-func (i *Invocation) GetElasticsearchOpsRequestUpgrade(esMeta metav1.ObjectMeta, targetVersion string) *dbaapi.ElasticsearchOpsRequest {
+func (fi *Invocation) GetElasticsearchOpsRequestUpgrade(esMeta metav1.ObjectMeta, targetVersion string) *dbaapi.ElasticsearchOpsRequest {
 	return &dbaapi.ElasticsearchOpsRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("es-upgrade"),
-			Namespace: i.namespace,
+			Namespace: fi.namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 
@@ -51,13 +51,13 @@ func (i *Invocation) GetElasticsearchOpsRequestUpgrade(esMeta metav1.ObjectMeta,
 	}
 }
 
-func (i *Invocation) GetElasticsearchOpsRequestHorizontalScale(esMeta metav1.ObjectMeta, scaleSpec *dbaapi.ElasticsearchHorizontalScalingSpec) *dbaapi.ElasticsearchOpsRequest {
+func (fi *Invocation) GetElasticsearchOpsRequestHorizontalScale(esMeta metav1.ObjectMeta, scaleSpec *dbaapi.ElasticsearchHorizontalScalingSpec) *dbaapi.ElasticsearchOpsRequest {
 	return &dbaapi.ElasticsearchOpsRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("es-scale-up"),
-			Namespace: i.namespace,
+			Namespace: fi.namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 
@@ -71,13 +71,13 @@ func (i *Invocation) GetElasticsearchOpsRequestHorizontalScale(esMeta metav1.Obj
 	}
 }
 
-func (i *Invocation) GetElasticsearchOpsRequestVerticalScale(esMeta metav1.ObjectMeta, scaleSpec *dbaapi.ElasticsearchVerticalScalingSpec) *dbaapi.ElasticsearchOpsRequest {
+func (fi *Invocation) GetElasticsearchOpsRequestVerticalScale(esMeta metav1.ObjectMeta, scaleSpec *dbaapi.ElasticsearchVerticalScalingSpec) *dbaapi.ElasticsearchOpsRequest {
 	return &dbaapi.ElasticsearchOpsRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("es-vertical-scale"),
-			Namespace: i.namespace,
+			Namespace: fi.namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 
@@ -91,13 +91,13 @@ func (i *Invocation) GetElasticsearchOpsRequestVerticalScale(esMeta metav1.Objec
 	}
 }
 
-func (i *Invocation) GetElasticsearchOpsRequestVolumeExpansion(esMeta metav1.ObjectMeta, veSpec *dbaapi.ElasticsearchVolumeExpansionSpec) *dbaapi.ElasticsearchOpsRequest {
+func (fi *Invocation) GetElasticsearchOpsRequestVolumeExpansion(esMeta metav1.ObjectMeta, veSpec *dbaapi.ElasticsearchVolumeExpansionSpec) *dbaapi.ElasticsearchOpsRequest {
 	return &dbaapi.ElasticsearchOpsRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("es-volume-expansion"),
-			Namespace: i.namespace,
+			Namespace: fi.namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 
@@ -111,10 +111,10 @@ func (i *Invocation) GetElasticsearchOpsRequestVolumeExpansion(esMeta metav1.Obj
 	}
 }
 
-func (i *Invocation) EventuallyElasticsearchOpsRequestSuccessful(meta metav1.ObjectMeta, timeOut time.Duration) GomegaAsyncAssertion {
+func (fi *Invocation) EventuallyElasticsearchOpsRequestSuccessful(meta metav1.ObjectMeta, timeOut time.Duration) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			esOpsReq, err := i.dbClient.OpsV1alpha1().ElasticsearchOpsRequests(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+			esOpsReq, err := fi.dbClient.OpsV1alpha1().ElasticsearchOpsRequests(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			return esOpsReq.Status.Phase == dbaapi.OpsRequestPhaseSuccessful
 		},

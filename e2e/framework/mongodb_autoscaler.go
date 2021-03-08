@@ -27,13 +27,13 @@ import (
 	kmmeta "kmodules.xyz/client-go/meta"
 )
 
-func (i *Invocation) MongoDBAutoscalerCompute(name, namespace string, standalone, replicaset, shard, configServer, mongos *v1alpha1.ComputeAutoscalerSpec) *v1alpha1.MongoDBAutoscaler {
+func (fi *Invocation) MongoDBAutoscalerCompute(name, namespace string, standalone, replicaset, shard, configServer, mongos *v1alpha1.ComputeAutoscalerSpec) *v1alpha1.MongoDBAutoscaler {
 	return &v1alpha1.MongoDBAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mg-autoscaler"),
 			Namespace: namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 		Spec: v1alpha1.MongoDBAutoscalerSpec{
@@ -51,13 +51,13 @@ func (i *Invocation) MongoDBAutoscalerCompute(name, namespace string, standalone
 	}
 }
 
-func (i *Invocation) MongoDBAutoscalerStorage(name, namespace string, standalone, replicaset, shard, configServer *v1alpha1.StorageAutoscalerSpec) *v1alpha1.MongoDBAutoscaler {
+func (fi *Invocation) MongoDBAutoscalerStorage(name, namespace string, standalone, replicaset, shard, configServer *v1alpha1.StorageAutoscalerSpec) *v1alpha1.MongoDBAutoscaler {
 	return &v1alpha1.MongoDBAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mg-autoscaler"),
 			Namespace: namespace,
 			Labels: map[string]string{
-				"app": i.app,
+				"app": fi.app,
 			},
 		},
 
@@ -75,8 +75,8 @@ func (i *Invocation) MongoDBAutoscalerStorage(name, namespace string, standalone
 	}
 }
 
-func (i *Invocation) CreateMongoDBAutoscaler(obj *v1alpha1.MongoDBAutoscaler) error {
-	_, err := i.dbClient.AutoscalingV1alpha1().MongoDBAutoscalers(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
+func (fi *Invocation) CreateMongoDBAutoscaler(obj *v1alpha1.MongoDBAutoscaler) error {
+	_, err := fi.dbClient.AutoscalingV1alpha1().MongoDBAutoscalers(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
 	return err
 }
 

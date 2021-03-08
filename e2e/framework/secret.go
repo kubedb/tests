@@ -29,6 +29,7 @@ import (
 	"github.com/appscode/go/log"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gomodules.xyz/password-generator"
 	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -103,6 +104,28 @@ func (f *Framework) EventuallyDBSecretCount(meta metav1.ObjectMeta, fqn string) 
 func (f *Framework) CheckSecret(secret *core.Secret) error {
 	_, err := f.kubeClient.CoreV1().Secrets(f.namespace).Get(context.TODO(), secret.Name, metav1.GetOptions{})
 	return err
+}
+
+func (fi *Invocation) GetAuthSecret(meta metav1.ObjectMeta, mangedByKubeDB bool) *core.Secret {
+	//mangedByKubeDB mimics a secret created and manged by kubedb and not user.
+	// It should get deleted during wipeout
+	var dbObjectMeta = metav1.ObjectMeta{
+		Name:      fmt.Sprintf("kubedb-%v-%v", meta.Name, CustomSecretSuffix),
+		Namespace: meta.Namespace,
+	}
+	if mangedByKubeDB {
+		dbObjectMeta.Labels = map[string]string{
+			meta_util.ManagedByLabelKey: kubedb.GroupName,
+		}
+	}
+	return &core.Secret{
+		ObjectMeta: dbObjectMeta,
+		Type:       core.SecretTypeBasicAuth,
+		StringData: map[string]string{
+			KeyMariaDBUser:     mariadbUser,
+			KeyMariaDBPassword: password.Generate(api.DefaultPasswordLength),
+		},
+	}
 }
 
 func (fi *Invocation) SecretForDatabaseAuthentication(meta metav1.ObjectMeta, mangedByKubeDB bool) *core.Secret {
@@ -185,4 +208,12 @@ func (fi *Invocation) CustomConfigForMySQL(customConfigs []string, name string) 
 	}
 	fi.AppendToCleanupList(cm)
 	return cm, err
+}
+func (f *Framework) GetMariaDBRootPassword(md *api.MariaDB) (string, error) {
+	secret, err := f.kubeClient.CoreV1().Secrets(md.Namespace).Get(context.TODO(), md.Spec.AuthSecret.Name, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+	password := string(secret.Data[KeyMySQLPassword])
+	return password, nil
 }

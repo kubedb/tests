@@ -50,9 +50,9 @@ const (
 
 var (
 	DockerRegistry   = "kubedbci"
-	DBType           = api.ResourceSingularMongoDB
+	DBType           = api.ResourceSingularMariaDB
 	TestProfiles     stringSlice
-	DBVersion        = "5.0.3-v1"
+	DBVersion        = "10.5"
 	DBUpdatedVersion = "6.0.6"
 	PullInterval     = time.Second * 2
 	WaitTimeOut      = time.Minute * 5

@@ -29,6 +29,8 @@ import (
 	"kubedb.dev/apimachinery/client/clientset/versioned/scheme"
 	_ "kubedb.dev/tests/e2e/elasticsearch"
 	"kubedb.dev/tests/e2e/framework"
+	_ "kubedb.dev/tests/e2e/mariadb"
+	_ "kubedb.dev/tests/e2e/mariadb/backup"
 	_ "kubedb.dev/tests/e2e/mongodb"
 	_ "kubedb.dev/tests/e2e/mongodb/backup"
 	_ "kubedb.dev/tests/e2e/mongodb/initialization"
@@ -80,7 +82,7 @@ func init() {
 	flag.StringVar(&framework.DockerRegistry, "docker-registry", framework.DockerRegistry, "User provided docker repository")
 	flag.StringVar(&framework.DBVersion, "db-version", framework.DBVersion, "Database version")
 	flag.StringVar(&framework.DBUpdatedVersion, "db-updated-version", framework.DBUpdatedVersion, "Upgraded database version")
-	flag.StringVar(&framework.DBType, "db-type", api.ResourceSingularMongoDB, "Database type test")
+	flag.StringVar(&framework.DBType, "db-type", api.ResourceSingularMariaDB, "Database type test")
 	flag.BoolVar(&framework.SSLEnabled, "ssl", framework.SSLEnabled, "enable ssl")
 	flag.BoolVar(&framework.InMemory, "inmemory", framework.SSLEnabled, "test percona inmemory")
 	flag.Var(&framework.TestProfiles, "test-profiles", "Test Profiles to test")
@@ -142,15 +144,15 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	By("Cleanup Left Overs")
-	By("Delete left over MongoDB objects")
-	framework.RootFramework.CleanMongoDB()
+	By("Delete left over MariaDB objects")
+	framework.RootFramework.CleanMariaDB()
 	By("Delete left over workloads if exists any")
-	framework.RootFramework.CleanWorkloadLeftOvers(api.MongoDB{}.ResourceFQN())
+	framework.RootFramework.CleanWorkloadLeftOvers(api.MariaDB{}.ResourceFQN())
 
-	err := framework.RootFramework.DeleteMinioServer()
-	Expect(err).NotTo(HaveOccurred())
+	//err := framework.RootFramework.DeleteMinioServer()
+	//Expect(err).NotTo(HaveOccurred())
 
 	By("Delete Namespace")
-	err = framework.RootFramework.DeleteNamespace()
+	err := framework.RootFramework.DeleteNamespace()
 	Expect(err).NotTo(HaveOccurred())
 })
