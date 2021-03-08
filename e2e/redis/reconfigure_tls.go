@@ -146,7 +146,7 @@ var _ = Describe("Reconfigure Redis TLS", func() {
 	})
 	Context("Add TLS", func() {
 		var makeTlsSpec = func(meta metav1.ObjectMeta) *dbaapi.TLSSpec {
-			issuer, err := to.InsureIssuer(meta, api.ResourceKindRedis)
+			issuer, err := to.EnsureIssuer(meta, api.ResourceKindRedis)
 			Expect(err).NotTo(HaveOccurred())
 			tls := &dbaapi.TLSSpec{
 				TLSConfig: kmapi.TLSConfig{

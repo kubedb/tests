@@ -106,7 +106,7 @@ var _ = Describe("Environment Variable", func() {
 				})
 				to.createElasticsearchAndWaitForBeingReady()
 
-				podName := to.GetElasticsearchClientPodName(to.db)
+				podName := to.GetElasticsearchIngestPodName(to.db)
 
 				By("Checking pod started with given envs")
 				pod, err := to.KubeClient().CoreV1().Pods(to.db.Namespace).Get(context.TODO(), podName, metav1.GetOptions{})
