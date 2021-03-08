@@ -36,7 +36,7 @@ var _ = Describe("StorageType Redis", func() {
 		value string
 	)
 	to := testOptions{}
-	testName := framework.RedisStorageType
+	testName := framework.StorageType
 
 	BeforeEach(func() {
 		to.Invocation = framework.NewInvocation()
@@ -47,7 +47,7 @@ var _ = Describe("StorageType Redis", func() {
 			Skip(fmt.Sprintf("TLS is not supported for version `%s` in redis", framework.DBVersion))
 		}
 
-		to.redis = to.RedisStandalone(framework.DBVersion)
+		to.redis = to.RedisStandalone()
 		to.skipMessage = ""
 		key = rand.WithUniqSuffix("kubed-e2e")
 		value = rand.GenerateTokenWithLength(10)

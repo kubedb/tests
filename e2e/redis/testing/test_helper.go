@@ -195,7 +195,7 @@ func (testConfig *TestConfig) FlushDBForCluster(redis *api.Redis) (string, error
 		if err != nil {
 			return false, err
 		}
-		time.Sleep(30 * time.Second)
+		//time.Sleep(30 * time.Second)
 		for i := 0; i < int(*redis.Spec.Cluster.Master); i++ {
 			for j := 0; j < int(*redis.Spec.Cluster.Replicas+1); j++ {
 				if nodes[i][j].Role == "slave" {

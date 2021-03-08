@@ -36,7 +36,7 @@ import (
 var _ = Describe("Environment Variables", func() {
 	var envList []core.EnvVar
 	to := testOptions{}
-	testName := framework.RedisEnvironmentVariable
+	testName := framework.EnvironmentVariable
 
 	BeforeEach(func() {
 		to.Invocation = framework.NewInvocation()
@@ -47,7 +47,7 @@ var _ = Describe("Environment Variables", func() {
 			Skip(fmt.Sprintf("TLS is not supported for version `%s` in redis", framework.DBVersion))
 		}
 
-		to.redis = to.RedisStandalone(framework.DBVersion)
+		to.redis = to.RedisStandalone()
 		envList = []core.EnvVar{
 			{
 				Name:  "TEST_ENV",

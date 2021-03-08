@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
-	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
 
 	. "github.com/onsi/ginkgo"
@@ -33,7 +32,7 @@ import (
 
 var _ = Describe("Vertical Scaling Redis", func() {
 	to := testOptions{}
-	testName := framework.RedisVerticalScaling
+	testName := framework.VerticalScaling
 	resources := &v1.ResourceRequirements{
 		Limits: map[v1.ResourceName]resource.Quantity{
 			v1.ResourceMemory: resource.MustParse("300Mi"),
@@ -87,38 +86,18 @@ var _ = Describe("Vertical Scaling Redis", func() {
 
 	Context("Scaling StandAlone Redis", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisStandalone(framework.DBVersion)
+			to.redis = to.RedisStandalone()
 			to.redisOpsReq = to.RedisOpsRequestVerticalScale(to.redis.Name, to.redis.Namespace, resources, nil)
 		})
 
 		It("Should Scale StandAlone Redis", func() {
-			var err error
-			// Create Redis
-			to.createRedis()
-
-			By("Inserting item into database")
-			to.EventuallySetItem(to.redis, "A", "VALUE").Should(BeTrue())
-
-			By("Retrieving item from database")
-			to.EventuallyGetItem(to.redis, "A").Should(BeEquivalentTo("VALUE"))
-
-			// Scaling Database
-			By("Scaling Redis")
-			to.redisOpsReq, err = to.CreateRedisOpsRequest(to.redisOpsReq)
-			Expect(err).NotTo(HaveOccurred())
-
-			to.EventuallyRedisOpsRequestPhase(to.redisOpsReq.ObjectMeta).Should(Equal(dbaapi.OpsRequestPhaseSuccessful))
-
-			// Retrieve Inserted Data
-			By("Checking key value after update")
-			to.EventuallyGetItem(to.redis, "A").Should(BeEquivalentTo("VALUE"))
+			to.shouldTestOpsReq()
 		})
 	})
 
 	Context("Scaling Redis Cluster", func() {
 		BeforeEach(func() {
-			to.redis = to.RedisCluster(framework.DBVersion, nil, nil)
-
+			to.redis = to.RedisCluster(nil, nil)
 			to.redisOpsReq = to.RedisOpsRequestVerticalScale(to.redis.Name, to.redis.Namespace, resources, nil)
 		})
 
@@ -128,7 +107,7 @@ var _ = Describe("Vertical Scaling Redis", func() {
 		})
 
 		It("Should Scale Resources of Redis Cluster", func() {
-			to.shouldTestClusterOpsReq()
+			to.shouldTestOpsReq()
 		})
 	})
 })

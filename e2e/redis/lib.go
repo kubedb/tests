@@ -17,6 +17,7 @@ limitations under the License.
 package redis
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -27,6 +28,19 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	core "k8s.io/api/core/v1"
+)
+
+var (
+	prevMaxClient = int32(500)
+	newMaxClient  = int32(1000)
+	customConfigs = []string{
+		fmt.Sprintf(`maxclients %v`, prevMaxClient),
+	}
+	newCustomConfig = []string{
+		fmt.Sprintf(`maxclients %v`, newMaxClient),
+	}
+	inlineConfig = fmt.Sprintf(`maxclients %v`, newMaxClient)
 )
 
 type testOptions struct {
@@ -41,8 +55,13 @@ type testOptions struct {
 }
 
 func (to *testOptions) getConfiguredClusterInfo() {
-	var err error
+	if to.redis.Spec.TLS == nil {
+		to.TestConfig().UseTLS = false
+	} else {
+		to.TestConfig().UseTLS = true
+	}
 
+	var err error
 	By("Wait until redis cluster be configured")
 	Expect(to.WaitUntilRedisClusterConfigured(to.redis)).NotTo(HaveOccurred())
 
@@ -55,17 +74,35 @@ func (to *testOptions) getConfiguredClusterInfo() {
 }
 
 func (to *testOptions) setValue() {
-	res, err := to.Invocation.TestConfig().GetItem(to.redis, "A")
-	Expect(err).NotTo(HaveOccurred())
-	Expect(res).To(Equal(""))
-	_, err = to.Invocation.TestConfig().SetItem(to.redis, "A", "VALUE")
-	Expect(err).NotTo(HaveOccurred())
+	if to.redis.Spec.TLS == nil {
+		to.TestConfig().UseTLS = false
+	} else {
+		to.TestConfig().UseTLS = true
+	}
+	if to.redis.Spec.Mode == api.RedisModeStandalone {
+		to.EventuallySetItem(to.redis, "A", "VALUE").Should(BeTrue())
+	} else {
+		res, err := to.Invocation.TestConfig().GetItem(to.redis, "A")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(res).To(Equal(""))
+		_, err = to.Invocation.TestConfig().SetItem(to.redis, "A", "VALUE")
+		Expect(err).NotTo(HaveOccurred())
+	}
 }
 
 func (to *testOptions) getValue() {
-	res, err := to.Invocation.TestConfig().GetItem(to.redis, "A")
-	Expect(err).NotTo(HaveOccurred())
-	Expect(res).To(Equal("VALUE"))
+	if to.redis.Spec.TLS == nil {
+		to.TestConfig().UseTLS = false
+	} else {
+		to.TestConfig().UseTLS = true
+	}
+	if to.redis.Spec.Mode == api.RedisModeStandalone {
+		to.EventuallyGetItem(to.redis, "A").Should(BeEquivalentTo("VALUE"))
+	} else {
+		res, err := to.Invocation.TestConfig().GetItem(to.redis, "A")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(res).To(Equal("VALUE"))
+	}
 }
 
 // spin up the expected redis for testing
@@ -85,16 +122,17 @@ func (to *testOptions) createRedis() {
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func (to *testOptions) shouldTestClusterOpsReq() {
+func (to *testOptions) shouldTestOpsReq() {
 	to.createRedis()
-	time.Sleep(1 * time.Minute)
+	if to.redis.Spec.Mode == api.RedisModeCluster {
+		time.Sleep(30 * time.Second)
+		to.getConfiguredClusterInfo()
+	}
 
-	to.getConfiguredClusterInfo()
-
-	By("Set Item Inside DB")
+	By("Inserting item into database")
 	to.setValue()
 
-	By("Checking key value")
+	By("Retrieving item from database")
 	to.getValue()
 
 	By("Applying the OpsRequest")
@@ -106,20 +144,81 @@ func (to *testOptions) shouldTestClusterOpsReq() {
 	to.redis, err = to.GetRedis(to.redis.ObjectMeta)
 	Expect(err).NotTo(HaveOccurred())
 
-	to.getConfiguredClusterInfo()
+	if to.redis.Spec.Mode == api.RedisModeCluster {
+		to.getConfiguredClusterInfo()
+	}
 
 	By("Checking key value after update")
 	to.getValue()
 }
 
+func (to *testOptions) shouldTestConfigurationOpsReq(userConfig, newUserConfig *core.Secret, prevConfig, newConfig []string) {
+	if to.skipMessage != "" {
+		Skip(to.skipMessage)
+	}
+
+	By("Creating secret: " + userConfig.Name)
+	_, err := to.CreateSecret(userConfig)
+	Expect(err).NotTo(HaveOccurred())
+
+	if newUserConfig != nil {
+		By("Creating secret: " + newUserConfig.Name)
+		_, err = to.CreateSecret(newUserConfig)
+		Expect(err).NotTo(HaveOccurred())
+	}
+
+	to.createRedis()
+	if to.redis.Spec.Mode == api.RedisModeCluster {
+		time.Sleep(30 * time.Second)
+		By("Wait until redis cluster be configured")
+		Expect(to.WaitUntilRedisClusterConfigured(to.redis)).NotTo(HaveOccurred())
+	}
+	By("Checking initial redis configuration")
+	for _, cfg := range prevConfig {
+		to.EventuallyRedisConfig(to.redis, cfg).Should(Equal(cfg))
+	}
+
+	By("Inserting item into database")
+	to.setValue()
+
+	By("Retrieving item from database")
+	to.getValue()
+
+	By("Applying the OpsRequest")
+	_, err = to.CreateRedisOpsRequest(to.redisOpsReq)
+	Expect(err).NotTo(HaveOccurred())
+
+	to.EventuallyRedisOpsRequestPhase(to.redisOpsReq.ObjectMeta).Should(Equal(dbaapi.OpsRequestPhaseSuccessful))
+
+	to.redis, err = to.GetRedis(to.redis.ObjectMeta)
+	Expect(err).NotTo(HaveOccurred())
+
+	if to.redis.Spec.Mode == api.RedisModeCluster {
+		By("Wait until redis cluster be configured")
+		Expect(to.WaitUntilRedisClusterConfigured(to.redis)).NotTo(HaveOccurred())
+	}
+
+	By("Checking key value after update")
+	to.getValue()
+
+	By("Checking new redis configuration")
+	for _, cfg := range newConfig {
+		to.EventuallyRedisConfig(to.redis, cfg).Should(Equal(cfg))
+	}
+}
+
 func runTestCommunity(testProfile string) bool {
-	return strings.Contains(framework.TestProfiles.String(), testProfile) ||
-		framework.TestProfiles.String() == framework.RedisAll ||
-		framework.TestProfiles.String() == framework.RedisCommunity
+	return runTestDatabaseType() && (strings.Contains(framework.TestProfiles.String(), testProfile) ||
+		framework.TestProfiles.String() == framework.All ||
+		framework.TestProfiles.String() == framework.Community)
 }
 
 func runTestEnterprise(testProfile string) bool {
-	return strings.Contains(framework.TestProfiles.String(), testProfile) ||
-		framework.TestProfiles.String() == framework.RedisAll ||
-		framework.TestProfiles.String() == framework.RedisEnterprise
+	return runTestDatabaseType() && (strings.Contains(framework.TestProfiles.String(), testProfile) ||
+		framework.TestProfiles.String() == framework.All ||
+		framework.TestProfiles.String() == framework.Enterprise)
+}
+
+func runTestDatabaseType() bool {
+	return strings.Compare(framework.DBType, api.ResourceSingularRedis) == 0
 }
