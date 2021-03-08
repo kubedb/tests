@@ -72,7 +72,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					issuer, err := fi.EnsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL standalone with tls secured and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, framework.AddTLSConfig(issuer.ObjectMeta))
@@ -117,7 +117,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					issuer, err := fi.EnsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL standalone with tls secured and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion)
@@ -164,7 +164,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					issuer, err := fi.EnsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL standalone with tls secured and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, framework.AddTLSConfig(issuer.ObjectMeta))
@@ -225,7 +225,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					issuer, err := fi.EnsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL standalone with tls secured and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, framework.AddTLSConfig(issuer.ObjectMeta))
@@ -250,7 +250,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("new-issuer"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err = fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					issuer, err = fi.EnsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 
 					// Renew Certificates and waiting for the success
@@ -299,7 +299,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					issuer, err := fi.EnsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL standalone with tls secured and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, framework.AddTLSConfig(issuer.ObjectMeta))
@@ -344,7 +344,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					issuer, err := fi.EnsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL Group Replication with tls secured and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -418,7 +418,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					issuer, err := fi.EnsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 
 					// Adding TLS/SSL and waiting for the success
@@ -454,7 +454,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					issuer, err := fi.EnsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL Group Replication with tls secured and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -534,7 +534,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					issuer, err := fi.EnsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL Group Replication with tls secured and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -603,7 +603,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("issuer"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					issuer, err := fi.EnsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL Group Replication with tls secured and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -645,7 +645,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("new-issuer"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err = fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					issuer, err = fi.EnsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 
 					_ = fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
@@ -697,7 +697,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					issuer, err := fi.EnsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL Group Replication with tls secured and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {

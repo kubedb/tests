@@ -19,6 +19,7 @@ package elasticsearch
 import (
 	"context"
 	"fmt"
+	"path"
 
 	"kubedb.dev/apimachinery/apis/autoscaling/v1alpha1"
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
@@ -27,12 +28,14 @@ import (
 
 	"github.com/appscode/go/log"
 	"github.com/google/go-cmp/cmp"
+	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kmapi "kmodules.xyz/client-go/api/v1"
 )
 
 type testOptions struct {
@@ -41,6 +44,7 @@ type testOptions struct {
 	skipMessage         string
 	configSecret        *core.Secret
 	elasticsearchOpsReq *dbaapi.ElasticsearchOpsRequest
+	issuer              *cm_api.Issuer
 	esAutoscaler        *v1alpha1.ElasticsearchAutoscaler
 }
 
@@ -153,6 +157,9 @@ func (to *testOptions) createElasticsearchOpsRequestAndWaitForBeingSuccessful() 
 
 	By("Waiting for Ops Request to be successful or failed...")
 	to.EventuallyElasticsearchOpsRequestSuccessful(to.elasticsearchOpsReq.ObjectMeta, 4*framework.WaitTimeOut).Should(BeTrue())
+
+	By("Waiting for Elasticsearch to be Ready after ops request is performed...")
+	to.EventuallyElasticsearchReady(to.db.ObjectMeta).Should(BeTrue())
 }
 
 func (to *testOptions) wipeOutElasticsearch() {
@@ -448,6 +455,41 @@ func (to *testOptions) verifyStorage() bool {
 
 func (to *testOptions) transformElasticsearch(db *api.Elasticsearch, transform func(in *api.Elasticsearch) *api.Elasticsearch) *api.Elasticsearch {
 	return transform(db)
+}
+
+func (to *testOptions) checkUpdatedCertificates() {
+	var pod *core.Pod
+	var err error
+	if to.db.Spec.Topology != nil {
+		pod, err = to.KubeClient().CoreV1().Pods(to.db.Namespace).Get(context.TODO(), fmt.Sprintf("%s-0", to.db.IngestStatefulSetName()), metav1.GetOptions{})
+		Expect(err).NotTo(HaveOccurred())
+	} else {
+		pod, err = to.KubeClient().CoreV1().Pods(to.db.Namespace).Get(context.TODO(), fmt.Sprintf("%s-0", to.db.CombinedStatefulSetName()), metav1.GetOptions{})
+		Expect(err).NotTo(HaveOccurred())
+	}
+
+	// Get updated DB
+	newDB, err := to.DBClient().KubedbV1alpha2().Elasticsearches(to.db.Namespace).Get(context.TODO(), to.db.Name, metav1.GetOptions{})
+	Expect(err).NotTo(HaveOccurred())
+	to.db = newDB
+
+	// Check HTTP Certificate
+	if kmapi.HasCertificate(to.db.Spec.TLS.Certificates, string(api.ElasticsearchHTTPCert)) {
+		cert1, err := to.GetCertificateFromPod(pod, path.Join(to.db.CertSecretVolumeMountPath(api.ElasticsearchConfigDir, api.ElasticsearchHTTPCert), core.TLSCertKey))
+		Expect(err).NotTo(HaveOccurred())
+		cert2, err := to.GetCertificateFromSecret(to.db.MustCertSecretName(api.ElasticsearchHTTPCert), to.db.Namespace)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(cmp.Equal(cert1, cert2)).Should(BeTrue())
+	}
+
+	// Check Transport Certificate
+	if kmapi.HasCertificate(to.db.Spec.TLS.Certificates, string(api.ElasticsearchTransportCert)) {
+		cert1, err := to.GetCertificateFromPod(pod, path.Join(to.db.CertSecretVolumeMountPath(api.ElasticsearchConfigDir, api.ElasticsearchTransportCert), core.TLSCertKey))
+		Expect(err).NotTo(HaveOccurred())
+		cert2, err := to.GetCertificateFromSecret(to.db.MustCertSecretName(api.ElasticsearchTransportCert), to.db.Namespace)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(cmp.Equal(cert1, cert2)).Should(BeTrue())
+	}
 }
 
 func GetElasticsearchContainer(sts *apps.StatefulSet, containerName string) core.Container {

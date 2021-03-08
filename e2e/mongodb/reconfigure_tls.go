@@ -111,7 +111,7 @@ var _ = Describe("Reconfigure TLS", func() {
 				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 
-				issuer, err := to.InsureIssuer(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN())
+				issuer, err := to.EnsureIssuer(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN())
 				Expect(err).NotTo(HaveOccurred())
 				tls := &opsapi.TLSSpec{
 					TLSConfig: kmapi.TLSConfig{
@@ -136,7 +136,7 @@ var _ = Describe("Reconfigure TLS", func() {
 				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 
-				issuer, err := to.InsureIssuer(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN())
+				issuer, err := to.EnsureIssuer(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN())
 				Expect(err).NotTo(HaveOccurred())
 				tls := &opsapi.TLSSpec{
 					TLSConfig: kmapi.TLSConfig{
@@ -161,7 +161,7 @@ var _ = Describe("Reconfigure TLS", func() {
 				to.mongodb.Spec.Version = framework.DBVersion
 				to.mongodb.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 
-				issuer, err := to.InsureIssuer(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN())
+				issuer, err := to.EnsureIssuer(to.mongodb.ObjectMeta, api.MongoDB{}.ResourceFQN())
 				Expect(err).NotTo(HaveOccurred())
 				tls := &opsapi.TLSSpec{
 					TLSConfig: kmapi.TLSConfig{

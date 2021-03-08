@@ -81,7 +81,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					issuer, err := fi.EnsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL standalone and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -132,7 +132,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					issuer, err := fi.EnsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL standalone and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -187,7 +187,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					issuer, err := fi.EnsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL standalone and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -245,7 +245,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					issuer, err := fi.EnsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL Group Replication and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -301,7 +301,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					issuer, err := fi.EnsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL Group Replication and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
@@ -362,7 +362,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(issuerMeta, api.ResourceKindMySQL)
+					issuer, err := fi.EnsureIssuer(issuerMeta, api.ResourceKindMySQL)
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL Group Replication and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {

@@ -123,6 +123,26 @@ func (fi *Invocation) EventuallyElasticsearchOpsRequestSuccessful(meta metav1.Ob
 	)
 }
 
+func (i *Invocation) GetElasticsearchOpsRequestReconfigureTLS(esMeta metav1.ObjectMeta, tlsSpec *dbaapi.TLSSpec) *dbaapi.ElasticsearchOpsRequest {
+	return &dbaapi.ElasticsearchOpsRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      rand.WithUniqSuffix("es-reconfigure-tls"),
+			Namespace: i.namespace,
+			Labels: map[string]string{
+				"app": i.app,
+			},
+		},
+
+		Spec: dbaapi.ElasticsearchOpsRequestSpec{
+			Type: dbaapi.OpsRequestTypeReconfigureTLSs,
+			DatabaseRef: corev1.LocalObjectReference{
+				Name: esMeta.Name,
+			},
+			TLS: tlsSpec,
+		},
+	}
+}
+
 func (f *Framework) DeleteElasticsearchOpsRequest(meta metav1.ObjectMeta) error {
 	return f.dbClient.OpsV1alpha1().ElasticsearchOpsRequests(meta.Namespace).Delete(context.TODO(), meta.Name, kmmeta.DeleteInForeground())
 }

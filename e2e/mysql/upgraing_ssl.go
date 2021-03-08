@@ -66,7 +66,7 @@ var _ = Describe("MySQL", func() {
 					Name:      rand.WithUniqSuffix("mysql"),
 					Namespace: fi.Namespace(),
 				}
-				issuer, err := fi.InsureIssuer(issuerMeta, api.MySQL{}.ResourceFQN())
+				issuer, err := fi.EnsureIssuer(issuerMeta, api.MySQL{}.ResourceFQN())
 				Expect(err).NotTo(HaveOccurred())
 				// Create MySQL standalone with tls secured and wait for running
 				my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, framework.AddTLSConfig(issuer.ObjectMeta))
@@ -111,7 +111,7 @@ var _ = Describe("MySQL", func() {
 						Name:      rand.WithUniqSuffix("mysql"),
 						Namespace: fi.Namespace(),
 					}
-					issuer, err := fi.InsureIssuer(issuerMeta, api.MySQL{}.ResourceFQN())
+					issuer, err := fi.EnsureIssuer(issuerMeta, api.MySQL{}.ResourceFQN())
 					Expect(err).NotTo(HaveOccurred())
 					// Create MySQL Group Replication with tls secured and wait for running
 					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {

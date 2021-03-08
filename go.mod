@@ -11,7 +11,7 @@ require (
 	github.com/elastic/go-elasticsearch/v7 v7.9.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-	github.com/google/go-cmp v0.5.2
+	github.com/google/go-cmp v0.5.4
 	github.com/jetstack/cert-manager v1.0.3
 	github.com/olivere/elastic v6.2.35+incompatible // indirect
 	github.com/olivere/elastic/v7 v7.0.21
@@ -24,6 +24,7 @@ require (
 	gocloud.dev v0.20.0
 	gomodules.xyz/blobfs v0.1.4
 	gomodules.xyz/cert v1.1.2
+	gomodules.xyz/oneliners v0.0.0-20200730052119-bccc7758058b
 	gomodules.xyz/password-generator v0.2.6
 	gomodules.xyz/pointer v0.0.0-20201105071923-daf60fa55209
 	gomodules.xyz/x v0.0.0-20201105065653-91c568df6331
