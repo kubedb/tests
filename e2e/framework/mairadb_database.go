@@ -42,7 +42,7 @@ type MariaDBInfo struct {
 	Param        string
 }
 
-type kubedb_table struct {
+type kubedbTable struct {
 	Id   int64  `xorm:"pk autoincr"`
 	Name string `xorm:"varchar(25) not null 'usr_name' comment('NickName')"`
 }
@@ -241,7 +241,7 @@ func (fi *Invocation) EventuallyCreateTableMD(meta metav1.ObjectMeta, dbInfo Mar
 			if err := en.Ping(); err != nil {
 				return false
 			}
-			return en.Charset("utf8mb4").StoreEngine("InnoDB").Sync2(new(kubedb_table)) == nil
+			return en.Charset("utf8mb4").StoreEngine("InnoDB").Sync2(new(kubedbTable)) == nil
 		},
 		Timeout,
 		RetryInterval,
@@ -380,7 +380,7 @@ func (fi *Invocation) EventuallyInsertRowMD(meta metav1.ObjectMeta, dbInfo Maria
 			}
 
 			for i := count; i < total; i++ {
-				if _, err := en.Insert(&kubedb_table{
+				if _, err := en.Insert(&kubedbTable{
 					Name: fmt.Sprintf("KubedbName-%v", i),
 				}); err != nil {
 					fmt.Println(err)
@@ -414,7 +414,7 @@ func (fi *Invocation) EventuallyCountRowMD(meta metav1.ObjectMeta, dbInfo MariaD
 				return -1
 			}
 
-			kubedb := new(kubedb_table)
+			kubedb := new(kubedbTable)
 			total, err := en.Count(kubedb)
 			if err != nil {
 				return -1

@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"gomodules.xyz/password-generator"
 	"time"
 
 	"kubedb.dev/apimachinery/apis/kubedb"
@@ -209,6 +208,7 @@ func (fi *Invocation) CustomConfigForMySQL(customConfigs []string, name string) 
 	}
 	fi.AppendToCleanupList(cm)
 	return cm, err
+}
 func (f *Framework) GetMariaDBRootPassword(md *api.MariaDB) (string, error) {
 	secret, err := f.kubeClient.CoreV1().Secrets(md.Namespace).Get(context.TODO(), md.Spec.AuthSecret.Name, metav1.GetOptions{})
 	if err != nil {
