@@ -61,7 +61,7 @@ var _ = Describe("MariaDB TLS/SSL", func() {
 	})
 
 	Describe("Test", func() {
-		FContext("Exporter", func() {
+		Context("Exporter", func() {
 			Context("Standalone", func() {
 				It("Should verify Exporter", func() {
 					// MariaDB objectMeta
@@ -116,9 +116,9 @@ var _ = Describe("MariaDB TLS/SSL", func() {
 
 			Context("Galera Cluster", func() {
 				It("Should verify Exporter", func() {
-					// MySQL objectMeta
+					// MariaDB objectMeta
 					mdMeta := metav1.ObjectMeta{
-						Name:      rand.WithUniqSuffix("mairadb"),
+						Name:      rand.WithUniqSuffix("mariadb"),
 						Namespace: fi.Namespace(),
 					}
 					issuer, err := fi.EnsureIssuer(mdMeta, api.MariaDB{}.ResourceFQN())
@@ -153,6 +153,7 @@ var _ = Describe("MariaDB TLS/SSL", func() {
 								},
 							},
 						}
+						// Add Monitor
 						fi.AddMariaDBMonitor(in)
 					})
 					Expect(err).NotTo(HaveOccurred())
