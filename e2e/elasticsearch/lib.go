@@ -108,7 +108,6 @@ func (to *testOptions) createElasticsearchAndWaitForBeingReady() {
 
 	By("Check for Elastic client")
 	to.EventuallyElasticsearchClientReady(to.db.ObjectMeta).Should(BeTrue())
-
 }
 
 func (to *testOptions) createElasticsearchWithCustomConfigAndWaitForBeingReady() {

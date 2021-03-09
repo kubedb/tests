@@ -23,8 +23,11 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gomodules.xyz/pointer"
 	batch "k8s.io/api/batch/v1beta1"
+	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -33,6 +36,7 @@ import (
 	dm_util "kmodules.xyz/client-go/dynamic"
 	meta_util "kmodules.xyz/client-go/meta"
 	appcat "kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1"
+	ofst "kmodules.xyz/offshoot-api/api/v1"
 	"stash.appscode.dev/apimachinery/apis/stash"
 	stash_v1alpha1 "stash.appscode.dev/apimachinery/apis/stash/v1alpha1"
 	stash_v1beta1 "stash.appscode.dev/apimachinery/apis/stash/v1beta1"
@@ -294,4 +298,22 @@ func getRestoreAddonName() string {
 		strings.TrimPrefix(StashAddonName, "stash-"),
 		StashAddonVersion,
 	)
+}
+
+func (fi *Invocation) NewInterimVolumeTemplate() *ofst.PersistentVolumeClaim {
+	return &ofst.PersistentVolumeClaim{
+		PartialObjectMeta: ofst.PartialObjectMeta{
+			Name:      fi.app,
+			Namespace: fi.namespace,
+		},
+		Spec: core.PersistentVolumeClaimSpec{
+			Resources: core.ResourceRequirements{
+				Requests: core.ResourceList{
+					core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
+				},
+			},
+			StorageClassName: pointer.StringP(fi.StorageClass),
+			AccessModes:      []core.PersistentVolumeAccessMode{core.ReadWriteOnce},
+		},
+	}
 }

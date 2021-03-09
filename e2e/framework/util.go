@@ -337,6 +337,14 @@ func getGVRAndObjectMeta(obj interface{}) (schema.GroupVersionResource, metav1.O
 		r.GetObjectKind().SetGroupVersionKind(opsapi.SchemeGroupVersion.WithKind(opsapi.ResourceKindMongoDBOpsRequest))
 		gvk := r.GroupVersionKind()
 		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: opsapi.ResourcePluralMongoDBOpsRequest}, r.ObjectMeta, nil
+	case *api.Elasticsearch:
+		r.GetObjectKind().SetGroupVersionKind(api.SchemeGroupVersion.WithKind(api.ResourceKindElasticsearch))
+		gvk := r.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: api.ResourcePluralElasticsearch}, r.ObjectMeta, nil
+	case *v1alpha1.ElasticsearchOpsRequest:
+		r.GetObjectKind().SetGroupVersionKind(opsapi.SchemeGroupVersion.WithKind(opsapi.ResourceKindElasticsearchOpsRequest))
+		gvk := r.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: opsapi.ResourcePluralElasticsearchOpsRequest}, r.ObjectMeta, nil
 	case *api.MySQL:
 		r.GetObjectKind().SetGroupVersionKind(api.SchemeGroupVersion.WithKind(api.ResourceKindMySQL))
 		gvk := r.GroupVersionKind()

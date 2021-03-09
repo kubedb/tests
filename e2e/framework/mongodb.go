@@ -486,12 +486,12 @@ func (fi *Invocation) DeployMongoDB(transformFuncs ...func(in *api.MongoDB)) *ap
 	fi.AppendToCleanupList(createdMongo)
 
 	// If "spec.Init.WaitForInitialRestore" is set to "true", database will stuck in "Provisioning" state until initial restore done.
-	if shouldWaitForInitialRestore(createdMongo) {
+	if shouldWaitForInitialRestore(createdMongo.Spec.Init) {
 		By("Waiting for MongoDB: " + createdMongo.Name + " to accept connection")
 		fi.EventuallyPingMongo(createdMongo.ObjectMeta).Should(BeTrue())
 	} else {
 		By("Waiting for MongoDB: " + createdMongo.Name + " to be ready")
-		fi.EventuallyMongoDBReady(mg.ObjectMeta).Should(BeTrue())
+		fi.EventuallyMongoDBReady(createdMongo.ObjectMeta).Should(BeTrue())
 	}
 
 	// if SSL is being used, verify SSL settings
@@ -668,8 +668,8 @@ func documentMatches(actual, expected Document) bool {
 		actual.State == expected.State
 }
 
-func shouldWaitForInitialRestore(mg *api.MongoDB) bool {
-	return mg != nil && mg.Spec.Init != nil && mg.Spec.Init.WaitForInitialRestore
+func shouldWaitForInitialRestore(init *api.InitSpec) bool {
+	return init != nil && init.WaitForInitialRestore
 }
 
 func (fi *Invocation) getStorage() *core.PersistentVolumeClaimSpec {

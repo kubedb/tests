@@ -19,7 +19,6 @@ package go_es
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	esv6 "github.com/elastic/go-elasticsearch/v6"
@@ -63,7 +62,7 @@ func (es *ESClientV6) CreateIndex(_index string) error {
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return errors.New(fmt.Sprintf("received status code: %d", res.StatusCode))
+		return decodeError(res.Body, res.StatusCode)
 	}
 
 	return nil
@@ -83,7 +82,7 @@ func (es *ESClientV6) GetIndices(indices ...string) (map[string]interface{}, err
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return nil, errors.New(fmt.Sprintf("received status code: %d", res.StatusCode))
+		return nil, decodeError(res.Body, res.StatusCode)
 	}
 
 	response := make(map[string]interface{})
@@ -108,7 +107,7 @@ func (es *ESClientV6) DeleteIndex(indices ...string) error {
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return errors.New(fmt.Sprintf("received status code: %d", res.StatusCode))
+		return decodeError(res.Body, res.StatusCode)
 	}
 	return nil
 }
@@ -137,7 +136,7 @@ func (es *ESClientV6) PutData(_index, _type, _id string, data map[string]interfa
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return errors.New(fmt.Sprintf("received status code: %d", res.StatusCode))
+		return decodeError(res.Body, res.StatusCode)
 	}
 	return nil
 }
@@ -158,7 +157,7 @@ func (es *ESClientV6) GetData(_index, _type, _id string) (map[string]interface{}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return nil, errors.New(fmt.Sprintf("received status code: %d", res.StatusCode))
+		return nil, decodeError(res.Body, res.StatusCode)
 	}
 
 	response = make(map[string]interface{})

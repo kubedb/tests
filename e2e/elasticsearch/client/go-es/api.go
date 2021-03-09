@@ -19,7 +19,9 @@ package go_es
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -71,7 +73,7 @@ func GetElasticClient(kc kubernetes.Interface, db *api.Elasticsearch, url string
 
 	switch {
 	// 6.x for searchguard & x-pack, 0.x for opendistro
-	case strings.HasPrefix(string(db.Spec.Version), "6."), strings.HasPrefix(string(db.Spec.Version), "0."):
+	case strings.HasPrefix(string(db.Spec.Version), "6."):
 		client, err := esv6.NewClient(esv6.Config{
 			Addresses:         []string{url},
 			Username:          username,
@@ -101,7 +103,7 @@ func GetElasticClient(kc kubernetes.Interface, db *api.Elasticsearch, url string
 		return &ESClientV6{client: client}, nil
 
 	// 7.x for searchguard & x-pack, 1.x for opendistro
-	case strings.HasPrefix(string(db.Spec.Version), "7."), strings.HasPrefix(string(db.Spec.Version), "1."):
+	case strings.HasPrefix(string(db.Spec.Version), "7."):
 		client, err := esv7.NewClient(esv7.Config{
 			Addresses:         []string{url},
 			Username:          username,
@@ -132,4 +134,17 @@ func GetElasticClient(kc kubernetes.Interface, db *api.Elasticsearch, url string
 	}
 
 	return nil, fmt.Errorf("unknown database verseion: %s", db.Spec.Version)
+}
+
+func decodeError(respBody io.Reader, statusCode int) error {
+	var response map[string]interface{}
+	err := json.NewDecoder(respBody).Decode(&response)
+	if err != nil {
+		return fmt.Errorf("failed to extract response body. Reason: %v", err)
+	}
+	jsonResponse, err := json.MarshalIndent(&response, "", "\t")
+	if err != nil {
+		return fmt.Errorf("failed to marshal error message. Reason: %v", err)
+	}
+	return errors.New(fmt.Sprintf("%s", string(jsonResponse)))
 }

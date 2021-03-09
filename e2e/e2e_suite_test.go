@@ -28,6 +28,8 @@ import (
 	cs "kubedb.dev/apimachinery/client/clientset/versioned"
 	"kubedb.dev/apimachinery/client/clientset/versioned/scheme"
 	_ "kubedb.dev/tests/e2e/elasticsearch"
+	_ "kubedb.dev/tests/e2e/elasticsearch/backup"
+	_ "kubedb.dev/tests/e2e/elasticsearch/initialization"
 	"kubedb.dev/tests/e2e/framework"
 	_ "kubedb.dev/tests/e2e/mariadb"
 	_ "kubedb.dev/tests/e2e/mariadb/backup"
