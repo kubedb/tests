@@ -605,3 +605,28 @@ func (fi *Invocation) getESNodeResources() core.ResourceRequirements {
 		},
 	}
 }
+
+func (fi *Invocation) AddDedicatedESNodes(db *api.Elasticsearch) {
+	// remove the combined node's configurations
+	db.Spec.Storage = nil
+	db.Spec.PodTemplate = ofst.PodTemplateSpec{}
+
+	// add dedicated nodes
+	db.Spec.Topology = &api.ElasticsearchClusterTopology{
+		Master: api.ElasticsearchNode{
+			Replicas: types.Int32P(1),
+			Suffix:   api.ElasticsearchMasterNodeSuffix,
+			Storage:  fi.getESStorage(),
+		},
+		Data: api.ElasticsearchNode{
+			Replicas: types.Int32P(2),
+			Suffix:   api.ElasticsearchDataNodeSuffix,
+			Storage:  fi.getESStorage(),
+		},
+		Ingest: api.ElasticsearchNode{
+			Replicas: types.Int32P(1),
+			Suffix:   api.ElasticsearchIngestNodeSuffix,
+			Storage:  fi.getESStorage(),
+		},
+	}
+}
