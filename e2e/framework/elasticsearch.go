@@ -488,6 +488,9 @@ func (f *Framework) GetAuthSecretForElasticsearch(es *api.Elasticsearch, mangedB
 func (f *Framework) CleanSecrets() {
 	if err := f.kubeClient.CoreV1().Secrets(f.namespace).DeleteCollection(context.TODO(), meta_util.DeleteInForeground(), metav1.ListOptions{}); err != nil {
 		fmt.Printf("error in deletion of secrets. Error: %v", err)
+	}
+}
+
 // DeployElasticsearch creates a Elasticsearch object. It accepts an array of functions
 // called transform function. The transform functions make test specific modification on
 // a generic Elasticsearch definition.

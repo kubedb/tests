@@ -60,9 +60,6 @@ var (
 	SSLEnabled       bool
 	InMemory         bool
 	TestFailed       = false
-
-	StashAddonName    = ""
-	StashAddonVersion = ""
 )
 
 type Framework struct {

@@ -19,14 +19,12 @@ package framework
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gomodules.xyz/pointer"
 	batch "k8s.io/api/batch/v1beta1"
 	core "k8s.io/api/core/v1"
-	kerr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -50,19 +48,6 @@ const (
 // Its verify Stash installation by checking the presence of RestoreSession CRD in the cluster.
 func (f *Framework) StashInstalled() bool {
 	return discovery.ExistsGroupKind(f.kubeClient.Discovery(), stash.GroupName, stash_v1beta1.ResourceKindRestoreSession)
-}
-
-func (fi *Invocation) AddonExist() (bool, error) {
-	// check whether the respective addon has been installed or not
-	_, err := fi.StashClient.StashV1beta1().Tasks().Get(context.TODO(), getBackupAddonName(), metav1.GetOptions{})
-	if err != nil {
-		if !kerr.IsNotFound(err) {
-			return false, err
-		} else {
-			return false, nil
-		}
-	}
-	return true, nil
 }
 
 func (fi *Invocation) BackupDatabase(dbMeta metav1.ObjectMeta, expectedSnapshotCount int32, transformFuncs ...func(bc *stash_v1beta1.BackupConfiguration)) (*appcat.AppBinding, *stash_v1alpha1.Repository) {
@@ -284,20 +269,6 @@ func (fi *Invocation) GetCronJob(meta metav1.ObjectMeta) (*batch.CronJob, error)
 		}
 	}
 	return nil, nil
-}
-
-func getBackupAddonName() string {
-	return fmt.Sprintf("%s-backup-%s",
-		strings.TrimPrefix(StashAddonName, "stash-"),
-		StashAddonVersion,
-	)
-}
-
-func getRestoreAddonName() string {
-	return fmt.Sprintf("%s-restore-%s",
-		strings.TrimPrefix(StashAddonName, "stash-"),
-		StashAddonVersion,
-	)
 }
 
 func (fi *Invocation) NewInterimVolumeTemplate() *ofst.PersistentVolumeClaim {

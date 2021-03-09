@@ -54,9 +54,6 @@ func (fi *Invocation) SetupDatabaseRestore(appBinding *appcat.AppBinding, repo *
 	// Generate RestoreSession definition for database
 	restoreSession := fi.NewRestoreSession(repo.Name, func(rs *stash_v1beta1.RestoreSession) {
 		rs.Labels = appBinding.Labels
-		rs.Spec.Task = stash_v1beta1.TaskRef{
-			Name: getRestoreAddonName(),
-		}
 		rs.Spec.Target = &stash_v1beta1.RestoreTarget{
 			Alias: fi.app,
 			Ref: stash_v1beta1.TargetRef{

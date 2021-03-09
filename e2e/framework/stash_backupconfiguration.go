@@ -68,9 +68,6 @@ func (fi *Invocation) SetupDatabaseBackup(appBinding *appcat.AppBinding, transfo
 
 	// Generate BackupConfiguration definition for database
 	backupConfig := fi.NewBackupConfiguration(repo.Name, func(bc *stash_v1beta1.BackupConfiguration) {
-		bc.Spec.Task = stash_v1beta1.TaskRef{
-			Name: getBackupAddonName(),
-		}
 		bc.Spec.Target = &stash_v1beta1.BackupTarget{
 			Alias: fi.app,
 			Ref: stash_v1beta1.TargetRef{

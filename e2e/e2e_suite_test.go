@@ -88,8 +88,6 @@ func init() {
 	flag.BoolVar(&framework.SSLEnabled, "ssl", framework.SSLEnabled, "enable ssl")
 	flag.BoolVar(&framework.InMemory, "inmemory", framework.SSLEnabled, "test percona inmemory")
 	flag.Var(&framework.TestProfiles, "test-profiles", "Test Profiles to test")
-	flag.StringVar(&framework.StashAddonName, "stash-addon-name", "", "Name of the Stash addon to use for testing database backup")
-	flag.StringVar(&framework.StashAddonVersion, "stash-addon-version", "", "Version of the Stash addon to use for testing database backup")
 }
 
 const (

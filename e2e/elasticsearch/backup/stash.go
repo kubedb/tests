@@ -20,10 +20,10 @@ import (
 	"fmt"
 
 	"kubedb.dev/tests/e2e/framework"
-	stash_v1beta1 "stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	stash_v1beta1 "stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 )
 
 var _ = Describe("Stash Backup", func() {
@@ -40,18 +40,6 @@ var _ = Describe("Stash Backup", func() {
 		// If Stash operator hasn't been installed, then skip running the backup tests
 		if !f.StashInstalled() {
 			Skip("Stash is not running in the cluster. Please install Stash to run the backup tests.")
-		}
-
-		// Skip if addon name or addon version is missing
-		if framework.StashAddonName == "" || framework.StashAddonVersion == "" {
-			Skip("Missing Stash addon name or version")
-		}
-
-		// If the provided addon does not exist, then skip running the test
-		exist, err := f.AddonExist()
-		Expect(err).NotTo(HaveOccurred())
-		if !exist {
-			Skip(fmt.Sprintf("Stash addon name: %s version: %s does not exist", framework.StashAddonName, framework.StashAddonVersion))
 		}
 	})
 
@@ -70,7 +58,7 @@ var _ = Describe("Stash Backup", func() {
 		Context("With Combined Nodes", func() {
 			Context("Of Single Replica", func() {
 				Context("Without TLS", func() {
-					FIt("should backup and restore successfully", func() {
+					It("should backup and restore successfully", func() {
 						// Deploy a Elasticsearch instance
 						es := f.DeployElasticsearch()
 
@@ -80,12 +68,6 @@ var _ = Describe("Stash Backup", func() {
 						// Backup the database
 						appBinding, repo := f.BackupDatabase(es.ObjectMeta, 1, func(bc *stash_v1beta1.BackupConfiguration) {
 							bc.Spec.InterimVolumeTemplate = f.NewInterimVolumeTemplate()
-							bc.Spec.Task.Params = []stash_v1beta1.Param{
-								{
-									Name:  "args",
-									Value: "--ignoreType='template,settings,alias'",
-								},
-							}
 						})
 
 						// Delete sample data
@@ -94,12 +76,6 @@ var _ = Describe("Stash Backup", func() {
 						// Restore the database
 						f.RestoreDatabase(appBinding, repo, func(rs *stash_v1beta1.RestoreSession) {
 							rs.Spec.InterimVolumeTemplate = f.NewInterimVolumeTemplate()
-							rs.Spec.Task.Params = []stash_v1beta1.Param{
-								{
-									Name:  "args",
-									Value: "--ignoreChildError=true",
-								},
-							}
 						})
 
 						// Verify restored data
