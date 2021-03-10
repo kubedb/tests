@@ -384,7 +384,7 @@ func getGVRAndObjectMeta(obj interface{}) (schema.GroupVersionResource, metav1.O
 	case *stash_v1beta1.BackupBlueprint:
 		r.GetObjectKind().SetGroupVersionKind(stash_v1beta1.SchemeGroupVersion.WithKind(stash_v1beta1.ResourceKindBackupBlueprint))
 		gvk := r.GroupVersionKind()
-		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: stash_v1beta1.ResourcePluralBackupConfiguration}, r.ObjectMeta, nil
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: stash_v1beta1.ResourcePluralBackupBlueprint}, r.ObjectMeta, nil
 	case *stash_v1beta1.BackupSession:
 		r.GetObjectKind().SetGroupVersionKind(stash_v1beta1.SchemeGroupVersion.WithKind(stash_v1beta1.ResourceKindBackupSession))
 		gvk := r.GroupVersionKind()

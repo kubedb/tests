@@ -3,6 +3,7 @@ module kubedb.dev/tests
 go 1.14
 
 require (
+	github.com/Masterminds/semver v1.5.0
 	github.com/appscode/go v0.0.0-20201006035845-a0302ac8e3d3
 	github.com/aws/aws-sdk-go v1.34.13
 	github.com/codeskyblue/go-sh v0.0.0-20200712050446-30169cf553fe

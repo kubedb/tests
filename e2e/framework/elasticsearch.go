@@ -23,12 +23,14 @@ import (
 	"strings"
 
 	"kubedb.dev/apimachinery/apis/catalog/v1alpha1"
+	catalog "kubedb.dev/apimachinery/apis/catalog/v1alpha1"
 	"kubedb.dev/apimachinery/apis/kubedb"
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha2/util"
 	"kubedb.dev/tests/e2e/elasticsearch/client/es"
 	go_es "kubedb.dev/tests/e2e/elasticsearch/client/go-es"
 
+	"github.com/Masterminds/semver"
 	"github.com/appscode/go/crypto/rand"
 	"github.com/appscode/go/log"
 	string_util "github.com/appscode/go/strings"
@@ -433,13 +435,18 @@ func (f *Framework) GetGoESClient(meta metav1.ObjectMeta) (go_es.ESClient, *port
 		return nil, nil, err
 	}
 
+	esVersion, err := f.dbClient.CatalogV1alpha1().ElasticsearchVersions().Get(context.TODO(), db.Spec.Version, metav1.GetOptions{})
+	if err != nil {
+		return nil, nil, err
+	}
+
 	tunnel, err := f.ForwardPort(meta, string(core.ResourceServices), db.ServiceName(), api.ElasticsearchRestPort)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	url := fmt.Sprintf("%v://127.0.0.1:%d", db.GetConnectionScheme(), tunnel.Local)
-	esClient, err := go_es.GetElasticClient(f.kubeClient, db, url)
+	esClient, err := go_es.GetElasticClient(f.kubeClient, db, esVersion.Spec.Version, url)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -643,4 +650,40 @@ func (fi *Invocation) EnableElasticsearchSSL(es *api.Elasticsearch, transformFun
 	for _, fn := range transformFuncs {
 		fn(es)
 	}
+}
+
+func (fi *Invocation) NearestESVariant(desiredDistro catalog.ElasticsearchDistro) string {
+	// Get current ElasticsearchVersion CR
+	curESVersion, err := fi.dbClient.CatalogV1alpha1().ElasticsearchVersions().Get(context.TODO(), DBVersion, metav1.GetOptions{})
+	Expect(err).NotTo(HaveOccurred())
+
+	allESVersions, err := fi.dbClient.CatalogV1alpha1().ElasticsearchVersions().List(context.TODO(), metav1.ListOptions{})
+	Expect(err).NotTo(HaveOccurred())
+
+	currentESVersionScore := calculateESVersionScore(curESVersion.Spec.Version)
+	diff := int64(1000000000)
+	nearestESVariant := DBVersion
+
+	// Chose the ElasticsearhVersion that matches the provided distro and has lowest diff with DBVersion
+	for _, esVersion := range allESVersions.Items {
+		if esVersion.Spec.Distribution == desiredDistro {
+			score := calculateESVersionScore(esVersion.Spec.Version)
+			curDiff := currentESVersionScore - score
+			if curDiff < 0 {
+				curDiff *= -1
+			}
+			if curDiff <= diff {
+				nearestESVariant = esVersion.Name
+				diff = curDiff
+			}
+		}
+	}
+	return nearestESVariant
+}
+
+// Here, we are going to use score=100*major+10*minor+patch formula to calculate score  of a database version.
+// This formula will ensure the selected ElasticsearchVersion object is the nearest of DBVersion.
+func calculateESVersionScore(esVersion string) int64 {
+	version := semver.MustParse(esVersion)
+	return 100*version.Major() + 10*version.Minor() + version.Patch()
 }
