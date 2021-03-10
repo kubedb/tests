@@ -255,7 +255,7 @@ var _ = Describe("MariaDB", func() {
 			})
 
 			Context("Multiple times with init", func() {
-				FIt("should resume database successfully", func() {
+				It("should resume database successfully", func() {
 					// MariaDB ObjectMeta
 					mdMeta := metav1.ObjectMeta{
 						Name:      rand.WithUniqSuffix("mariadb"),

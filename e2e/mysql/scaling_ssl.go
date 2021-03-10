@@ -180,7 +180,7 @@ var _ = Describe("MySQL", func() {
 				fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
 			})
 		})
-		FContext("Vertical scale", func() {
+		Context("Vertical scale", func() {
 			It("Should vertical scale MySQL Group Replication", func() {
 				// MySQL objectMeta
 				issuerMeta := metav1.ObjectMeta{

@@ -105,9 +105,7 @@ func (f *Framework) DumpTestConfigurations() {
 		"Database Type: %s\n\t"+
 		"Database Version: %s\n\t"+
 		"Updated Database Version: %s\n\t"+
-		"SSL Enabled: %v\n\t"+
-		"Stash Addon Name: %s\n\t"+
-		"Stash Addon Version: %s\n\t",
+		"SSL Enabled: %v\n\t",
 		TestProfiles.String(),
 		DockerRegistry,
 		f.StorageClass,
@@ -115,8 +113,6 @@ func (f *Framework) DumpTestConfigurations() {
 		DBVersion,
 		DBUpdatedVersion,
 		SSLEnabled,
-		StashAddonName,
-		StashAddonVersion,
 	),
 	)
 }

@@ -19,12 +19,13 @@ package framework
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gomodules.xyz/pointer"
 	batch "k8s.io/api/batch/v1beta1"
-	kerr "k8s.io/apimachinery/pkg/api/errors"
+	core "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -33,6 +34,7 @@ import (
 	dm_util "kmodules.xyz/client-go/dynamic"
 	meta_util "kmodules.xyz/client-go/meta"
 	appcat "kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1"
+	ofst "kmodules.xyz/offshoot-api/api/v1"
 	"stash.appscode.dev/apimachinery/apis/stash"
 	stash_v1alpha1 "stash.appscode.dev/apimachinery/apis/stash/v1alpha1"
 	stash_v1beta1 "stash.appscode.dev/apimachinery/apis/stash/v1beta1"
@@ -46,19 +48,6 @@ const (
 // Its verify Stash installation by checking the presence of RestoreSession CRD in the cluster.
 func (f *Framework) StashInstalled() bool {
 	return discovery.ExistsGroupKind(f.kubeClient.Discovery(), stash.GroupName, stash_v1beta1.ResourceKindRestoreSession)
-}
-
-func (fi *Invocation) AddonExist() (bool, error) {
-	// check whether the respective addon has been installed or not
-	_, err := fi.StashClient.StashV1beta1().Tasks().Get(context.TODO(), getBackupAddonName(), metav1.GetOptions{})
-	if err != nil {
-		if !kerr.IsNotFound(err) {
-			return false, err
-		} else {
-			return false, nil
-		}
-	}
-	return true, nil
 }
 
 func (fi *Invocation) BackupDatabase(dbMeta metav1.ObjectMeta, expectedSnapshotCount int32, transformFuncs ...func(bc *stash_v1beta1.BackupConfiguration)) (*appcat.AppBinding, *stash_v1alpha1.Repository) {
@@ -282,16 +271,20 @@ func (fi *Invocation) GetCronJob(meta metav1.ObjectMeta) (*batch.CronJob, error)
 	return nil, nil
 }
 
-func getBackupAddonName() string {
-	return fmt.Sprintf("%s-backup-%s",
-		strings.TrimPrefix(StashAddonName, "stash-"),
-		StashAddonVersion,
-	)
-}
-
-func getRestoreAddonName() string {
-	return fmt.Sprintf("%s-restore-%s",
-		strings.TrimPrefix(StashAddonName, "stash-"),
-		StashAddonVersion,
-	)
+func (fi *Invocation) NewInterimVolumeTemplate() *ofst.PersistentVolumeClaim {
+	return &ofst.PersistentVolumeClaim{
+		PartialObjectMeta: ofst.PartialObjectMeta{
+			Name:      fi.app,
+			Namespace: fi.namespace,
+		},
+		Spec: core.PersistentVolumeClaimSpec{
+			Resources: core.ResourceRequirements{
+				Requests: core.ResourceList{
+					core.ResourceStorage: resource.MustParse(DBPvcStorageSize),
+				},
+			},
+			StorageClassName: pointer.StringP(fi.StorageClass),
+			AccessModes:      []core.PersistentVolumeAccessMode{core.ReadWriteOnce},
+		},
+	}
 }

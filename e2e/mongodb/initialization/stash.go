@@ -41,18 +41,6 @@ var _ = Describe("MongoDB Initialization", func() {
 		if !f.StashInstalled() {
 			Skip("Stash is not running in the cluster. Please install Stash to run the backup tests.")
 		}
-
-		// Skip if addon name or addon version is missing
-		if framework.StashAddonName == "" || framework.StashAddonVersion == "" {
-			Skip("Missing Stash addon name or version")
-		}
-
-		// If the provided addon does not exist, then skip running the test
-		exist, err := f.AddonExist()
-		Expect(err).NotTo(HaveOccurred())
-		if !exist {
-			Skip(fmt.Sprintf("Stash addon name: %s version: %s does not exist", framework.StashAddonName, framework.StashAddonVersion))
-		}
 	})
 
 	JustAfterEach(func() {

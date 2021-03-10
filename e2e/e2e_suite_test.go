@@ -28,6 +28,8 @@ import (
 	cs "kubedb.dev/apimachinery/client/clientset/versioned"
 	"kubedb.dev/apimachinery/client/clientset/versioned/scheme"
 	_ "kubedb.dev/tests/e2e/elasticsearch"
+	_ "kubedb.dev/tests/e2e/elasticsearch/backup"
+	_ "kubedb.dev/tests/e2e/elasticsearch/initialization"
 	"kubedb.dev/tests/e2e/framework"
 	_ "kubedb.dev/tests/e2e/mariadb"
 	_ "kubedb.dev/tests/e2e/mariadb/backup"
@@ -86,8 +88,6 @@ func init() {
 	flag.BoolVar(&framework.SSLEnabled, "ssl", framework.SSLEnabled, "enable ssl")
 	flag.BoolVar(&framework.InMemory, "inmemory", framework.SSLEnabled, "test percona inmemory")
 	flag.Var(&framework.TestProfiles, "test-profiles", "Test Profiles to test")
-	flag.StringVar(&framework.StashAddonName, "stash-addon-name", "", "Name of the Stash addon to use for testing database backup")
-	flag.StringVar(&framework.StashAddonVersion, "stash-addon-version", "", "Version of the Stash addon to use for testing database backup")
 }
 
 const (

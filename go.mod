@@ -3,6 +3,7 @@ module kubedb.dev/tests
 go 1.14
 
 require (
+	github.com/Masterminds/semver v1.5.0
 	github.com/appscode/go v0.0.0-20201006035845-a0302ac8e3d3
 	github.com/aws/aws-sdk-go v1.34.13
 	github.com/codeskyblue/go-sh v0.0.0-20200712050446-30169cf553fe
@@ -22,6 +23,7 @@ require (
 	github.com/prometheus/prom2json v1.3.0
 	go.mongodb.org/mongo-driver v1.3.2
 	gocloud.dev v0.20.0
+	golang.org/x/tools v0.0.0-20201110124207-079ba7bd75cd // indirect
 	gomodules.xyz/blobfs v0.1.4
 	gomodules.xyz/cert v1.1.2
 	gomodules.xyz/oneliners v0.0.0-20200730052119-bccc7758058b

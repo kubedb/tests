@@ -62,7 +62,6 @@ func (fi *Invocation) CreateBackupBlueprint() *stash_v1beta1.BackupBlueprint {
 
 	// Generate BackupBlueprint definition
 	bb := fi.NewBackupBlueprint(secret.Name)
-	bb.Spec.Task.Name = getBackupAddonName()
 
 	By(fmt.Sprintf("Creating BackupBlueprint: %s", bb.Name))
 	createdBB, err := fi.StashClient.StashV1beta1().BackupBlueprints().Create(context.TODO(), bb, metav1.CreateOptions{})
