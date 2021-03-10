@@ -630,3 +630,17 @@ func (fi *Invocation) AddDedicatedESNodes(db *api.Elasticsearch) {
 		},
 	}
 }
+
+func (fi *Invocation) EnableElasticsearchSSL(es *api.Elasticsearch, transformFuncs ...func(in *api.Elasticsearch)) {
+	// Create Issuer
+	issuer, err := fi.EnsureIssuer(es.ObjectMeta, api.ResourceKindElasticsearch)
+	Expect(err).NotTo(HaveOccurred())
+
+	// Enable SSL in the Elasticsearch
+	es.Spec.TLS = NewTLSConfiguration(issuer)
+
+	// apply test specific modification
+	for _, fn := range transformFuncs {
+		fn(es)
+	}
+}

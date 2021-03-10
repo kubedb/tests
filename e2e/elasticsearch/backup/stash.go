@@ -85,10 +85,12 @@ var _ = Describe("Stash Backup", func() {
 						f.VerifyElasticsearchRestore(es, framework.SampleESIndex)
 					})
 				})
-				XContext("With TLS", func() {
+				Context("With TLS", func() {
 					It("should backup and restore successfully", func() {
 						// Deploy a Elasticsearch instance
-						es := f.DeployElasticsearch()
+						es := f.DeployElasticsearch(func(in *api.Elasticsearch) {
+							f.EnableElasticsearchSSL(in)
+						})
 
 						// Populate the Elasticsearch with some sample data
 						f.PopulateElasticsearch(es, framework.SampleESIndex)
@@ -140,11 +142,12 @@ var _ = Describe("Stash Backup", func() {
 						f.VerifyElasticsearchRestore(es, framework.SampleESIndex)
 					})
 				})
-				XContext("With TLS", func() {
+				Context("With TLS", func() {
 					It("should backup and restore successfully", func() {
 						// Deploy a Elasticsearch instance
 						es := f.DeployElasticsearch(func(in *api.Elasticsearch) {
 							in.Spec.Replicas = pointer.Int32P(3)
+							f.EnableElasticsearchSSL(in)
 						})
 
 						// Populate the Elasticsearch with some sample data
@@ -198,11 +201,12 @@ var _ = Describe("Stash Backup", func() {
 					f.VerifyElasticsearchRestore(es, framework.SampleESIndex)
 				})
 			})
-			XContext("With TLS", func() {
+			Context("With TLS", func() {
 				It("should backup and restore successfully", func() {
 					// Deploy a Elasticsearch instance
 					es := f.DeployElasticsearch(func(in *api.Elasticsearch) {
 						f.AddDedicatedESNodes(in)
+						f.EnableElasticsearchSSL(in)
 					})
 
 					// Populate the Elasticsearch with some sample data
