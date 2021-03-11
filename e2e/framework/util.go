@@ -407,6 +407,8 @@ func (f *Framework) waitUntilResourceDeleted(gvr schema.GroupVersionResource, ob
 				return true, err
 			}
 		}
+		// retry deleting the object
+		_ = f.dmClient.Resource(gvr).Namespace(objMeta.Namespace).Delete(context.TODO(), objMeta.Name, metav1.DeleteOptions{})
 		return false, nil
 	})
 }
@@ -418,7 +420,7 @@ func (fi *Invocation) CleanupTestResources() error {
 		if err != nil {
 			return err
 		}
-		err = fi.dmClient.Resource(gvr).Namespace(objMeta.Namespace).Delete(context.TODO(), objMeta.Name, meta_util.DeleteInForeground())
+		err = fi.dmClient.Resource(gvr).Namespace(objMeta.Namespace).Delete(context.TODO(), objMeta.Name, metav1.DeleteOptions{})
 		if err != nil && !kerr.IsNotFound(err) {
 			return err
 		}
