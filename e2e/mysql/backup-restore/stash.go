@@ -471,14 +471,7 @@ var _ = Describe("Stash Backup For MySQL", func() {
 				dbInfo.DatabaseName = framework.MySQLTestDB
 				fi.PopulateMySQL(my.ObjectMeta, dbInfo)
 
-				appBinding, repo := fi.BackupDatabase(my.ObjectMeta, 1, func(bc *stash_v1beta1.BackupConfiguration) {
-					bc.Spec.Task.Params = []stash_v1beta1.Param{
-						{
-							Name:  framework.ParamKeyArgs,
-							Value: "--single-transaction --all-databases --set-gtid-purged=OFF",
-						},
-					}
-				})
+				appBinding, repo := fi.BackupDatabase(my.ObjectMeta, 1)
 
 				By("Simulate disaster by dropping testdb")
 				dbInfo.DatabaseName = framework.DBMySQL
@@ -553,14 +546,7 @@ var _ = Describe("Stash Backup For MySQL", func() {
 					dbInfo.DatabaseName = framework.MySQLTestDB
 					fi.PopulateMySQL(my.ObjectMeta, dbInfo)
 
-					appBinding, repo := fi.BackupDatabase(my.ObjectMeta, 1, func(bc *stash_v1beta1.BackupConfiguration) {
-						bc.Spec.Task.Params = []stash_v1beta1.Param{
-							{
-								Name:  framework.ParamKeyArgs,
-								Value: "--single-transaction --all-databases --set-gtid-purged=OFF",
-							},
-						}
-					})
+					appBinding, repo := fi.BackupDatabase(my.ObjectMeta, 1)
 
 					By("Simulate disaster by dropping testdb")
 					dbInfo.DatabaseName = framework.DBMySQL
