@@ -39,14 +39,14 @@ require (
 	k8s.io/client-go v0.19.0
 	k8s.io/kube-aggregator v0.19.0
 	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
-	kmodules.xyz/client-go v0.0.0-20210218100652-8f345ddfe801
+	kmodules.xyz/client-go v0.0.0-20210313172452-3345a02bec66
 	kmodules.xyz/custom-resources v0.0.0-20210222235834-b3f8dc56b6a3
 	kmodules.xyz/monitoring-agent-api v0.0.0-20201105074044-be7a1044891a
 	kmodules.xyz/objectstore-api v0.0.0-20210218144135-bfabb80e0362
 	kmodules.xyz/offshoot-api v0.0.0-20210308072215-581e7685cd02
-	kubedb.dev/apimachinery v0.17.0
+	kubedb.dev/apimachinery v0.17.1
 	sigs.k8s.io/yaml v1.2.0
-	stash.appscode.dev/apimachinery v0.11.10
+	stash.appscode.dev/apimachinery v0.11.11
 	xorm.io/xorm v1.0.5
 )
 
