@@ -353,6 +353,10 @@ func getGVRAndObjectMeta(obj interface{}) (schema.GroupVersionResource, metav1.O
 		r.GetObjectKind().SetGroupVersionKind(api.SchemeGroupVersion.WithKind(api.ResourceKindMariaDB))
 		gvk := r.GroupVersionKind()
 		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: api.ResourcePluralMariaDB}, r.ObjectMeta, nil
+	case *v1alpha1.MariaDBOpsRequest:
+		r.GetObjectKind().SetGroupVersionKind(opsapi.SchemeGroupVersion.WithKind(opsapi.ResourceKindMariaDBOpsRequest))
+		gvk := r.GroupVersionKind()
+		return schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: opsapi.ResourcePluralMariaDBOpsRequest}, r.ObjectMeta, nil
 	case *v1alpha1.MySQLOpsRequest:
 		r.GetObjectKind().SetGroupVersionKind(opsapi.SchemeGroupVersion.WithKind(opsapi.ResourceKindMySQLOpsRequest))
 		gvk := r.GroupVersionKind()
