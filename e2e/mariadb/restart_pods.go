@@ -18,12 +18,12 @@ package mariadb
 
 import (
 	"fmt"
-	"github.com/appscode/go/types"
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	opsapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
 
+	"github.com/appscode/go/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
