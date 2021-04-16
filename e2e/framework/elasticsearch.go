@@ -325,8 +325,9 @@ func (f *Framework) EventuallyElasticsearchClientReady(meta metav1.ObjectMeta) G
 			if _, err := client.Ping(url); err != nil {
 				return false
 			}
-			if db.Spec.Topology != nil {
-				// cluster health status will be green only for dedicated elasicsearch
+			// For, topology cluster with more than one data node check Green status;
+			// Otherwise check, yellow status.
+			if db.Spec.Topology != nil && pointer.Int32(db.Spec.Topology.Data.Replicas) > 1 {
 				if err := client.WaitForGreenStatus("10s"); err != nil {
 					return false
 				}
