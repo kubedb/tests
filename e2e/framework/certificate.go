@@ -43,7 +43,7 @@ func (f *Framework) GetSSLCertificate(meta metav1.ObjectMeta) error {
 		return err
 	}
 
-	certSecret, err := f.kubeClient.CoreV1().Secrets(mg.Namespace).Get(context.TODO(), mg.MustCertSecretName(api.MongoDBClientCert, ""), metav1.GetOptions{})
+	certSecret, err := f.kubeClient.CoreV1().Secrets(mg.Namespace).Get(context.TODO(), mg.GetCertSecretName(api.MongoDBClientCert, ""), metav1.GetOptions{})
 	if err != nil {
 		return err
 	}

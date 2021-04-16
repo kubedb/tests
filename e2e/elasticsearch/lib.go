@@ -476,7 +476,7 @@ func (to *testOptions) checkUpdatedCertificates() {
 	if kmapi.HasCertificate(to.db.Spec.TLS.Certificates, string(api.ElasticsearchHTTPCert)) {
 		cert1, err := to.GetCertificateFromPod(pod, path.Join(to.db.CertSecretVolumeMountPath(api.ElasticsearchConfigDir, api.ElasticsearchHTTPCert), core.TLSCertKey))
 		Expect(err).NotTo(HaveOccurred())
-		cert2, err := to.GetCertificateFromSecret(to.db.MustCertSecretName(api.ElasticsearchHTTPCert), to.db.Namespace)
+		cert2, err := to.GetCertificateFromSecret(to.db.GetCertSecretName(api.ElasticsearchHTTPCert), to.db.Namespace)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(cmp.Equal(cert1, cert2)).Should(BeTrue())
 	}
@@ -485,7 +485,7 @@ func (to *testOptions) checkUpdatedCertificates() {
 	if kmapi.HasCertificate(to.db.Spec.TLS.Certificates, string(api.ElasticsearchTransportCert)) {
 		cert1, err := to.GetCertificateFromPod(pod, path.Join(to.db.CertSecretVolumeMountPath(api.ElasticsearchConfigDir, api.ElasticsearchTransportCert), core.TLSCertKey))
 		Expect(err).NotTo(HaveOccurred())
-		cert2, err := to.GetCertificateFromSecret(to.db.MustCertSecretName(api.ElasticsearchTransportCert), to.db.Namespace)
+		cert2, err := to.GetCertificateFromSecret(to.db.GetCertSecretName(api.ElasticsearchTransportCert), to.db.Namespace)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(cmp.Equal(cert1, cert2)).Should(BeTrue())
 	}
