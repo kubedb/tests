@@ -59,7 +59,7 @@ func (fi *Invocation) GetMariaDBClient(meta metav1.ObjectMeta, tunnel *portforwa
 	}
 
 	if SslEnabledMariaDB(md) {
-		serverSecret, err := fi.kubeClient.CoreV1().Secrets(fi.Namespace()).Get(context.TODO(), md.MustCertSecretName(api.MariaDBServerCert), metav1.GetOptions{})
+		serverSecret, err := fi.kubeClient.CoreV1().Secrets(fi.Namespace()).Get(context.TODO(), md.GetCertSecretName(api.MariaDBServerCert), metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -67,7 +67,7 @@ func (fi *Invocation) GetMariaDBClient(meta metav1.ObjectMeta, tunnel *portforwa
 		certPool := x509.NewCertPool()
 		certPool.AppendCertsFromPEM(cacrt)
 		// get client-secret
-		clientSecret, err := fi.kubeClient.CoreV1().Secrets(fi.Namespace()).Get(context.TODO(), md.MustCertSecretName(api.MariaDBArchiverCert), metav1.GetOptions{})
+		clientSecret, err := fi.kubeClient.CoreV1().Secrets(fi.Namespace()).Get(context.TODO(), md.GetCertSecretName(api.MariaDBArchiverCert), metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}

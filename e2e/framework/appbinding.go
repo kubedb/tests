@@ -87,7 +87,7 @@ func (f *Framework) CheckMongoDBAppBindingSpec(meta metav1.ObjectMeta) error {
 	}
 	if appBinding.Spec.Secret == nil ||
 		(appBinding.Spec.ClientConfig.CABundle == nil && appBinding.Spec.Secret.Name != mongodb.Spec.AuthSecret.Name) ||
-		(appBinding.Spec.ClientConfig.CABundle != nil && appBinding.Spec.Secret.Name != mongodb.MustCertSecretName(api.MongoDBClientCert, "")) {
+		(appBinding.Spec.ClientConfig.CABundle != nil && appBinding.Spec.Secret.Name != mongodb.GetCertSecretName(api.MongoDBClientCert, "")) {
 		return fmt.Errorf("appbinding %v/%v contains invalid secret", appBinding.Namespace, appBinding.Name)
 	}
 	return nil
