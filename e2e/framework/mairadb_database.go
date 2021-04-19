@@ -26,7 +26,6 @@ import (
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 
-	"github.com/davecgh/go-spew/spew"
 	_ "github.com/go-sql-driver/mysql"
 	sql_driver "github.com/go-sql-driver/mysql"
 	. "github.com/onsi/gomega"
@@ -304,10 +303,7 @@ func (fi *Invocation) EventuallyCreateTestDBMD(meta metav1.ObjectMeta, dbInfo Ma
 				return false
 			}
 			for _, query := range queries {
-				if r, err := en.Query(query); err != nil {
-					spew.Dump(r)
-					fmt.Println(err)
-					fmt.Println(query)
+				if _, err := en.Query(query); err != nil {
 					return false
 				}
 			}
@@ -455,6 +451,41 @@ func (fi *Invocation) EventuallyMariaDBVariable(meta metav1.ObjectMeta, dbInfo M
 		},
 		time.Minute*5,
 		time.Second*5,
+	)
+}
+
+func (fi *Invocation) EventuallyDatabaseVersionUpdatedMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo, targetedVersion string) GomegaAsyncAssertion {
+	query := `SHOW VARIABLES LIKE "version";`
+	return Eventually(
+		func() bool {
+			tunnel, err := fi.ForwardPortMD(meta)
+			if err != nil {
+				return false
+			}
+			defer tunnel.Close()
+
+			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
+			if err != nil {
+				return false
+			}
+			defer en.Close()
+
+			if err := en.Ping(); err != nil {
+				return false
+			}
+
+			result, err := en.QueryString(query)
+			if err != nil {
+				return false
+			}
+
+			if strings.Contains(string(result[0]["Value"]), targetedVersion) {
+				return true
+			}
+			return false
+		},
+		Timeout,
+		RetryInterval,
 	)
 }
 

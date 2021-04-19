@@ -7,7 +7,6 @@ require (
 	github.com/appscode/go v0.0.0-20201006035845-a0302ac8e3d3
 	github.com/aws/aws-sdk-go v1.34.13
 	github.com/codeskyblue/go-sh v0.0.0-20200712050446-30169cf553fe
-	github.com/davecgh/go-spew v1.1.1
 	github.com/elastic/go-elasticsearch/v6 v6.8.10
 	github.com/elastic/go-elasticsearch/v7 v7.9.0
 	github.com/go-sql-driver/mysql v1.5.0
