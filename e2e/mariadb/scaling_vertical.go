@@ -56,60 +56,7 @@ var _ = Describe("MariaDB", func() {
 
 	})
 
-	Context("Scaling Database", func() {
-		// Will be added later
-		//Context("Horizontal scale", func() {
-		//	It("Should horizontal scale MariaDB", func() {
-		//		// Create MariaDB Group Replication and wait for running
-		//		my, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
-		//			in.Spec.Replicas = types.Int32P(api.MariaDBDefaultGroupSize)
-		//			clusterMode := api.MariaDBClusterModeGroup
-		//			in.Spec.Topology = &api.MariaDBClusterTopology{
-		//				Mode: &clusterMode,
-		//				Group: &api.MariaDBGroupSpec{
-		//					Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
-		//				},
-		//			}
-		//		})
-		//		Expect(err).NotTo(HaveOccurred())
-		//		// Database connection information
-		//		dbInfo := framework.DatabaseConnectionInfo{
-		//			DatabaseName: framework.DBMariaDB,
-		//			User:         framework.MariaDBRootUser,
-		//			Param:        "",
-		//		}
-		//		fi.EventuallyDBReady(my, dbInfo)
-		//		fi.PopulateMariaDB(my.ObjectMeta, dbInfo)
-		//
-		//		By("Configuring MariaDB group member scaled up")
-		//		myORUp := fi.CreateMariaDBOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MariaDBOpsRequest) {
-		//			in.Name = rand.WithUniqSuffix("myops-up")
-		//			in.Spec.Type = opsapi.OpsRequestTypeHorizontalScaling
-		//			in.Spec.HorizontalScaling = &opsapi.MariaDBHorizontalScalingSpec{
-		//				Member: types.Int32P(5),
-		//			}
-		//		})
-		//
-		//		By("Checking MariaDB horizontal scaled up")
-		//		fi.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*myORUp.Spec.HorizontalScaling.Member)))
-		//
-		//		By("Configuring MariaDB group member scaled down")
-		//		myORDown := fi.CreateMariaDBOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MariaDBOpsRequest) {
-		//			in.Name = rand.WithUniqSuffix("myops-down")
-		//			in.Spec.Type = opsapi.OpsRequestTypeHorizontalScaling
-		//			in.Spec.HorizontalScaling = &opsapi.MariaDBHorizontalScalingSpec{
-		//				Member: types.Int32P(4),
-		//			}
-		//		})
-		//
-		//		By("Checking MariaDB horizontal scaled down")
-		//		fi.EventuallyONLINEMembersCount(my.ObjectMeta, dbInfo).Should(Equal(int(*myORDown.Spec.HorizontalScaling.Member)))
-		//
-		//		// Retrieve Inserted Data
-		//		By("Checking Row Count of Table")
-		//		fi.EventuallyCountRow(my.ObjectMeta, dbInfo).Should(Equal(3))
-		//	})
-		//})
+	Context("Vertical Scaling Database", func() {
 		Context("Vertical scale", func() {
 			It("Should vertical scale MariaDB standalone", func() {
 				// Create MariaDB standalone and wait for running

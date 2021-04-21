@@ -21,6 +21,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -479,10 +480,46 @@ func (fi *Invocation) EventuallyDatabaseVersionUpdatedMD(meta metav1.ObjectMeta,
 				return false
 			}
 
-			if strings.Contains(string(result[0]["Value"]), targetedVersion) {
+			if strings.Contains(result[0]["Value"], targetedVersion) {
 				return true
 			}
 			return false
+		},
+		Timeout,
+		RetryInterval,
+	)
+}
+
+func (fi *Invocation) EventuallyONLINEMembersCountMD(meta metav1.ObjectMeta, dbInfo MariaDBInfo) GomegaAsyncAssertion {
+	query := `show status like "wsrep_cluster_size";`
+	return Eventually(
+		func() int {
+			tunnel, err := fi.ForwardPortMD(meta)
+			if err != nil {
+				return -1
+			}
+			defer tunnel.Close()
+
+			en, err := fi.GetMariaDBClient(meta, tunnel, dbInfo)
+			if err != nil {
+				return -1
+			}
+			defer en.Close()
+
+			if err := en.Ping(); err != nil {
+				return -1
+			}
+
+			result, err := en.QueryString(query)
+			if err != nil {
+				return -1
+			}
+
+			clusterSize, err := strconv.Atoi(result[0]["Value"])
+			if err != nil {
+				return -1
+			}
+			return clusterSize
 		},
 		Timeout,
 		RetryInterval,
