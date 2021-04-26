@@ -30,7 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = FDescribe("MariaDB", func() {
+var _ = Describe("MariaDB", func() {
 	var fi *framework.Invocation
 
 	BeforeEach(func() {
@@ -86,7 +86,7 @@ var _ = FDescribe("MariaDB", func() {
 			})
 		})
 
-		FContext("MariaDB Cluster", func() {
+		Context("MariaDB Cluster", func() {
 			It("Should Upgrade MariaDB Cluster", func() {
 
 				md, err := fi.CreateMariaDBAndWaitForRunning(framework.OldDBVersion, func(in *api.MariaDB) {
