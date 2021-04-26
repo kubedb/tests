@@ -30,7 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = Describe("MariaDB", func() {
+var _ = FDescribe("MariaDB", func() {
 	var fi *framework.Invocation
 
 	BeforeEach(func() {
@@ -67,7 +67,7 @@ var _ = Describe("MariaDB", func() {
 				fi.EventuallyDBReadyMD(md, mydbInfo)
 
 				fi.PopulateMariaDB(md, mydbInfo)
-				// Upgrade MySQL Version and waiting for success
+				// Upgrade MariaDB Version and waiting for success
 				mdOpsReq := fi.CreateMariaDBOpsRequestsAndWaitForSuccess(md.Name, func(in *opsapi.MariaDBOpsRequest) {
 					in.Spec.Type = opsapi.OpsRequestTypeUpgrade
 					in.Spec.Upgrade = &opsapi.MariaDBUpgradeSpec{
@@ -86,7 +86,7 @@ var _ = Describe("MariaDB", func() {
 			})
 		})
 
-		Context("MariaDB Cluster", func() {
+		FContext("MariaDB Cluster", func() {
 			It("Should Upgrade MariaDB Cluster", func() {
 
 				md, err := fi.CreateMariaDBAndWaitForRunning(framework.OldDBVersion, func(in *api.MariaDB) {
@@ -100,7 +100,7 @@ var _ = Describe("MariaDB", func() {
 				fi.EventuallyDBReadyMD(md, mydbInfo)
 
 				fi.PopulateMariaDB(md, mydbInfo)
-				// Upgrade MySQL Version and waiting for success
+				// Upgrade MariaDB Version and waiting for success
 				mdOpsReq := fi.CreateMariaDBOpsRequestsAndWaitForSuccess(md.Name, func(in *opsapi.MariaDBOpsRequest) {
 					in.Spec.Type = opsapi.OpsRequestTypeUpgrade
 					in.Spec.Upgrade = &opsapi.MariaDBUpgradeSpec{

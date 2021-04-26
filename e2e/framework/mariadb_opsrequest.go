@@ -18,6 +18,7 @@ package framework
 
 import (
 	"context"
+	"fmt"
 
 	opsapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 
@@ -73,6 +74,24 @@ func (f *Framework) EventuallyMariaDBOpsRequestCompleted(meta metav1.ObjectMeta)
 	)
 }
 
+func (f *Framework) EventuallyMariaDBOpsRequestPhaseSuccessful(meta metav1.ObjectMeta) GomegaAsyncAssertion {
+	return Eventually(
+		func() bool {
+			db, err := f.dbClient.OpsV1alpha1().MariaDBOpsRequests(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
+			if err != nil {
+				fmt.Println("Failed to get OpsReq CR. Error: ", err)
+				return false
+			}
+			if db.Status.Phase == opsapi.OpsRequestPhaseSuccessful {
+				return true
+			}
+			return false
+		},
+		Timeout,
+		RetryInterval,
+	)
+}
+
 func (fi *Invocation) CreateMariaDBOpsRequestsAndWaitForSuccess(dbName string, transformFuncs ...func(in *opsapi.MariaDBOpsRequest)) *opsapi.MariaDBOpsRequest {
 	var err error
 	// Generate MariaDB Ops Request
@@ -93,9 +112,7 @@ func (fi *Invocation) CreateMariaDBOpsRequestsAndWaitForSuccess(dbName string, t
 	fi.EventuallyMariaDBOpsRequestCompleted(mdOpsReq.ObjectMeta).Should(BeTrue())
 
 	By("Verify that MariaDB OpsRequest Phase has Succeeded")
-	mdOpsReq, err = fi.dbClient.OpsV1alpha1().MariaDBOpsRequests(mdOpsReq.Namespace).Get(context.TODO(), mdOpsReq.Name, metav1.GetOptions{})
-	Expect(err).NotTo(HaveOccurred())
-	Expect(mdOpsReq.Status.Phase).Should(Equal(opsapi.OpsRequestPhaseSuccessful))
+	fi.EventuallyMariaDBOpsRequestPhaseSuccessful(mdOpsReq.ObjectMeta).Should(BeTrue())
 
 	return mdOpsReq
 }
