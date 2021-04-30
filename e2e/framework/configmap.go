@@ -85,15 +85,15 @@ func (fi *Invocation) GetCustomConfig(configs []string, name string) *core.Secre
 	}
 }
 
-func (fi *Invocation) GetCustomConfigForMariaDB(configs []string) *core.Secret {
+func (fi *Invocation) GetCustomConfigForMariaDB(configs []string, name string) *core.Secret {
 	configs = append([]string{"[mysqld]"}, configs...)
 	return &core.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fi.app,
+			Name:      name,
 			Namespace: fi.namespace,
 		},
 		StringData: map[string]string{
-			"my-custom.cnf": strings.Join(configs, "\n"),
+			"md-custom.cnf": strings.Join(configs, "\n"),
 		},
 	}
 }

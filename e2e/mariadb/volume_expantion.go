@@ -54,7 +54,7 @@ var _ = Describe("MariaDB", func() {
 
 	})
 
-	FContext("Volume Expansion", func() {
+	Context("Volume Expansion", func() {
 		Context("MariaDB Standalone", func() {
 			It("Should volume expanded", func() {
 				// Create MariaDB standalone and wait for running
