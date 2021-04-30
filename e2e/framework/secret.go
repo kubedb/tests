@@ -209,6 +209,18 @@ func (fi *Invocation) CustomConfigForMySQL(customConfigs []string, name string) 
 	fi.AppendToCleanupList(cm)
 	return cm, err
 }
+
+func (fi *Invocation) CustomConfigForMariaDB(customConfigs []string, name string) (*core.Secret, error) {
+	cm := fi.GetCustomConfigForMariaDB(customConfigs, name)
+	By("Creating custom Config for MariaDB " + cm.Namespace + "/" + cm.Name)
+	cm, err := fi.CreateSecret(cm)
+	if err != nil {
+		return nil, err
+	}
+	fi.AppendToCleanupList(cm)
+	return cm, err
+}
+
 func (f *Framework) GetMariaDBRootPassword(md *api.MariaDB) (string, error) {
 	secret, err := f.kubeClient.CoreV1().Secrets(md.Namespace).Get(context.TODO(), md.Spec.AuthSecret.Name, metav1.GetOptions{})
 	if err != nil {

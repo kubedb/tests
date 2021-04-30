@@ -7,7 +7,6 @@ require (
 	github.com/appscode/go v0.0.0-20201006035845-a0302ac8e3d3
 	github.com/aws/aws-sdk-go v1.34.13
 	github.com/codeskyblue/go-sh v0.0.0-20200712050446-30169cf553fe
-	github.com/davecgh/go-spew v1.1.1
 	github.com/elastic/go-elasticsearch/v6 v6.8.10
 	github.com/elastic/go-elasticsearch/v7 v7.9.0
 	github.com/go-sql-driver/mysql v1.5.0
@@ -44,7 +43,7 @@ require (
 	kmodules.xyz/monitoring-agent-api v0.0.0-20201105074044-be7a1044891a
 	kmodules.xyz/objectstore-api v0.0.0-20210218144135-bfabb80e0362
 	kmodules.xyz/offshoot-api v0.0.0-20210308072215-581e7685cd02
-	kubedb.dev/apimachinery v0.18.0
+	kubedb.dev/apimachinery v0.18.1-0.20210427094601-bacf34a63a5a
 	sigs.k8s.io/yaml v1.2.0
 	stash.appscode.dev/apimachinery v0.12.1
 	xorm.io/xorm v1.0.5

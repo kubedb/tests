@@ -52,7 +52,8 @@ var (
 	DockerRegistry   = "kubedbci"
 	DBType           = api.ResourceSingularMariaDB
 	TestProfiles     stringSlice
-	DBVersion        = "10.5"
+	DBVersion        = "10.5.8"
+	OldDBVersion     = "10.4.17"
 	DBUpdatedVersion = "6.0.6"
 	PullInterval     = time.Second * 2
 	WaitTimeOut      = time.Minute * 5

@@ -18,7 +18,6 @@ package e2e_test
 
 import (
 	"flag"
-	"net"
 	"os"
 	"path/filepath"
 	"testing"
@@ -134,9 +133,9 @@ var _ = BeforeSuite(func() {
 	//framework.RootFramework.EventuallyCRD().Should(Succeed())
 
 	// Deploy Minio Server for Stash backup tests
-	By("Deploy TLS secured Minio Server")
-	_, err = framework.RootFramework.CreateMinioServer(true, []net.IP{net.ParseIP(framework.LocalHostIP)})
-	Expect(err).NotTo(HaveOccurred())
+	//By("Deploy TLS secured Minio Server")
+	//_, err = framework.RootFramework.CreateMinioServer(true, []net.IP{net.ParseIP(framework.LocalHostIP)})
+	//Expect(err).NotTo(HaveOccurred())
 
 	// Show current test configuration
 	framework.RootFramework.DumpTestConfigurations()

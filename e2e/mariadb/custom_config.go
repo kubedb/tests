@@ -23,6 +23,8 @@ import (
 	"kubedb.dev/tests/e2e/framework"
 	"kubedb.dev/tests/e2e/matcher"
 
+	"github.com/appscode/go/crypto/rand"
+	"github.com/appscode/go/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
@@ -62,7 +64,8 @@ var _ = Describe("MariaDB", func() {
 				"read_buffer_size=1048576", // 1MB
 			}
 			var customConfigForMariaDB = func() (*core.Secret, error) {
-				cm := fi.GetCustomConfigForMariaDB(customConfigs)
+				customConfigName := rand.WithUniqSuffix("md-custom-config")
+				cm := fi.GetCustomConfigForMariaDB(customConfigs, customConfigName)
 				By("Creating custom Config for MariaDB " + cm.Namespace + "/" + cm.Name)
 				cm, err := fi.CreateSecret(cm)
 				if err != nil {
@@ -79,6 +82,7 @@ var _ = Describe("MariaDB", func() {
 
 					// Create MariaDB standalone and wait for running
 					md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+						in.Spec.Replicas = types.Int32P(3)
 						in.Spec.ConfigSecret = &core.LocalObjectReference{
 							Name: cm.Name,
 						}
