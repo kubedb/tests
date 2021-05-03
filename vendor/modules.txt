@@ -858,8 +858,7 @@ kmodules.xyz/objectstore-api/api/v1
 # kmodules.xyz/offshoot-api v0.0.0-20210502215616-234104e66819
 ## explicit
 kmodules.xyz/offshoot-api/api/v1
-# kmodules.xyz/prober v0.0.0-20210502215750-20bdd29d9c85
-## explicit
+# kmodules.xyz/prober v0.0.0-20210218144026-43e923722d81
 kmodules.xyz/prober/api/v1
 # kubedb.dev/apimachinery v0.18.0
 ## explicit
@@ -1046,7 +1045,7 @@ xorm.io/xorm/tags
 # google.golang.org/api => google.golang.org/api v0.20.0
 # google.golang.org/genproto => google.golang.org/genproto v0.0.0-20201110150050-8816d57aaa9a
 # google.golang.org/grpc => google.golang.org/grpc v1.27.1
-# helm.sh/helm/v3 => github.com/kubepack/helm/v3 v3.1.0-rc.1.0.20210427034123-21364f60dbb1
+# helm.sh/helm/v3 => github.com/kubepack/helm/v3 v3.1.0-rc.1.0.20210503022716-7e2d4913a125
 # k8s.io/api => k8s.io/api v0.21.0
 # k8s.io/apimachinery => github.com/kmodules/apimachinery v0.21.1-rc.0.0.20210405112358-ad4c2289ba4c
 # k8s.io/apiserver => github.com/kmodules/apiserver v0.21.1-0.20210427013338-53dee545b83c

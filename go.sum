@@ -1837,9 +1837,8 @@ kmodules.xyz/offshoot-api v0.0.0-20210308072215-581e7685cd02/go.mod h1:RMHLigHIL
 kmodules.xyz/offshoot-api v0.0.0-20210502215616-234104e66819 h1:+4326iQRjsOQn9/kHwRBQD8W2+RSrrQeRWnbDA9J3L8=
 kmodules.xyz/offshoot-api v0.0.0-20210502215616-234104e66819/go.mod h1:r5oLsdmy3qkC8HPwoaATVjp5EmDmwZ09u2H6uQ03D8o=
 kmodules.xyz/openshift v0.0.0-20201105073146-0da509a7d39f/go.mod h1:vFwB/f5rVH5QoKXb/MN5xndDzYbmip2N8Zn68wgywlk=
+kmodules.xyz/prober v0.0.0-20210218144026-43e923722d81 h1:mi0XHhavbXQqj9q89dNhWaOdGjZWHhpr3ai5gSYMZ44=
 kmodules.xyz/prober v0.0.0-20210218144026-43e923722d81/go.mod h1:2eN8X5Wq7/AAgE5AWMAX8T0lE51HZiYEldG2RQuouX4=
-kmodules.xyz/prober v0.0.0-20210502215750-20bdd29d9c85 h1:k29BvfyEoC1zYsZR3Pc0iaHxQWeeQUrvK1/n9FsAJ70=
-kmodules.xyz/prober v0.0.0-20210502215750-20bdd29d9c85/go.mod h1:riIrGsqPjBkpguuLOZI/UFLl0ls4aq6PZt12CuhlhCQ=
 kmodules.xyz/webhook-runtime v0.0.0-20201105073856-2dc7382b88c6/go.mod h1:xLgewoOzwR5ZrVOHQ2SR0P4E7tgCyBWbYlUawEXgeF4=
 kubedb.dev/apimachinery v0.18.0 h1:Ar4qup7opGzzKENZeidgi6fQHmLqhTsVkbok+TJxDOo=
 kubedb.dev/apimachinery v0.18.0/go.mod h1:Z40oGFQbjQJoa7WzhJrOJDgEOian5YzQJdol0bFs1Sg=
