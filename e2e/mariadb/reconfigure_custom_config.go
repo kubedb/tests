@@ -76,6 +76,142 @@ var _ = Describe("MariaDB", func() {
 
 					// Create MariaDB standalone and wait for running
 					md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+						in.Spec.ConfigSecret = &core.LocalObjectReference{
+							Name: cm.Name,
+						}
+						// Set termination policy WipeOut to delete all mysql resources permanently
+						in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+					})
+					Expect(err).NotTo(HaveOccurred())
+					// Database connection information
+					dbInfo := framework.GetMariaDBInfo(framework.DBMySQL, framework.MySQLRootUser, "")
+					fi.EventuallyDBReadyMD(md, dbInfo)
+
+					By("Checking mariadb configured from provided custom configuration")
+					for _, cfg := range customConfigs {
+						fi.EventuallyMariaDBVariable(md.ObjectMeta, dbInfo, cfg).Should(matcher.UseCustomConfig(cfg))
+					}
+
+					// Removing custom configuration and waiting for the success
+					_ = fi.CreateMariaDBOpsRequestsAndWaitForSuccess(md.Name, func(in *opsapi.MariaDBOpsRequest) {
+						in.Spec.Type = opsapi.OpsRequestTypeReconfigure
+						in.Spec.Configuration = &opsapi.MariaDBCustomConfigurationSpec{
+							RemoveCustomConfig: true,
+						}
+					})
+					fi.EventuallyDBReadyMD(md, dbInfo)
+
+					By("Checking mysql custom configuration have removed")
+					for _, cfg := range customConfigs {
+						fi.EventuallyMariaDBVariable(md.ObjectMeta, dbInfo, cfg).ShouldNot(matcher.UseCustomConfig(cfg))
+					}
+				})
+			})
+
+			Context("Reconfigure custom configuration", func() {
+				It("Should reconfigure custom configuration", func() {
+					customConfigName := rand.WithUniqSuffix("md-custom-config")
+					cm, err := fi.CustomConfigForMariaDB(customConfigs, customConfigName)
+					By("Creating custom Config for MariaDB " + cm.Namespace + "/" + cm.Name)
+					Expect(err).NotTo(HaveOccurred())
+
+					// Create MariaDB standalone and wait for running
+					md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+						in.Spec.ConfigSecret = &core.LocalObjectReference{
+							Name: cm.Name,
+						}
+						// Set termination policy WipeOut to delete all mysql resources permanently
+						in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+					})
+					Expect(err).NotTo(HaveOccurred())
+					// Database connection information
+					dbInfo := framework.GetMariaDBInfo(framework.DBMySQL, framework.MySQLRootUser, "")
+					fi.EventuallyDBReadyMD(md, dbInfo)
+
+					By("Checking mariadb configured from provided custom configuration")
+					for _, cfg := range customConfigs {
+						fi.EventuallyMariaDBVariable(md.ObjectMeta, dbInfo, cfg).Should(matcher.UseCustomConfig(cfg))
+					}
+
+					// Reconfigure custom configuration and waiting for the success
+					reconfigureCustomConfigName := rand.WithUniqSuffix("reconfigure-md")
+					rcm, err := fi.CustomConfigForMariaDB(reconfigureCustomConfigs, reconfigureCustomConfigName)
+					Expect(err).NotTo(HaveOccurred())
+					_ = fi.CreateMariaDBOpsRequestsAndWaitForSuccess(md.Name, func(in *opsapi.MariaDBOpsRequest) {
+						in.Spec.Type = opsapi.OpsRequestTypeReconfigure
+						in.Spec.Configuration = &opsapi.MariaDBCustomConfigurationSpec{
+							ConfigSecret: &core.LocalObjectReference{
+								Name: rcm.Name,
+							},
+						}
+					})
+					fi.EventuallyDBReadyMD(md, dbInfo)
+
+					By("Checking mariadb custom configuration have been reconfigured")
+					for _, cfg := range reconfigureCustomConfigs {
+						fi.EventuallyMariaDBVariable(md.ObjectMeta, dbInfo, cfg).Should(matcher.UseCustomConfig(cfg))
+					}
+				})
+			})
+
+			Context("Inline Reconfigure custom configuration", func() {
+				It("Should inline reconfigure custom configuration", func() {
+					customConfigName := rand.WithUniqSuffix("md-custom-config")
+					cm, err := fi.CustomConfigForMariaDB(customConfigs, customConfigName)
+					By("Creating custom Config for MariaDB " + cm.Namespace + "/" + cm.Name)
+					Expect(err).NotTo(HaveOccurred())
+
+					// Create MariaDB standalone and wait for running
+					md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+						in.Spec.ConfigSecret = &core.LocalObjectReference{
+							Name: cm.Name,
+						}
+						// Set termination policy WipeOut to delete all mysql resources permanently
+						in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+					})
+					Expect(err).NotTo(HaveOccurred())
+					// Database connection information
+					dbInfo := framework.GetMariaDBInfo(framework.DBMySQL, framework.MySQLRootUser, "")
+					fi.EventuallyDBReadyMD(md, dbInfo)
+
+					By("Checking mariadb configured from provided custom configuration")
+					for _, cfg := range customConfigs {
+						fi.EventuallyMariaDBVariable(md.ObjectMeta, dbInfo, cfg).Should(matcher.UseCustomConfig(cfg))
+					}
+
+					// Inline reconfigure custom configuration and waiting for the success
+
+					_ = fi.CreateMariaDBOpsRequestsAndWaitForSuccess(md.Name, func(in *opsapi.MariaDBOpsRequest) {
+						in.Spec.Type = opsapi.OpsRequestTypeReconfigure
+						in.Spec.Configuration = &opsapi.MariaDBCustomConfigurationSpec{
+							InlineConfig: "max_connections=200\n" +
+								"read_buffer_size=1048576",
+						}
+					})
+					fi.EventuallyDBReadyMD(md, dbInfo)
+
+					inlineData := []string{
+						"max_connections=200",
+						"read_buffer_size=1048576", // 1MB
+					}
+					By("Checking mysql custom configuration have been reconfigured with inline configuration")
+					for _, cfg := range inlineData {
+						fi.EventuallyMariaDBVariable(md.ObjectMeta, dbInfo, cfg).Should(matcher.UseCustomConfig(cfg))
+					}
+				})
+			})
+		})
+
+		Context("MariaDB Cluster", func() {
+			Context("Remove custom configuration", func() {
+				It("Should remove custom configuration", func() {
+					customConfigName := rand.WithUniqSuffix("md-custom-config")
+					cm, err := fi.CustomConfigForMariaDB(customConfigs, customConfigName)
+					By("Creating custom Config for MariaDB " + cm.Namespace + "/" + cm.Name)
+					Expect(err).NotTo(HaveOccurred())
+
+					// Create MariaDB standalone and wait for running
+					md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
 						in.Spec.Replicas = types.Int32P(3)
 						in.Spec.ConfigSecret = &core.LocalObjectReference{
 							Name: cm.Name,
@@ -200,165 +336,6 @@ var _ = Describe("MariaDB", func() {
 					By("Checking mysql custom configuration have been reconfigured with inline configuration")
 					for _, cfg := range inlineData {
 						fi.EventuallyMariaDBVariable(md.ObjectMeta, dbInfo, cfg).Should(matcher.UseCustomConfig(cfg))
-					}
-				})
-			})
-		})
-
-		Context("MySQL Group Replication", func() {
-			Context("Remove custom configuration", func() {
-				It("Should Remove custom configuration", func() {
-					customConfigName := rand.WithUniqSuffix("mysql")
-					cm, err := fi.CustomConfigForMySQL(customConfigs, customConfigName)
-					Expect(err).NotTo(HaveOccurred())
-					// Create MySQL Group Replication and wait for running
-					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Spec.Replicas = types.Int32P(api.MySQLDefaultGroupSize)
-						clusterMode := api.MySQLClusterModeGroup
-						in.Spec.Topology = &api.MySQLClusterTopology{
-							Mode: &clusterMode,
-							Group: &api.MySQLGroupSpec{
-								Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
-							},
-						}
-						in.Spec.ConfigSecret = &core.LocalObjectReference{
-							Name: cm.Name,
-						}
-					})
-					Expect(err).NotTo(HaveOccurred())
-					// Database connection information
-					dbInfo := framework.DatabaseConnectionInfo{
-						DatabaseName: framework.DBMySQL,
-						User:         framework.MySQLRootUser,
-						Param:        "",
-					}
-					fi.EventuallyDBReady(my, dbInfo)
-
-					By("Checking provided custom configuration have been configured")
-					for _, cfg := range customConfigs {
-						fi.EventuallyMySQLVariable(my.ObjectMeta, dbInfo, cfg).Should(matcher.UseCustomConfig(cfg))
-					}
-
-					// Remove custom configuration and waiting for the success
-					_ = fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
-						in.Spec.Type = opsapi.OpsRequestTypeReconfigure
-						in.Spec.Configuration = &opsapi.MySQLCustomConfigurationSpec{
-							RemoveCustomConfig: true,
-						}
-					})
-					fi.EventuallyDBReady(my, dbInfo)
-
-					By("Checking mysql custom configuration have been removed")
-					for _, cfg := range customConfigs {
-						fi.EventuallyMySQLVariable(my.ObjectMeta, dbInfo, cfg).ShouldNot(matcher.UseCustomConfig(cfg))
-					}
-				})
-			})
-
-			Context("Reconfigure custom configuration", func() {
-				It("Should reconfigure custom configuration", func() {
-					customConfigName := rand.WithUniqSuffix("mysql")
-					cm, err := fi.CustomConfigForMySQL(customConfigs, customConfigName)
-					Expect(err).NotTo(HaveOccurred())
-					// Create MySQL Group Replication and wait for running
-					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Spec.Replicas = types.Int32P(api.MySQLDefaultGroupSize)
-						clusterMode := api.MySQLClusterModeGroup
-						in.Spec.Topology = &api.MySQLClusterTopology{
-							Mode: &clusterMode,
-							Group: &api.MySQLGroupSpec{
-								Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
-							},
-						}
-						in.Spec.ConfigSecret = &core.LocalObjectReference{
-							Name: cm.Name,
-						}
-					})
-					Expect(err).NotTo(HaveOccurred())
-					// Database connection information
-					dbInfo := framework.DatabaseConnectionInfo{
-						DatabaseName: framework.DBMySQL,
-						User:         framework.MySQLRootUser,
-						Param:        "",
-					}
-					fi.EventuallyDBReady(my, dbInfo)
-
-					By("Checking provided custom configuration have been configured")
-					for _, cfg := range customConfigs {
-						fi.EventuallyMySQLVariable(my.ObjectMeta, dbInfo, cfg).Should(matcher.UseCustomConfig(cfg))
-					}
-
-					// Reconfigure custom configuration and waiting for the success
-					reconfigureCustomConfigName := rand.WithUniqSuffix("reconfigure-mysql")
-					rcm, err := fi.CustomConfigForMySQL(reconfigureCustomConfigs, reconfigureCustomConfigName)
-					_ = fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
-						in.Spec.Type = opsapi.OpsRequestTypeReconfigure
-						in.Spec.Configuration = &opsapi.MySQLCustomConfigurationSpec{
-							ConfigSecret: &core.LocalObjectReference{
-								Name: rcm.Name,
-							},
-						}
-					})
-					Expect(err).NotTo(HaveOccurred())
-					fi.EventuallyDBReady(my, dbInfo)
-
-					By("Checking mysql custom configuration have been reconfigured")
-					for _, cfg := range reconfigureCustomConfigs {
-						fi.EventuallyMySQLVariable(my.ObjectMeta, dbInfo, cfg).Should(matcher.UseCustomConfig(cfg))
-					}
-				})
-			})
-
-			Context("Inline Reconfigure custom configuration", func() {
-				It("Should inline Reconfigure custom configuration", func() {
-					customConfigName := rand.WithUniqSuffix("mysql")
-					cm, err := fi.CustomConfigForMySQL(customConfigs, customConfigName)
-					Expect(err).NotTo(HaveOccurred())
-					// Create MySQL Group Replication and wait for running
-					my, err := fi.CreateMySQLAndWaitForRunning(framework.DBVersion, func(in *api.MySQL) {
-						in.Spec.Replicas = types.Int32P(api.MySQLDefaultGroupSize)
-						clusterMode := api.MySQLClusterModeGroup
-						in.Spec.Topology = &api.MySQLClusterTopology{
-							Mode: &clusterMode,
-							Group: &api.MySQLGroupSpec{
-								Name: "dc002fc3-c412-4d18-b1d4-66c1fbfbbc9b",
-							},
-						}
-						in.Spec.ConfigSecret = &core.LocalObjectReference{
-							Name: cm.Name,
-						}
-					})
-					Expect(err).NotTo(HaveOccurred())
-					// Database connection information
-					dbInfo := framework.DatabaseConnectionInfo{
-						DatabaseName: framework.DBMySQL,
-						User:         framework.MySQLRootUser,
-						Param:        "",
-					}
-					fi.EventuallyDBReady(my, dbInfo)
-
-					By("Checking provided custom configuration have been configured")
-					for _, cfg := range customConfigs {
-						fi.EventuallyMySQLVariable(my.ObjectMeta, dbInfo, cfg).Should(matcher.UseCustomConfig(cfg))
-					}
-
-					// Inline reconfigure custom configuration and waiting for the success
-					_ = fi.CreateMySQLOpsRequestsAndWaitForSuccess(my.Name, func(in *opsapi.MySQLOpsRequest) {
-						in.Spec.Type = opsapi.OpsRequestTypeReconfigure
-						in.Spec.Configuration = &opsapi.MySQLCustomConfigurationSpec{
-							InlineConfig: "max_connections=200\n" +
-								"read_buffer_size=1048576",
-						}
-					})
-					fi.EventuallyDBReady(my, dbInfo)
-
-					inlineData := []string{
-						"max_connections=200",
-						"read_buffer_size=1048576", // 1MB
-					}
-					By("Checking mysql custom configuration have been reconfigured with inline configuration")
-					for _, cfg := range inlineData {
-						fi.EventuallyMySQLVariable(my.ObjectMeta, dbInfo, cfg).Should(matcher.UseCustomConfig(cfg))
 					}
 				})
 			})

@@ -75,7 +75,32 @@ var _ = Describe("MariaDB", func() {
 				return cm, err
 			}
 
-			Context("from secret", func() {
+			Context("from secret for Standalone", func() {
+				It("should set configuration provided in secret", func() {
+					cm, err := customConfigForMariaDB()
+					Expect(err).NotTo(HaveOccurred())
+
+					// Create MariaDB standalone and wait for running
+					md, err := fi.CreateMariaDBAndWaitForRunning(framework.DBVersion, func(in *api.MariaDB) {
+						in.Spec.ConfigSecret = &core.LocalObjectReference{
+							Name: cm.Name,
+						}
+						// Set termination policy WipeOut to delete all mysql resources permanently
+						in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+					})
+					Expect(err).NotTo(HaveOccurred())
+					// Database connection information
+					dbInfo := framework.GetMariaDBInfo(framework.DBMySQL, framework.MySQLRootUser, "")
+					fi.EventuallyDBReadyMD(md, dbInfo)
+
+					By("Checking mariadb configured from provided custom configuration")
+					for _, cfg := range customConfigs {
+						fi.EventuallyMariaDBVariable(md.ObjectMeta, dbInfo, cfg).Should(matcher.UseCustomConfig(cfg))
+					}
+				})
+			})
+
+			Context("from secret MariaDB Cluster", func() {
 				It("should set configuration provided in secret", func() {
 					cm, err := customConfigForMariaDB()
 					Expect(err).NotTo(HaveOccurred())
