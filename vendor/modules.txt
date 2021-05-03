@@ -809,7 +809,7 @@ k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset
 k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/scheme
 k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1
 k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1beta1
-# k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7 => k8s.io/kube-openapi v0.0.0-20201113171705-d219536bb9fd
+# k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7 => k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7
 k8s.io/kube-openapi/pkg/common
 k8s.io/kube-openapi/pkg/util/proto
 # k8s.io/kubernetes v1.21.0 => github.com/kmodules/kubernetes v1.22.0-alpha.0.0.20210427080452-22d2e66bae50
@@ -858,7 +858,8 @@ kmodules.xyz/objectstore-api/api/v1
 # kmodules.xyz/offshoot-api v0.0.0-20210502215616-234104e66819
 ## explicit
 kmodules.xyz/offshoot-api/api/v1
-# kmodules.xyz/prober v0.0.0-20210218144026-43e923722d81
+# kmodules.xyz/prober v0.0.0-20210502215750-20bdd29d9c85
+## explicit
 kmodules.xyz/prober/api/v1
 # kubedb.dev/apimachinery v0.18.0
 ## explicit
@@ -1052,7 +1053,7 @@ xorm.io/xorm/tags
 # k8s.io/cli-runtime => k8s.io/cli-runtime v0.21.0
 # k8s.io/client-go => k8s.io/client-go v0.21.0
 # k8s.io/component-base => k8s.io/component-base v0.21.0
-# k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20201113171705-d219536bb9fd
+# k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7
 # k8s.io/kubernetes => github.com/kmodules/kubernetes v1.22.0-alpha.0.0.20210427080452-22d2e66bae50
 # k8s.io/utils => k8s.io/utils v0.0.0-20201110183641-67b214c5f920
 # kmodules.xyz/resource-metadata => kmodules.xyz/resource-metadata v0.5.0

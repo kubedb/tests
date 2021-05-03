@@ -44,6 +44,7 @@ require (
 	kmodules.xyz/monitoring-agent-api v0.0.0-20210503020053-730829ef4ddb
 	kmodules.xyz/objectstore-api v0.0.0-20210502215550-f5d0292dff17
 	kmodules.xyz/offshoot-api v0.0.0-20210502215616-234104e66819
+	kmodules.xyz/prober v0.0.0-20210502215750-20bdd29d9c85 // indirect
 	kubedb.dev/apimachinery v0.18.0
 	sigs.k8s.io/yaml v1.2.0
 	stash.appscode.dev/apimachinery v0.12.1
@@ -152,7 +153,7 @@ replace k8s.io/client-go => k8s.io/client-go v0.21.0
 
 replace k8s.io/component-base => k8s.io/component-base v0.21.0
 
-replace k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20201113171705-d219536bb9fd
+replace k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7
 
 replace k8s.io/kubernetes => github.com/kmodules/kubernetes v1.22.0-alpha.0.0.20210427080452-22d2e66bae50
 
