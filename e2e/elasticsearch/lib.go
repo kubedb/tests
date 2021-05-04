@@ -26,7 +26,6 @@ import (
 	dbaapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	"kubedb.dev/tests/e2e/framework"
 
-	"github.com/appscode/go/log"
 	"github.com/google/go-cmp/cmp"
 	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	. "github.com/onsi/ginkgo"
@@ -35,6 +34,7 @@ import (
 	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog/v2"
 	kmapi "kmodules.xyz/client-go/api/v1"
 )
 
@@ -246,12 +246,12 @@ func (to *testOptions) verifyResources() bool {
 		Expect(err).NotTo(HaveOccurred())
 		container := GetElasticsearchContainer(sts, api.ElasticsearchContainerName)
 		if !cmp.Equal(container.Resources, *reqSpec.Node) {
-			log.Error("statefulSet....container.Resources and reqSpec.Node are not equal!")
+			klog.Error("statefulSet....container.Resources and reqSpec.Node are not equal!")
 			return false
 		}
 
 		if !cmp.Equal(dbSpec.PodTemplate.Spec.Resources, *reqSpec.Node) {
-			log.Error("dbSpec.PodTemplate.Spec.Resources and reqSpec.Node are not equal!")
+			klog.Error("dbSpec.PodTemplate.Spec.Resources and reqSpec.Node are not equal!")
 			return false
 		}
 	}
@@ -263,12 +263,12 @@ func (to *testOptions) verifyResources() bool {
 			Expect(err).NotTo(HaveOccurred())
 			container := GetElasticsearchContainer(sts, api.ElasticsearchContainerName)
 			if !cmp.Equal(container.Resources, *reqSpec.Topology.Master) {
-				log.Error("statefulSet....container.Resources and reqSpec.topology.master are not equal!")
+				klog.Error("statefulSet....container.Resources and reqSpec.topology.master are not equal!")
 				return false
 			}
 
 			if !cmp.Equal(*reqSpec.Topology.Master, dbSpec.Topology.Master.Resources) {
-				log.Error("reqSpec.Topology.Master and dbSpec.Topology.Master.Resources are not equal!")
+				klog.Error("reqSpec.Topology.Master and dbSpec.Topology.Master.Resources are not equal!")
 				return false
 			}
 		}
@@ -279,12 +279,12 @@ func (to *testOptions) verifyResources() bool {
 			Expect(err).NotTo(HaveOccurred())
 			container := GetElasticsearchContainer(sts, api.ElasticsearchContainerName)
 			if !cmp.Equal(container.Resources, *reqSpec.Topology.Data) {
-				log.Error("statefulSet....container.Resources and reqSpec.topology.data are not equal!")
+				klog.Error("statefulSet....container.Resources and reqSpec.topology.data are not equal!")
 				return false
 			}
 
 			if !cmp.Equal(*reqSpec.Topology.Data, dbSpec.Topology.Data.Resources) {
-				log.Error("reqSpec.Topology.Data and dbSpec.Topology.Data.Resources are not equal!")
+				klog.Error("reqSpec.Topology.Data and dbSpec.Topology.Data.Resources are not equal!")
 				return false
 			}
 		}
@@ -295,27 +295,27 @@ func (to *testOptions) verifyResources() bool {
 			Expect(err).NotTo(HaveOccurred())
 			container := GetElasticsearchContainer(sts, api.ElasticsearchContainerName)
 			if !cmp.Equal(container.Resources, *reqSpec.Topology.Ingest) {
-				log.Error("statefulSet....container.Resources and reqSpec.topology.ingest are not equal!")
+				klog.Error("statefulSet....container.Resources and reqSpec.topology.ingest are not equal!")
 				return false
 			}
 			// Exporter sidecar of ingest node
 			if reqSpec.Exporter != nil && dbSpec.Monitor != nil && dbSpec.Monitor.Prometheus != nil {
 				container = GetElasticsearchContainer(sts, api.ElasticsearchExporterContainerName)
 				if !cmp.Equal(container.Resources, *reqSpec.Exporter) {
-					log.Error("statefulSet....container.Resources and reqSpec.exporter are not equal!")
+					klog.Error("statefulSet....container.Resources and reqSpec.exporter are not equal!")
 					return false
 				}
 			}
 
 			if !cmp.Equal(*reqSpec.Topology.Ingest, dbSpec.Topology.Ingest.Resources) {
-				log.Error("reqSpec.Topology.Ingest and dbSpec.Topology.Ingest.Resources are not equal!")
+				klog.Error("reqSpec.Topology.Ingest and dbSpec.Topology.Ingest.Resources are not equal!")
 				return false
 			}
 		}
 	}
 	if reqSpec.Exporter != nil && dbSpec.Monitor != nil && dbSpec.Monitor.Prometheus != nil {
 		if !cmp.Equal(*reqSpec.Exporter, dbSpec.Monitor.Prometheus.Exporter.Resources) {
-			log.Error("reqSpec.Exporter and dbSpec.Monitor.Prometheus.Exporter.Resources are not equal!")
+			klog.Error("reqSpec.Exporter and dbSpec.Monitor.Prometheus.Exporter.Resources are not equal!")
 			return false
 		}
 	}
@@ -338,7 +338,7 @@ func (to *testOptions) verifyStorage() bool {
 
 		// with statefulSet
 		if !cmp.Equal(*sts.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage(), *reqSpec.Node) {
-			log.Error("VolumeClaimTemplates[0].Spec.Resources.Requests.Storage() and reqSpec.Node are not equal!")
+			klog.Error("VolumeClaimTemplates[0].Spec.Resources.Requests.Storage() and reqSpec.Node are not equal!")
 			return false
 		}
 
@@ -348,14 +348,14 @@ func (to *testOptions) verifyStorage() bool {
 			pvc, err := to.KubeClient().CoreV1().PersistentVolumeClaims(to.db.Namespace).Get(context.TODO(), pvcName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			if !cmp.Equal(*pvc.Spec.Resources.Requests.Storage(), *reqSpec.Node) {
-				log.Error("pvc.Spec.Resources.Requests.Storage() and reqSpec.Node are not equal!")
+				klog.Error("pvc.Spec.Resources.Requests.Storage() and reqSpec.Node are not equal!")
 				return false
 			}
 		}
 
 		// with Elasticsearch CRD
 		if !cmp.Equal(*dbSpec.Storage.Resources.Requests.Storage(), *reqSpec.Node) {
-			log.Error("db.Spec.Storage.Resources.Requests.Storage() and reqSpec.Node are not equal!")
+			klog.Error("db.Spec.Storage.Resources.Requests.Storage() and reqSpec.Node are not equal!")
 			return false
 		}
 	}
@@ -368,7 +368,7 @@ func (to *testOptions) verifyStorage() bool {
 
 			// with StatefulSet
 			if !cmp.Equal(*sts.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage(), *reqSpec.Topology.Master) {
-				log.Error("VolumeClaimTemplates[0].Spec.Resources.Requests.Storage() and reqSpec.Topology.Master are not equal!")
+				klog.Error("VolumeClaimTemplates[0].Spec.Resources.Requests.Storage() and reqSpec.Topology.Master are not equal!")
 				return false
 			}
 
@@ -378,14 +378,14 @@ func (to *testOptions) verifyStorage() bool {
 				pvc, err := to.KubeClient().CoreV1().PersistentVolumeClaims(to.db.Namespace).Get(context.TODO(), pvcName, metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
 				if !cmp.Equal(*pvc.Spec.Resources.Requests.Storage(), *reqSpec.Topology.Master) {
-					log.Error("pvc.Spec.Resources.Requests.Storage() and reqSpec.Topology.Master are not equal!")
+					klog.Error("pvc.Spec.Resources.Requests.Storage() and reqSpec.Topology.Master are not equal!")
 					return false
 				}
 			}
 
 			// with Elasticsearch CRD
 			if !cmp.Equal(*dbSpec.Topology.Master.Storage.Resources.Requests.Storage(), *reqSpec.Topology.Master) {
-				log.Error("db.Spec.Topology.Master.Storage.Resources.Requests.Storage() and reqSpec.Topology.Master are not equal!")
+				klog.Error("db.Spec.Topology.Master.Storage.Resources.Requests.Storage() and reqSpec.Topology.Master are not equal!")
 				return false
 			}
 		}
@@ -397,7 +397,7 @@ func (to *testOptions) verifyStorage() bool {
 
 			// with statefulSet
 			if !cmp.Equal(*sts.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage(), *reqSpec.Topology.Data) {
-				log.Error("VolumeClaimTemplates[0].Spec.Resources.Requests.Storage() and reqSpec.topology.data are not equal!")
+				klog.Error("VolumeClaimTemplates[0].Spec.Resources.Requests.Storage() and reqSpec.topology.data are not equal!")
 				return false
 			}
 
@@ -407,14 +407,14 @@ func (to *testOptions) verifyStorage() bool {
 				pvc, err := to.KubeClient().CoreV1().PersistentVolumeClaims(to.db.Namespace).Get(context.TODO(), pvcName, metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
 				if !cmp.Equal(*pvc.Spec.Resources.Requests.Storage(), *reqSpec.Topology.Data) {
-					log.Error("pvc.Spec.Resources.Requests.Storage() and reqSpec.Topology.Data are not equal!")
+					klog.Error("pvc.Spec.Resources.Requests.Storage() and reqSpec.Topology.Data are not equal!")
 					return false
 				}
 			}
 
 			// with Elasticsearch CRD
 			if !cmp.Equal(*dbSpec.Topology.Data.Storage.Resources.Requests.Storage(), *reqSpec.Topology.Data) {
-				log.Error("dbSpec.Topology.Data.Storage.Resources.Requests.Storage() and reqSpec.Topology.Data are not equal!")
+				klog.Error("dbSpec.Topology.Data.Storage.Resources.Requests.Storage() and reqSpec.Topology.Data are not equal!")
 				return false
 			}
 		}
@@ -426,7 +426,7 @@ func (to *testOptions) verifyStorage() bool {
 
 			// with statefulSet
 			if !cmp.Equal(*sts.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage(), *reqSpec.Topology.Ingest) {
-				log.Error("sts.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage() and reqSpec.topology.ingest are not equal!")
+				klog.Error("sts.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage() and reqSpec.topology.ingest are not equal!")
 				return false
 			}
 
@@ -436,14 +436,14 @@ func (to *testOptions) verifyStorage() bool {
 				pvc, err := to.KubeClient().CoreV1().PersistentVolumeClaims(to.db.Namespace).Get(context.TODO(), pvcName, metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
 				if !cmp.Equal(*pvc.Spec.Resources.Requests.Storage(), *reqSpec.Topology.Ingest) {
-					log.Error("pvc.Spec.Resources.Requests.Storage() and reqSpec.Topology.Ingest are not equal!")
+					klog.Error("pvc.Spec.Resources.Requests.Storage() and reqSpec.Topology.Ingest are not equal!")
 					return false
 				}
 			}
 
 			// with Elasticsearch CRD
 			if !cmp.Equal(*dbSpec.Topology.Ingest.Storage.Resources.Requests.Storage(), *reqSpec.Topology.Ingest) {
-				log.Error("reqSpec.Topology.Ingest and dbSpec.Topology.Ingest.Resources are not equal!")
+				klog.Error("reqSpec.Topology.Ingest and dbSpec.Topology.Ingest.Resources are not equal!")
 				return false
 			}
 		}

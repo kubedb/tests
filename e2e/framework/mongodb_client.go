@@ -28,7 +28,6 @@ import (
 	"kubedb.dev/apimachinery/apis/autoscaling/v1alpha1"
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 
-	"github.com/appscode/go/log"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -38,6 +37,7 @@ import (
 	"gomodules.xyz/x/arrays"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog/v2"
 	v1 "kmodules.xyz/client-go/api/v1"
 	"kmodules.xyz/client-go/tools/exec"
 	"kmodules.xyz/client-go/tools/portforward"
@@ -216,7 +216,7 @@ func (f *Framework) EventuallyPingMongo(meta metav1.ObjectMeta) GomegaAsyncAsser
 			svcName := f.GetPrimaryService(meta)
 			_, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName)
 			if err != nil {
-				log.Errorln("Failed to ConnectAndPing. Reason: ", err)
+				klog.Errorln("Failed to ConnectAndPing. Reason: ", err)
 				return false
 			}
 			defer tunnel.Close()
@@ -233,7 +233,7 @@ func (f *Framework) EventuallyInsertDocument(meta metav1.ObjectMeta, dbName stri
 			svcName := f.GetPrimaryService(meta)
 			client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName)
 			if err != nil {
-				log.Errorln("Failed to ConnectAndPing. Reason: ", err)
+				klog.Errorln("Failed to ConnectAndPing. Reason: ", err)
 				return false, err
 			}
 			defer tunnel.Close()
@@ -244,7 +244,7 @@ func (f *Framework) EventuallyInsertDocument(meta metav1.ObjectMeta, dbName stri
 			}
 
 			if _, err := client.Database(dbName).Collection("people").InsertOne(context.Background(), person); err != nil {
-				log.Errorln("creation error:", err)
+				klog.Errorln("creation error:", err)
 				return false, err
 			}
 
@@ -257,7 +257,7 @@ func (f *Framework) EventuallyInsertDocument(meta metav1.ObjectMeta, dbName stri
 				}
 
 				if _, err := client.Database(dbName).Collection(fmt.Sprintf("people-%03d", i)).InsertOne(context.Background(), person); err != nil {
-					log.Errorln("creation error:", err)
+					klog.Errorln("creation error:", err)
 					return false, err
 				}
 			}
@@ -275,7 +275,7 @@ func (f *Framework) EventuallyDocumentExists(meta metav1.ObjectMeta, dbName stri
 			svcName := f.GetPrimaryService(meta)
 			client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName)
 			if err != nil {
-				log.Errorln("Failed to ConnectAndPing. Reason: ", err)
+				klog.Errorln("Failed to ConnectAndPing. Reason: ", err)
 				return false, err
 			}
 			defer tunnel.Close()
@@ -287,7 +287,7 @@ func (f *Framework) EventuallyDocumentExists(meta metav1.ObjectMeta, dbName stri
 			person := &KubedbTable{}
 
 			if er := client.Database(dbName).Collection("people").FindOne(context.Background(), bson.M{"firstname": expected.FirstName}).Decode(&person); er != nil || person == nil || person.LastName != expected.LastName {
-				log.Errorln("checking error:", er)
+				klog.Errorln("checking error:", er)
 				return false, er
 			}
 
@@ -300,7 +300,7 @@ func (f *Framework) EventuallyDocumentExists(meta metav1.ObjectMeta, dbName stri
 				person := &KubedbTable{}
 
 				if er := client.Database(dbName).Collection(fmt.Sprintf("people-%03d", i)).FindOne(context.Background(), bson.M{"firstname": expected.FirstName}).Decode(&person); er != nil || person == nil || person.LastName != expected.LastName {
-					log.Errorln("checking error:", er)
+					klog.Errorln("checking error:", er)
 					return false, er
 				}
 			}
@@ -317,14 +317,14 @@ func (f *Framework) EventuallyInsertCollection(meta metav1.ObjectMeta, dbName st
 			svcName := f.GetPrimaryService(meta)
 			client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName)
 			if err != nil {
-				log.Errorln("Failed to ConnectAndPing. Reason: ", err)
+				klog.Errorln("Failed to ConnectAndPing. Reason: ", err)
 				return false, err
 			}
 			defer tunnel.Close()
 
 			for i := range collections {
 				if _, err := client.Database(dbName).Collection(collections[i].Name).InsertOne(context.Background(), collections[i].Document); err != nil {
-					log.Errorln("creation error:", err)
+					klog.Errorln("creation error:", err)
 					return false, err
 				}
 			}
@@ -341,7 +341,7 @@ func (f *Framework) EventuallyUpdateCollection(meta metav1.ObjectMeta, dbName st
 			svcName := f.GetPrimaryService(meta)
 			client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName)
 			if err != nil {
-				log.Errorln("Failed to ConnectAndPing. Reason: ", err)
+				klog.Errorln("Failed to ConnectAndPing. Reason: ", err)
 				return false, err
 			}
 			defer tunnel.Close()
@@ -349,7 +349,7 @@ func (f *Framework) EventuallyUpdateCollection(meta metav1.ObjectMeta, dbName st
 			for i := range collections {
 				updateResult, err := client.Database(dbName).Collection(collections[i].Name).ReplaceOne(context.Background(), bson.M{"name": SampleDocument}, collections[i].Document)
 				if err != nil {
-					log.Errorln("update error:", err)
+					klog.Errorln("update error:", err)
 					return false, err
 				}
 				if updateResult.MatchedCount == 0 {
@@ -367,7 +367,7 @@ func (f *Framework) GetDocument(meta metav1.ObjectMeta, dbName, collectionName s
 	svcName := f.GetPrimaryService(meta)
 	client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName)
 	if err != nil {
-		log.Errorln("Failed to ConnectAndPing. Reason: ", err)
+		klog.Errorln("Failed to ConnectAndPing. Reason: ", err)
 		return nil, err
 	}
 	defer tunnel.Close()
@@ -385,13 +385,13 @@ func (f *Framework) EventuallyDropDatabase(meta metav1.ObjectMeta, dbName string
 			svcName := f.GetPrimaryService(meta)
 			client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName)
 			if err != nil {
-				log.Errorln("Failed to ConnectAndPing. Reason: ", err)
+				klog.Errorln("Failed to ConnectAndPing. Reason: ", err)
 				return false, err
 			}
 			defer tunnel.Close()
 
 			if err := client.Database(dbName).Drop(context.Background()); err != nil {
-				log.Errorln("creation error:", err)
+				klog.Errorln("creation error:", err)
 				return false, err
 			}
 			return true, nil
@@ -427,21 +427,21 @@ func (f *Framework) EventuallyEnableSharding(meta metav1.ObjectMeta, dbName stri
 			svcName := f.GetPrimaryService(meta)
 			client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName, false)
 			if err != nil {
-				log.Errorln("Failed to ConnectAndPing. Reason: ", err)
+				klog.Errorln("Failed to ConnectAndPing. Reason: ", err)
 				return false, err
 			}
 			defer tunnel.Close()
 
 			singleRes := client.Database("admin").RunCommand(context.Background(), bson.D{{Key: "enableSharding", Value: dbName}})
 			if singleRes.Err() != nil {
-				log.Errorln("RunCommand enableSharding error:", err)
+				klog.Errorln("RunCommand enableSharding error:", err)
 				return false, err
 			}
 
 			// Now shard collection
 			singleRes = client.Database("admin").RunCommand(context.Background(), bson.D{{Key: "shardCollection", Value: fmt.Sprintf("%v.public", dbName)}, {Key: "key", Value: bson.M{"firstname": 1}}})
 			if singleRes.Err() != nil {
-				log.Errorln("RunCommand shardCollection error:", err)
+				klog.Errorln("RunCommand shardCollection error:", err)
 				return false, err
 			}
 
@@ -459,7 +459,7 @@ func (f *Framework) EventuallyCollectionPartitioned(meta metav1.ObjectMeta, dbNa
 			svcName := f.GetPrimaryService(meta)
 			client, tunnel, err := f.ConnectAndPing(meta, string(core.ResourceServices), svcName, false)
 			if err != nil {
-				log.Errorln("Failed to ConnectAndPing. Reason: ", err)
+				klog.Errorln("Failed to ConnectAndPing. Reason: ", err)
 				return false, err
 			}
 			defer tunnel.Close()
@@ -468,10 +468,10 @@ func (f *Framework) EventuallyCollectionPartitioned(meta metav1.ObjectMeta, dbNa
 			err = client.Database("config").Collection("databases").FindOne(context.TODO(), bson.D{{Key: "_id", Value: dbName}}).Decode(&res)
 			if err != nil {
 				if err == mongo.ErrNoDocuments {
-					log.Infoln("No document in config.databases:", err)
+					klog.Infoln("No document in config.databases:", err)
 					return false, nil
 				}
-				log.Errorln("Query error:", err)
+				klog.Errorln("Query error:", err)
 				return false, err
 			}
 
@@ -479,7 +479,7 @@ func (f *Framework) EventuallyCollectionPartitioned(meta metav1.ObjectMeta, dbNa
 			if ok && val == true {
 				return true, nil
 			}
-			log.Errorln("db", dbName, "is not partitioned. Got partitioned:", val)
+			klog.Errorln("db", dbName, "is not partitioned. Got partitioned:", val)
 			return false, nil
 		},
 		time.Minute*5,
@@ -497,7 +497,7 @@ func (f *Framework) getMaxIncomingConnections(meta metav1.ObjectMeta, resource, 
 	res := make(map[string]interface{})
 	err = client.Database("admin").RunCommand(context.Background(), bson.D{{Key: "getCmdLineOpts", Value: 1}}).Decode(&res)
 	if err != nil {
-		log.Errorln("RunCommand getCmdLineOpts error:", err)
+		klog.Errorln("RunCommand getCmdLineOpts error:", err)
 		return 0, err
 	}
 
@@ -604,7 +604,7 @@ func (f *Framework) getClusterAuthModeFromDB(meta metav1.ObjectMeta) (string, er
 			primitive.E{Key: "clusterAuthMode", Value: 1},
 		}).Decode(&res)
 	if err != nil {
-		log.Errorln("RunCommand getCmdLineOpts error:", err)
+		klog.Errorln("RunCommand getCmdLineOpts error:", err)
 		return "", err
 	}
 
@@ -632,7 +632,7 @@ func (f *Framework) getSSLModeFromDB(meta metav1.ObjectMeta) (string, error) {
 			primitive.E{Key: "sslMode", Value: 1},
 		}).Decode(&res)
 	if err != nil {
-		log.Errorln("RunCommand getCmdLineOpts error:", err)
+		klog.Errorln("RunCommand getCmdLineOpts error:", err)
 		return "", err
 	}
 
@@ -700,7 +700,7 @@ func (f *Framework) getStorageEngine(meta metav1.ObjectMeta, resource, name stri
 			primitive.E{Key: "serverStatus", Value: 1},
 		}).Decode(&res)
 	if err != nil {
-		log.Errorln("RunCommand serverStatus error:", err)
+		klog.Errorln("RunCommand serverStatus error:", err)
 		return "", err
 	}
 
@@ -917,7 +917,7 @@ func (f *Framework) EventuallyTLSUserCreated(db *api.MongoDB) GomegaAsyncAsserti
 			res := make(map[string]interface{})
 			err = client.Database("$external").RunCommand(context.Background(), bson.D{{Key: "usersInfo", Value: "CN=root,OU=client,O=kubedb"}}).Decode(&res)
 			if err != nil {
-				log.Error("Failed to run command. error: ", err)
+				klog.Error("Failed to run command. error: ", err)
 				return false, err
 			}
 			users, ok := res["users"].(primitive.A)

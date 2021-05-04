@@ -23,12 +23,12 @@ import (
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"kubedb.dev/tests/e2e/framework"
 
-	"github.com/appscode/go/log"
 	"github.com/appscode/go/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/klog/v2"
 	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
 
@@ -252,7 +252,7 @@ var _ = Describe("General MongoDB", func() {
 			if err != nil {
 				if kerr.IsNotFound(err) {
 					// MongoDB was not created. Hence, rest of cleanup is not necessary.
-					log.Infof("Skipping rest of cleanup. Reason: MongoDB %s is not found.", to.mongodb.Name)
+					klog.Infof("Skipping rest of cleanup. Reason: MongoDB %s is not found.", to.mongodb.Name)
 					return
 				}
 				Expect(err).NotTo(HaveOccurred())
@@ -309,7 +309,7 @@ var _ = Describe("General MongoDB", func() {
 			if err != nil {
 				if kerr.IsNotFound(err) {
 					// MongoDB was not created. Hence, rest of cleanup is not necessary.
-					log.Infof("Skipping rest of cleanup. Reason: MongoDB %s is not found.", to.mongodb.Name)
+					klog.Infof("Skipping rest of cleanup. Reason: MongoDB %s is not found.", to.mongodb.Name)
 					return
 				}
 				Expect(err).NotTo(HaveOccurred())

@@ -23,13 +23,13 @@ import (
 	"kubedb.dev/tests/e2e/framework"
 
 	"github.com/appscode/go/crypto/rand"
-	"github.com/appscode/go/log"
 	"github.com/appscode/go/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog/v2"
 )
 
 var _ = Describe("MySQL", func() {
@@ -153,7 +153,7 @@ var _ = Describe("MySQL", func() {
 				if err != nil {
 					if kerr.IsNotFound(err) {
 						// MySQL was not created. Hence, rest of cleanup is not necessary.
-						log.Infof("Skipping rest of cleanup. Reason: MySQL %s/%s is not found.", myMeta.Namespace, myMeta.Name)
+						klog.Infof("Skipping rest of cleanup. Reason: MySQL %s/%s is not found.", myMeta.Namespace, myMeta.Name)
 						return
 					}
 					Expect(err).NotTo(HaveOccurred())

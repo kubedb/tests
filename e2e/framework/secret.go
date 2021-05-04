@@ -26,7 +26,6 @@ import (
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 
 	"github.com/appscode/go/crypto/rand"
-	"github.com/appscode/go/log"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gomodules.xyz/password-generator"
@@ -34,6 +33,7 @@ import (
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/klog/v2"
 	meta_util "kmodules.xyz/client-go/meta"
 )
 
@@ -58,7 +58,7 @@ func (f *Framework) UpdateSecret(meta metav1.ObjectMeta, transformer func(core.S
 				return nil
 			}
 		}
-		log.Errorf("Attempt %d failed to update Secret %s@%s due to %s.", attempt, cur.Name, cur.Namespace, err)
+		klog.Errorf("Attempt %d failed to update Secret %s@%s due to %s.", attempt, cur.Name, cur.Namespace, err)
 		time.Sleep(updateRetryInterval)
 	}
 	return fmt.Errorf("failed to update Secret %s@%s after %d attempts", meta.Name, meta.Namespace, attempt)

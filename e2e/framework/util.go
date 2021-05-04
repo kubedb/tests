@@ -30,7 +30,6 @@ import (
 	"kubedb.dev/apimachinery/apis/ops/v1alpha1"
 	opsapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 
-	"github.com/appscode/go/log"
 	"github.com/aws/aws-sdk-go/aws"
 	shell "github.com/codeskyblue/go-sh"
 	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
@@ -45,6 +44,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/klog/v2"
 	kutil "kmodules.xyz/client-go"
 	meta_util "kmodules.xyz/client-go/meta"
 	"kmodules.xyz/client-go/tools/portforward"
@@ -118,7 +118,7 @@ func (f *Framework) AddMonitor(obj *api.MongoDB) {
 func (f *Framework) VerifyShardExporters(meta metav1.ObjectMeta) error {
 	mongoDB, err := f.dbClient.KubedbV1alpha2().MongoDBs(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 	if err != nil {
-		log.Infoln(err)
+		klog.Infoln(err)
 		return err
 	}
 
@@ -130,21 +130,21 @@ func (f *Framework) VerifyShardExporters(meta metav1.ObjectMeta) error {
 	newMeta.Name = mongoDB.ConfigSvrNodeName()
 	err = f.VerifyMongoDBExporter(newMeta)
 	if err != nil {
-		log.Infoln(err)
+		klog.Infoln(err)
 		return err
 	}
 	// for shards
 	newMeta.Name = mongoDB.ShardNodeName(int32(0))
 	err = f.VerifyMongoDBExporter(newMeta)
 	if err != nil {
-		log.Infoln(err)
+		klog.Infoln(err)
 		return err
 	}
 	// for mongos
 	newMeta.Name = mongoDB.MongosNodeName()
 	err = f.VerifyMongoDBExporter(newMeta)
 	if err != nil {
-		log.Infoln(err)
+		klog.Infoln(err)
 		return err
 	}
 
@@ -155,7 +155,7 @@ func (f *Framework) VerifyInMemory(meta metav1.ObjectMeta) error {
 	svcName := f.GetPrimaryService(meta)
 	storageEngine, err := f.getStorageEngine(meta, string(core.ResourceServices), svcName)
 	if err != nil {
-		log.Infoln(err)
+		klog.Infoln(err)
 		return err
 	}
 
@@ -172,7 +172,7 @@ func (f *Framework) VerifyInMemory(meta metav1.ObjectMeta) error {
 func (f *Framework) VerifyMongoDBExporter(meta metav1.ObjectMeta) error {
 	tunnel, err := f.ForwardToPort(meta, string(core.ResourcePods), fmt.Sprintf("%v-0", meta.Name), aws.Int(mona.PrometheusExporterPortNumber))
 	if err != nil {
-		log.Infoln(err)
+		klog.Infoln(err)
 		return err
 	}
 	defer tunnel.Close()
@@ -183,7 +183,7 @@ func (f *Framework) VerifyMongoDBExporter(meta metav1.ObjectMeta) error {
 
 		err := prom2json.FetchMetricFamilies(metricsURL, mfChan, transport)
 		if err != nil {
-			log.Infoln(err)
+			klog.Infoln(err)
 			return false, nil
 		}
 
@@ -201,7 +201,7 @@ func (f *Framework) VerifyMongoDBExporter(meta metav1.ObjectMeta) error {
 		if count != metricsMatchedCount {
 			return false, nil
 		}
-		log.Infoln("Found ", count, " metrics out of ", metricsMatchedCount)
+		klog.Infoln("Found ", count, " metrics out of ", metricsMatchedCount)
 		return true, nil
 	})
 }

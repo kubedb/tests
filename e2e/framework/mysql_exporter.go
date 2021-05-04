@@ -23,12 +23,12 @@ import (
 
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 
-	"github.com/appscode/go/log"
 	"github.com/aws/aws-sdk-go/aws"
 	promClient "github.com/prometheus/client_model/go"
 	"github.com/prometheus/prom2json"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/klog/v2"
 	kutil "kmodules.xyz/client-go"
 	mona "kmodules.xyz/monitoring-agent-api/api/v1"
 )
@@ -58,7 +58,7 @@ func (f *Framework) AddMySQLMonitor(obj *api.MySQL) {
 func (f *Framework) VerifyMySQLExporter(my *api.MySQL) error {
 	tunnel, err := f.ForwardToPort(my.ObjectMeta, string(core.ResourceServices), my.StatsService().ServiceName(), aws.Int(mona.PrometheusExporterPortNumber))
 	if err != nil {
-		log.Infoln(err)
+		klog.Infoln(err)
 		return err
 	}
 
@@ -69,7 +69,7 @@ func (f *Framework) VerifyMySQLExporter(my *api.MySQL) error {
 
 		err := prom2json.FetchMetricFamilies(metricsURL, mfChan, transport)
 		if err != nil {
-			log.Infoln(err)
+			klog.Infoln(err)
 			return false, nil
 		}
 
@@ -87,7 +87,7 @@ func (f *Framework) VerifyMySQLExporter(my *api.MySQL) error {
 		if count != mySQLMetricsMatchedCount {
 			return false, nil
 		}
-		log.Infoln("Found ", count, " metrics out of ", mySQLMetricsMatchedCount)
+		klog.Infoln("Found ", count, " metrics out of ", mySQLMetricsMatchedCount)
 		return true, nil
 	})
 }

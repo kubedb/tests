@@ -25,13 +25,13 @@ import (
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 
 	"github.com/appscode/go/crypto/rand"
-	"github.com/appscode/go/log"
 	"github.com/appscode/go/types"
 	cm_api "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/klog/v2"
 	kmapi "kmodules.xyz/client-go/api/v1"
 	meta_util "kmodules.xyz/client-go/meta"
 )
@@ -84,7 +84,7 @@ func (f *Framework) UpdateIssuer(meta metav1.ObjectMeta, transformer func(cm_api
 				return nil
 			}
 		}
-		log.Errorf("Attempt %d failed to update Issuer %s@%s due to %s.", attempt, cur.Name, cur.Namespace, err)
+		klog.Errorf("Attempt %d failed to update Issuer %s@%s due to %s.", attempt, cur.Name, cur.Namespace, err)
 		time.Sleep(updateRetryInterval)
 	}
 	return fmt.Errorf("failed to update Issuer %s@%s after %d attempts", meta.Name, meta.Namespace, attempt)

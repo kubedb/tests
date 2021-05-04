@@ -25,13 +25,13 @@ import (
 	"kubedb.dev/tests/e2e/framework"
 
 	"github.com/appscode/go/crypto/rand"
-	"github.com/appscode/go/log"
 	"github.com/appscode/go/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/klog/v2"
 )
 
 var _ = Describe("General Redis", func() {
@@ -196,7 +196,7 @@ var _ = Describe("General Redis", func() {
 				if err != nil {
 					if kerr.IsNotFound(err) {
 						// Redis was not created. Hence, rest of cleanup is not necessary.
-						log.Infof("Skipping rest of cleanup. Reason: Redis %s is not found.", to.redis.Name)
+						klog.Infof("Skipping rest of cleanup. Reason: Redis %s is not found.", to.redis.Name)
 						return
 					}
 					Expect(err).NotTo(HaveOccurred())

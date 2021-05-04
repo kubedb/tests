@@ -32,7 +32,6 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/appscode/go/crypto/rand"
-	"github.com/appscode/go/log"
 	string_util "github.com/appscode/go/strings"
 	"github.com/appscode/go/types"
 	. "github.com/onsi/ginkgo"
@@ -46,6 +45,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/klog/v2"
 	meta_util "kmodules.xyz/client-go/meta"
 	"kmodules.xyz/client-go/tools/portforward"
 	ofst "kmodules.xyz/offshoot-api/api/v1"
@@ -361,7 +361,7 @@ func (f *Framework) EventuallyElasticsearchIndicesCount(oldCount int, client es.
 		func() bool {
 			newCount, err := client.CountIndex()
 			if err != nil {
-				log.Error(err)
+				klog.Error(err)
 				return false
 			}
 			return oldCount <= newCount
