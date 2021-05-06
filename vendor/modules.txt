@@ -97,7 +97,7 @@ github.com/go-stack/stack
 # github.com/gogo/protobuf v1.3.2 => github.com/gogo/protobuf v1.3.2
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
-# github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
+# github.com/golang/glog v0.0.0-20210429001901-424d2337a529
 github.com/golang/glog
 # github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 github.com/golang/groupcache/lru
@@ -431,8 +431,13 @@ gomodules.xyz/blobfs
 ## explicit
 gomodules.xyz/cert
 gomodules.xyz/cert/certstore
+# gomodules.xyz/clock v0.0.0-20200817085942-06523dba733f
+gomodules.xyz/clock
 # gomodules.xyz/jsonpatch/v2 v2.1.0
 gomodules.xyz/jsonpatch/v2
+# gomodules.xyz/kglog v0.0.1
+## explicit
+gomodules.xyz/kglog
 # gomodules.xyz/oneliners v0.0.0-20200730052119-bccc7758058b
 ## explicit
 gomodules.xyz/oneliners
@@ -442,11 +447,15 @@ gomodules.xyz/password-generator
 # gomodules.xyz/pointer v0.0.0-20201105071923-daf60fa55209
 ## explicit
 gomodules.xyz/pointer
+# gomodules.xyz/runtime v0.2.0
+gomodules.xyz/runtime
 # gomodules.xyz/sets v0.0.0-20210218105342-2efe2fb519a2
 gomodules.xyz/sets
 # gomodules.xyz/version v0.1.0
 gomodules.xyz/version
-# gomodules.xyz/x v0.0.3
+# gomodules.xyz/wait v0.0.0-20210218105358-639bd9211545
+gomodules.xyz/wait
+# gomodules.xyz/x v0.0.4
 ## explicit
 gomodules.xyz/x/arrays
 gomodules.xyz/x/crypto/rand
@@ -815,7 +824,7 @@ k8s.io/utils/buffer
 k8s.io/utils/integer
 k8s.io/utils/pointer
 k8s.io/utils/trace
-# kmodules.xyz/client-go v0.0.0-20210504024435-1eb80721e9b8
+# kmodules.xyz/client-go v0.0.0-20210505231546-fa4fb8e1d04e
 ## explicit
 kmodules.xyz/client-go
 kmodules.xyz/client-go/api/v1
@@ -826,7 +835,6 @@ kmodules.xyz/client-go/apps/v1
 kmodules.xyz/client-go/core/v1
 kmodules.xyz/client-go/discovery
 kmodules.xyz/client-go/dynamic
-kmodules.xyz/client-go/logs
 kmodules.xyz/client-go/meta
 kmodules.xyz/client-go/tools/clientcmd
 kmodules.xyz/client-go/tools/exec
@@ -852,9 +860,9 @@ kmodules.xyz/objectstore-api/api/v1
 # kmodules.xyz/offshoot-api v0.0.0-20210504040651-7951e351f0f5
 ## explicit
 kmodules.xyz/offshoot-api/api/v1
-# kmodules.xyz/prober v0.0.0-20210504042421-eca494e828bc
+# kmodules.xyz/prober v0.0.0-20210504215326-2e406706b970
 kmodules.xyz/prober/api/v1
-# kubedb.dev/apimachinery v0.18.1-0.20210504045738-11d1c3068aa3
+# kubedb.dev/apimachinery v0.18.1-0.20210506003355-e982e5902ad2
 ## explicit
 kubedb.dev/apimachinery/apis
 kubedb.dev/apimachinery/apis/autoscaling
@@ -961,7 +969,7 @@ sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.2.0
 ## explicit
 sigs.k8s.io/yaml
-# stash.appscode.dev/apimachinery v0.13.1-0.20210504044941-15d8c532c990
+# stash.appscode.dev/apimachinery v0.13.1-0.20210505235659-974fc12c7593
 ## explicit
 stash.appscode.dev/apimachinery/apis
 stash.appscode.dev/apimachinery/apis/repositories
