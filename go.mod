@@ -9,28 +9,28 @@ require (
 	github.com/codeskyblue/go-sh v0.0.0-20200712050446-30169cf553fe
 	github.com/davecgh/go-spew v1.1.1
 	github.com/elastic/go-elasticsearch/v6 v6.8.10
-	github.com/elastic/go-elasticsearch/v7 v7.12.0
+	github.com/elastic/go-elasticsearch/v7 v7.13.1
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/google/go-cmp v0.5.5
-	github.com/jetstack/cert-manager v1.3.1
+	github.com/jetstack/cert-manager v1.4.0-beta.0
 	github.com/olivere/elastic v6.2.35+incompatible // indirect
 	github.com/olivere/elastic/v7 v7.0.24
-	github.com/onsi/ginkgo v1.15.0
-	github.com/onsi/gomega v1.10.5
+	github.com/onsi/ginkgo v1.16.1
+	github.com/onsi/gomega v1.11.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/prom2json v1.3.0
 	github.com/xdg/scram v1.0.3 // indirect
 	github.com/xdg/stringprep v1.0.3 // indirect
 	go.mongodb.org/mongo-driver v1.1.2
-	gocloud.dev v0.22.0
+	gocloud.dev v0.20.0
 	gomodules.xyz/blobfs v0.1.7
 	gomodules.xyz/cert v1.2.0
-	gomodules.xyz/kglog v0.0.1
+	gomodules.xyz/logs v0.0.2
 	gomodules.xyz/oneliners v0.0.0-20200730052119-bccc7758058b
 	gomodules.xyz/password-generator v0.2.7
 	gomodules.xyz/pointer v0.0.0-20201105071923-daf60fa55209
-	gomodules.xyz/x v0.0.4
+	gomodules.xyz/x v0.0.5
 	gopkg.in/olivere/elastic.v5 v5.0.86
 	gopkg.in/olivere/elastic.v6 v6.2.35
 	gopkg.in/yaml.v2 v2.4.0
@@ -41,15 +41,15 @@ require (
 	k8s.io/klog/v2 v2.8.0
 	k8s.io/kube-aggregator v0.21.0
 	k8s.io/utils v0.0.0-20210111153108-fddb29f9d009
-	kmodules.xyz/client-go v0.0.0-20210505231546-fa4fb8e1d04e
-	kmodules.xyz/custom-resources v0.0.0-20210504034124-54c54fcdb690
+	kmodules.xyz/client-go v0.0.0-20210605021217-cabaee7b953e
+	kmodules.xyz/custom-resources v0.0.0-20210605111625-741fcb992541
 	kmodules.xyz/monitoring-agent-api v0.0.0-20210504040241-261c2428d207
 	kmodules.xyz/objectstore-api v0.0.0-20210504041638-b9e00ab1eab3
 	kmodules.xyz/offshoot-api v0.0.0-20210504040651-7951e351f0f5
-	kubedb.dev/apimachinery v0.18.1-0.20210506003355-e982e5902ad2
+	kubedb.dev/apimachinery v0.18.1-0.20210606081947-27cc118e5a02
 	sigs.k8s.io/yaml v1.2.0
-	stash.appscode.dev/apimachinery v0.13.1-0.20210505235659-974fc12c7593
-	xorm.io/xorm v1.0.7
+	stash.appscode.dev/apimachinery v0.13.1-0.20210605201829-a382bbe2f22a
+	xorm.io/xorm v1.1.0
 )
 
 replace bitbucket.org/ww/goautoneg => gomodules.xyz/goautoneg v0.0.0-20120707110453-a547fc61f48d
@@ -120,8 +120,6 @@ replace github.com/googleapis/gnostic => github.com/googleapis/gnostic v0.4.1
 
 replace github.com/imdario/mergo => github.com/imdario/mergo v0.3.5
 
-replace github.com/jetstack/cert-manager => github.com/kmodules/cert-manager v1.3.1-0.20210429172957-c5436c14ce0e
-
 replace github.com/prometheus-operator/prometheus-operator => github.com/prometheus-operator/prometheus-operator v0.47.0
 
 replace github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring => github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.47.0
@@ -142,7 +140,7 @@ replace k8s.io/api => k8s.io/api v0.21.0
 
 replace k8s.io/apimachinery => github.com/kmodules/apimachinery v0.21.1-rc.0.0.20210405112358-ad4c2289ba4c
 
-replace k8s.io/apiserver => github.com/kmodules/apiserver v0.21.1-0.20210427013338-53dee545b83c
+replace k8s.io/apiserver => github.com/kmodules/apiserver v0.21.1-0.20210525165825-102cf43e00fa
 
 replace k8s.io/cli-runtime => k8s.io/cli-runtime v0.21.0
 
@@ -155,7 +153,5 @@ replace k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20210305001622-591a79e
 replace k8s.io/kubernetes => github.com/kmodules/kubernetes v1.22.0-alpha.0.0.20210427080452-22d2e66bae50
 
 replace k8s.io/utils => k8s.io/utils v0.0.0-20201110183641-67b214c5f920
-
-replace kmodules.xyz/resource-metadata => kmodules.xyz/resource-metadata v0.5.0
 
 replace sigs.k8s.io/application => github.com/kmodules/application v0.8.4-0.20210427030912-90eeee3bc4ad
