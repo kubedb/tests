@@ -12,11 +12,11 @@ require (
 	github.com/elastic/go-elasticsearch/v7 v7.13.1
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/google/go-cmp v0.5.5
-	github.com/jetstack/cert-manager v1.4.0-beta.0
+	github.com/jetstack/cert-manager v1.4.0
 	github.com/olivere/elastic v6.2.35+incompatible // indirect
 	github.com/olivere/elastic/v7 v7.0.24
-	github.com/onsi/ginkgo v1.16.1
-	github.com/onsi/gomega v1.11.0
+	github.com/onsi/ginkgo v1.16.4
+	github.com/onsi/gomega v1.13.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/prom2json v1.3.0
@@ -34,21 +34,21 @@ require (
 	gopkg.in/olivere/elastic.v5 v5.0.86
 	gopkg.in/olivere/elastic.v6 v6.2.35
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.21.0
-	k8s.io/apiextensions-apiserver v0.21.0
-	k8s.io/apimachinery v0.21.0
-	k8s.io/client-go v0.21.0
+	k8s.io/api v0.21.1
+	k8s.io/apiextensions-apiserver v0.21.1
+	k8s.io/apimachinery v0.21.1
+	k8s.io/client-go v0.21.1
 	k8s.io/klog/v2 v2.8.0
-	k8s.io/kube-aggregator v0.21.0
-	k8s.io/utils v0.0.0-20210111153108-fddb29f9d009
-	kmodules.xyz/client-go v0.0.0-20210614094429-affdb80e35c8
-	kmodules.xyz/custom-resources v0.0.0-20210605111625-741fcb992541
-	kmodules.xyz/monitoring-agent-api v0.0.0-20210504040241-261c2428d207
-	kmodules.xyz/objectstore-api v0.0.0-20210504041638-b9e00ab1eab3
-	kmodules.xyz/offshoot-api v0.0.0-20210504040651-7951e351f0f5
-	kubedb.dev/apimachinery v0.18.1-0.20210606081947-27cc118e5a02
+	k8s.io/kube-aggregator v0.21.1
+	k8s.io/utils v0.0.0-20210527160623-6fdb442a123b
+	kmodules.xyz/client-go v0.0.0-20210617233340-13d22e91512b
+	kmodules.xyz/custom-resources v0.0.0-20210618003440-c6bb400da153
+	kmodules.xyz/monitoring-agent-api v0.0.0-20210618110729-9cd872c66513
+	kmodules.xyz/objectstore-api v0.0.0-20210618005912-71f8a80f48f9
+	kmodules.xyz/offshoot-api v0.0.0-20210618005544-5217a24765da
+	kubedb.dev/apimachinery v0.19.0-rc.0
 	sigs.k8s.io/yaml v1.2.0
-	stash.appscode.dev/apimachinery v0.13.1-0.20210605201829-a382bbe2f22a
+	stash.appscode.dev/apimachinery v0.14.1
 	xorm.io/xorm v1.1.0
 )
 

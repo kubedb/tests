@@ -201,17 +201,17 @@ func (fi *Invocation) ClusterElasticsearch() *api.Elasticsearch {
 			Topology: &api.ElasticsearchClusterTopology{
 				Master: api.ElasticsearchNode{
 					Replicas: types.Int32P(1),
-					Suffix:   api.ElasticsearchMasterNodeSuffix,
+					Suffix:   string(api.ElasticsearchNodeRoleTypeMaster),
 					Storage:  fi.getESStorage(),
 				},
-				Data: api.ElasticsearchNode{
+				Data: &api.ElasticsearchNode{
 					Replicas: types.Int32P(2),
-					Suffix:   api.ElasticsearchDataNodeSuffix,
+					Suffix:   string(api.ElasticsearchNodeRoleTypeData),
 					Storage:  fi.getESStorage(),
 				},
 				Ingest: api.ElasticsearchNode{
 					Replicas: types.Int32P(1),
-					Suffix:   api.ElasticsearchIngestNodeSuffix,
+					Suffix:   string(api.ElasticsearchNodeRoleTypeIngest),
 					Storage:  fi.getESStorage(),
 				},
 			},
@@ -623,17 +623,17 @@ func (fi *Invocation) AddDedicatedESNodes(db *api.Elasticsearch) {
 	db.Spec.Topology = &api.ElasticsearchClusterTopology{
 		Master: api.ElasticsearchNode{
 			Replicas: types.Int32P(1),
-			Suffix:   api.ElasticsearchMasterNodeSuffix,
+			Suffix:   string(api.ElasticsearchNodeRoleTypeMaster),
 			Storage:  fi.getESStorage(),
 		},
-		Data: api.ElasticsearchNode{
+		Data: &api.ElasticsearchNode{
 			Replicas: types.Int32P(2),
-			Suffix:   api.ElasticsearchDataNodeSuffix,
+			Suffix:   string(api.ElasticsearchNodeRoleTypeData),
 			Storage:  fi.getESStorage(),
 		},
 		Ingest: api.ElasticsearchNode{
 			Replicas: types.Int32P(1),
-			Suffix:   api.ElasticsearchIngestNodeSuffix,
+			Suffix:   string(api.ElasticsearchNodeRoleTypeIngest),
 			Storage:  fi.getESStorage(),
 		},
 	}
