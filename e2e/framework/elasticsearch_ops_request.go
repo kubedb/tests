@@ -116,6 +116,7 @@ func (fi *Invocation) EventuallyElasticsearchOpsRequestSuccessful(meta metav1.Ob
 		func() bool {
 			esOpsReq, err := fi.dbClient.OpsV1alpha1().ElasticsearchOpsRequests(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
+			Expect(esOpsReq.Status.Phase).ShouldNot(Equal(dbaapi.OpsRequestPhaseFailed))
 			return esOpsReq.Status.Phase == dbaapi.OpsRequestPhaseSuccessful
 		},
 		timeOut,
